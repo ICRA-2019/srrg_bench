@@ -14,12 +14,12 @@ add_definitions(-Ofast -march=native -Wall -pedantic -std=c++11)
 #add_definitions(-O0 -march=native -Wall -pedantic -std=c++11 -g)
 
 #ds locate external dependencies
-find_package(catkin QUIET COMPONENTS srrg_cmake_modules srrg_core_viewers srrg_gl_helpers obindex2)
+find_package(catkin QUIET COMPONENTS srrg_cmake_modules srrg_core_viewers srrg_gl_helpers obindex2 srrg_hbst)
 find_package(Eigen3 QUIET)
 find_package(OpenCV QUIET)
-find_package(DBoW2 QUIET)
-find_package(DLib QUIET)
-find_package(FLANN QUIET)
+#find_package(DBoW2 QUIET)
+#find_package(DLib QUIET)
+#find_package(FLANN QUIET)
 
 #ds viewer related
 set(CMAKE_MODULE_PATH ${srrg_cmake_modules_INCLUDE_DIRS})
@@ -27,29 +27,49 @@ find_package(QGLViewer QUIET)
 
 #ds evaluate configuration
 if(EIGEN3_FOUND)
-  message("srrg_bench|found Eigen3: ${EIGEN3_INCLUDE_DIR}")
+  message("srrg_bench|found Eigen3: '${EIGEN3_INCLUDE_DIR}' ${EIGEN3_VERSION}")
+  
+  #ds enable hbst wrapping
   add_definitions(-DSRRG_HBST_HAS_EIGEN)
+  
+  #ds add headers for all projects
+  include_directories(${EIGEN3_INCLUDE_DIR})
 endif()
 if(OpenCV_FOUND)
-  message("srrg_bench|found OpenCV: ${OpenCV_DIR}")
+  message("srrg_bench|found OpenCV: '${OpenCV_DIR}' ${OpenCV_VERSION}")
   set(SRRG_BENCH_BUILD_OPENCV true)
+  
+  #ds enable hbst wrapping
   add_definitions(-DSRRG_HBST_HAS_OPENCV)
+  
+  #ds add headers for all projects
+  include_directories(${OpenCV_INCLUDE_DIRS})
+endif()
+if(srrg_hbst_FOUND)
+  message("srrg_bench|found srrg_hbst: '${HBST_DIR}' ${HBST_VERSION}")
+  add_definitions(-DSRRG_BENCH_BUILD_HBST)
 endif()
 if(DBoW2_FOUND AND DLib_FOUND)
-  message("srrg_bench|found DBoW2: ${DBoW2_DIR}")
-  message("srrg_bench|found DLib: ${DLib_DIR}")
-  set(SRRG_BENCH_BUILD_DBOW2 true)
+  message("srrg_bench|found DBoW2: '${DBoW2_DIR}' ${DBoW2_VERSION}")
+  message("srrg_bench|found DLib: '${DLib_DIR}' ${DLib_VERSION}")
+  add_definitions(-DSRRG_BENCH_BUILD_FLANN_DBOW2)
 endif()
 if(FLANN_FOUND)
-  message("srrg_bench|found FLANN: ${FLANN_DIR}")
-  set(SRRG_BENCH_BUILD_FLANN true)
+  message("srrg_bench|found FLANN: '${FLANN_DIR}' ${FLANN_VERSION}")
+  add_definitions(-DSRRG_BENCH_BUILD_FLANN_HC)
 endif()
 if(obindex2_FOUND)
-  message("srrg_bench|found OBIndex2: ${obindex2_DIR}")
-  set(SRRG_BENCH_BUILD_IBOW true)
+  message("srrg_bench|found OBIndex2: '${obindex2_DIR}' ${obindex2_VERSION}")
+  add_definitions(-DSRRG_BENCH_BUILD_IBOW)
 endif()
 if(srrg_core_viewers_FOUND AND QGLVIEWER_FOUND)
   message("srrg_bench|found required visualization libraries, building viewers")
   set(SRRG_BENCH_BUILD_VIEWERS true)
+  add_definitions(-DSRRG_BENCH_BUILD_VIEWERS)
 endif()
 
+#ds define catkin package
+catkin_package(INCLUDE_DIRS src)
+
+#ds add benchmark source folders
+add_subdirectory(src/srrg_hbst)

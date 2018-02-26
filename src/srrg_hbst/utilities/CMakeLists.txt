@@ -1,0 +1,2 @@
+add_library(srrg_bench_loop_closure_evaluator_library loop_closure_evaluator.cpp command_line_parameters.cpp)
+target_link_libraries(srrg_bench_loop_closure_evaluator_library ${OpenCV_LIBS})

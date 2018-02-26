@@ -14,4 +14,8 @@ Affiliated datasets: <br>
 - [Oxford Robotcar Dataset](http://robotcar-dataset.robots.ox.ac.uk/)
 - [Nordlandsbanen](https://nrkbeta.no/2013/01/15/nordlandsbanen-minute-by-minute-season-by-season/)
 
+Supported environments: <br>
+- Ubuntu 14.04 with gcc/g++-5 or higher
+- Ubuntu 16.04 with gcc/g++-5 or higher
+
 ### SRRG HBST
