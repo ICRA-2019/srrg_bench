@@ -31,8 +31,6 @@ if(EIGEN3_FOUND)
   
   #ds enable hbst wrapping
   add_definitions(-DSRRG_HBST_HAS_EIGEN)
-  
-  #ds add headers for all projects
   include_directories(${EIGEN3_INCLUDE_DIR})
 endif()
 if(OpenCV_FOUND)
@@ -41,26 +39,29 @@ if(OpenCV_FOUND)
   
   #ds enable hbst wrapping
   add_definitions(-DSRRG_HBST_HAS_OPENCV)
-  
-  #ds add headers for all projects
   include_directories(${OpenCV_INCLUDE_DIRS})
 endif()
 if(srrg_hbst_FOUND)
-  message("srrg_bench|found srrg_hbst: '${HBST_DIR}' ${HBST_VERSION}")
+  message("srrg_bench|found srrg_hbst: '${srrg_hbst_DIR}' ${srrg_hbst_VERSION}")
   add_definitions(-DSRRG_BENCH_BUILD_HBST)
+  include_directories(${srrg_hbst_INCLUDE_DIRS})
 endif()
 if(DBoW2_FOUND AND DLib_FOUND)
   message("srrg_bench|found DBoW2: '${DBoW2_DIR}' ${DBoW2_VERSION}")
   message("srrg_bench|found DLib: '${DLib_DIR}' ${DLib_VERSION}")
   add_definitions(-DSRRG_BENCH_BUILD_FLANN_DBOW2)
+  include_directories(${DLIB_INCLUDE_DIR})
+  include_directories(${DBOW2_INCLUDE_DIR})
 endif()
 if(FLANN_FOUND)
   message("srrg_bench|found FLANN: '${FLANN_DIR}' ${FLANN_VERSION}")
   add_definitions(-DSRRG_BENCH_BUILD_FLANN_HC)
+  include_directories(${FLANN_INCLUDE_DIRS})
 endif()
 if(obindex2_FOUND)
   message("srrg_bench|found OBIndex2: '${obindex2_DIR}' ${obindex2_VERSION}")
   add_definitions(-DSRRG_BENCH_BUILD_IBOW)
+  include_directories(${obindex2_INCLUDE_DIRS})
 endif()
 if(srrg_core_viewers_FOUND AND QGLVIEWER_FOUND)
   message("srrg_bench|found required visualization libraries, building viewers")

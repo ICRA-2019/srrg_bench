@@ -265,6 +265,9 @@ int32_t main(int32_t argc_, char** argv_) {
             = result.number_of_matches_relative_verified;
           } else {
 
+            //ds do not refine search result
+            result.number_of_matches_relative_verified = result.result_image_retrieval.number_of_matches_relative;
+
             //ds update confusion matrix
             confusion_matrix[result.result_image_retrieval.image_association.query][result.result_image_retrieval.image_association.train]
             = result.result_image_retrieval.number_of_matches_relative;

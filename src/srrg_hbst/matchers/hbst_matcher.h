@@ -4,7 +4,7 @@
 
 namespace srrg_bench {
 
-typedef BinaryTree256 Tree; //no augmentation
+typedef srrg_hbst::BinaryTree256 Tree; //no augmentation
 
 //! @class matcher implementing the HBST matching algorithm
 class HBSTMatcher: public BaseMatcher {
@@ -17,7 +17,7 @@ public:
   //! @param[in] minimum_distance_between_closure_images_ minimum image number distance between closures
   HBSTMatcher(const uint32_t& interspace_image_number_,
               const uint32_t& minimum_distance_between_closure_images_,
-              const SplittingStrategy& train_mode_);
+              const srrg_hbst::SplittingStrategy& train_mode_);
 
   //! @brief default destructor
   ~HBSTMatcher();
@@ -61,6 +61,6 @@ protected:
   uint32_t _minimum_distance_between_closure_images;
 
   //! @brief leaf spawning strategy
-  SplittingStrategy _train_mode;
+  srrg_hbst::SplittingStrategy _train_mode;
 };
 }

@@ -1,6 +1,6 @@
 add_library(srrg_bench_closure_viewer_library closure_viewer.cpp)
 target_link_libraries(srrg_bench_closure_viewer_library 
-  loop_closure_evaluator_library
+  srrg_bench_loop_closure_evaluator_library
   srrg_core_viewers_library
   ${OpenCV_LIBS}
   ${OPENGL_gl_LIBRARY}

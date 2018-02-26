@@ -43,8 +43,8 @@ int32_t main(int32_t argc_, char** argv_) {
   std::shared_ptr<CommandLineParameters> parameters = std::make_shared<CommandLineParameters>();
   parameters->parse(argc_, argv_);
   parameters->validate(std::cerr);
-  parameters->write(std::cerr);
   parameters->configure(std::cerr);
+  parameters->write(std::cerr);
 
   //ds evaluated matcher
   std::shared_ptr<BaseMatcher> matcher = 0;
@@ -58,17 +58,17 @@ int32_t main(int32_t argc_, char** argv_) {
     if (parameters->use_random_splitting) {
       matcher = std::make_shared<HBSTMatcher>(parameters->query_interspace,
                                               parameters->minimum_distance_between_closure_images,
-                                              SplittingStrategy::SplitRandomUniform);
+                                              srrg_hbst::SplittingStrategy::SplitRandomUniform);
       method_name += "-random-" + std::to_string(Tree::Node::maximum_leaf_size);
     } else if (parameters->use_uneven_splitting) {
       matcher = std::make_shared<HBSTMatcher>(parameters->query_interspace,
                                               parameters->minimum_distance_between_closure_images,
-                                              SplittingStrategy::SplitUneven);
+                                              srrg_hbst::SplittingStrategy::SplitUneven);
       method_name += "-uneven-" + std::to_string(Tree::Node::maximum_leaf_size);
     } else {
       matcher = std::make_shared<HBSTMatcher>(parameters->query_interspace,
                                               parameters->minimum_distance_between_closure_images,
-                                              SplittingStrategy::SplitEven);
+                                              srrg_hbst::SplittingStrategy::SplitEven);
       method_name += "-even-" + std::to_string(Tree::Node::maximum_leaf_size);
     }
 #else
