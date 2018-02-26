@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<package>
+  <name>srrg_bench</name>
+  <version>0.0.0</version>
+  <description>The srrg_bench package</description>
+  <maintainer email="schlegel@diag.uniroma1.it">Dominik Schlegel</maintainer>
+  <license>BSD</license>
+  <author email="schlegel@diag.uniroma1.it">Dominik Schlegel</author>
+  <buildtool_depend>catkin</buildtool_depend>
+</package>
+
