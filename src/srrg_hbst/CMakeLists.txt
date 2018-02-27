@@ -45,3 +45,9 @@ else()
   target_link_libraries(compute_closure_ground_truth srrg_bench_matchers_library)
 
 endif()
+
+#ds descriptor bit analysis for HBST
+if(srrg_hbst_FOUND)
+  add_executable(analyze_completeness analyze_completeness.cpp)
+  target_link_libraries(analyze_completeness srrg_bench_loop_closure_evaluator_library)
+endif()

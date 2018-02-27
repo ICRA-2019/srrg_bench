@@ -18,6 +18,11 @@ Supported environments: <br>
 - Ubuntu 14.04 with gcc/g++-5 or higher
 - Ubuntu 16.04 with gcc/g++-5 or higher
 
+Reference software (required if a comparison is desired): <br>
+- DBoW2: https://github.com/dorian3d/DBoW2
+- FLANN: https://github.com/mariusmuja/flann (used for Hierarchical Clustering Trees)
+- iBoW: https://github.com/emiliofidalgo/obindex2
+
 ### SRRG HBST
 Image Retrieval (Closure) ground truth computation examples: <br>
 - KITTI sequence 06:

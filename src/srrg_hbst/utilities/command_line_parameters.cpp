@@ -170,6 +170,10 @@ void CommandLineParameters::configure(std::ostream& stream_) {
     evaluator->loadImagesWithPosesFromFileKITTI(file_name_poses_ground_truth, folder_images);
   } else if (parsing_mode == "malaga") {
     evaluator->loadImagesWithPosesFromFileMalaga(file_name_poses_ground_truth, folder_images);
+
+    //ds adjust thresholds for malaga precision (GPS only)
+    maximum_difference_position_meters *= 2;
+    maximum_difference_angle_radians   *= 2;
   } else if (parsing_mode == "lucia") {
     evaluator->loadImagesWithPosesFromFileLucia(file_name_poses_ground_truth, file_name_image_timestamps);
   } else if (parsing_mode == "oxford") {

@@ -27,8 +27,8 @@ int32_t main(int32_t argc_, char** argv_) {
   std::shared_ptr<CommandLineParameters> parameters = std::make_shared<CommandLineParameters>();
   parameters->parse(argc_, argv_);
   parameters->validate(std::cerr);
-  parameters->write(std::cerr);
   parameters->configure(std::cerr);
+  parameters->write(std::cerr);
 
   //ds default arguments
   bool compute_plausible_confusion    = false;
