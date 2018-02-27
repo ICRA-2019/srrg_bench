@@ -33,6 +33,10 @@ if(SRRG_BENCH_BUILD_VIEWERS)
   #ds ground truth computation - with viewer
   add_executable(compute_closure_ground_truth compute_closure_ground_truth.cpp)
   target_link_libraries(compute_closure_ground_truth srrg_bench_matchers_library srrg_bench_closure_viewer_library)
+  
+  #ds compile live viewer
+  add_executable(live_viewer live_viewer.cpp)
+  target_link_libraries(live_viewer srrg_bench_loop_closure_evaluator_library srrg_bench_live_viewer_library pthread)
 
 else()
 

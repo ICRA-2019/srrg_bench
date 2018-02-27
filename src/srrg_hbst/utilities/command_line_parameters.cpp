@@ -176,6 +176,9 @@ void CommandLineParameters::configure(std::ostream& stream_) {
     maximum_difference_angle_radians   *= 2;
   } else if (parsing_mode == "lucia") {
     evaluator->loadImagesWithPosesFromFileLucia(file_name_poses_ground_truth, file_name_image_timestamps);
+
+    //ds adjust detector threshold to high image resolution
+    fast_detector_threshold *= 3;
   } else if (parsing_mode == "oxford") {
     if (load_cross_datasets) {
       evaluator->loadImagesWithPosesFromFileOxford(file_name_poses_ground_truth,
