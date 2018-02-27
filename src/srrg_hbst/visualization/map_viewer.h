@@ -10,8 +10,8 @@ class MapViewer: public srrg_core_viewers::SimpleViewer {
 //ds object life
 public:
 
-    MapViewer() {setWindowTitle("Trajectory view"); _robots_to_world.clear();};
-    ~MapViewer() {};
+    MapViewer() {setWindowTitle("Trajectory view"); setFPSIsDisplayed(true); _robots_to_world.clear();}
+    ~MapViewer() {}
 
 //ds setters/getters
 public:

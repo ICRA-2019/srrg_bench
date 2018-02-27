@@ -101,8 +101,8 @@ public:
       }
 
       //ds rebuild descriptor matrix and keypoints vector
-      keypoints.resize(_parameters->target_number_of_descriptors);
-      descriptors = descriptors(cv::Rect(0, 0, descriptors.cols, _parameters->target_number_of_descriptors));
+      keypoints.resize(std::min(keypoints.size(), static_cast<uint64_t>(_parameters->target_number_of_descriptors)));
+      descriptors = descriptors(cv::Rect(0, 0, descriptors.cols, keypoints.size()));
 
       //ds store final keypoints
       _buffer_keypoints.push_back(keypoints);
