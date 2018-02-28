@@ -386,8 +386,8 @@ void LoopClosureEvaluator::loadImagesWithPosesFromFileLucia(const std::string& f
     //ds rotate into camera frame
     Eigen::Matrix3d orientation_robot_to_camera(Eigen::Matrix3d::Identity());
     orientation_robot_to_camera << 0, 0, 1,
-                                   -1, 0, 0,
-                                   0, -1, 0;
+                                   0, 1, 0,
+                                   -1, 0, 0;
     pose.linear() = orientation_robot_to_camera*orientation.toRotationMatrix();
 
     //ds compute full timestamp

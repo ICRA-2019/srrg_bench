@@ -26,7 +26,7 @@ set(CMAKE_MODULE_PATH ${srrg_cmake_modules_INCLUDE_DIRS})
 find_package(QGLViewer QUIET)
 
 #ds evaluate configuration
-if(EIGEN3_FOUND)
+if(EIGEN3_FOUND OR EIGEN3_INCLUDE_DIR)
   message("srrg_bench|found Eigen3: '${EIGEN3_INCLUDE_DIR}' ${EIGEN3_VERSION}")
   
   #ds enable hbst wrapping

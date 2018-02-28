@@ -6,15 +6,14 @@ namespace srrg_bench {
   using namespace srrg_gl_helpers;
   using namespace srrg_core_viewers;
 
-  ViewerBonsai::ViewerBonsai(const srrg_hbst::BinaryTree256* tree_,
+  ViewerBonsai::ViewerBonsai(const std::shared_ptr<srrg_hbst::BinaryTree256> tree_,
                              const double& object_scale_,
-                             const std::string& window_name_): _mutex_data_transfer(0),
-                                                               _tree(tree_),
+                             const std::string& window_name_): _tree(tree_),
                                                                _object_scale(object_scale_),
                                                                _window_name(window_name_) {
     _matches.clear();
     setWindowTitle(_window_name.c_str());
-    setFPSIsDisplayed(true);
+    setFPSIsDisplayed(false);
 
     //ds set viewpoint
     _viewpoint[0][0] = 0;
@@ -59,7 +58,6 @@ namespace srrg_bench {
     drawAxis(_object_scale);
 
     //ds from the root
-    std::lock_guard<std::mutex> lock(*_mutex_data_transfer);
     if (_tree && _tree->root()) {
 
       //ds root node
@@ -101,15 +99,15 @@ namespace srrg_bench {
 
         //ds if we switched back to benchmark - reset the steps
         if (!_option_stepwise_playback) {
+          std::cerr << "switched to benchmark playback" << std::endl;
           _requested_playback_steps = 0;
         }
-        _option_requested = true;
         break;
       }
       case Qt::Key_Up: {
         if (_option_stepwise_playback) {
+          std::cerr << "switched to stepwise playback" << std::endl;
           ++_requested_playback_steps;
-          _option_requested = true;
         }
         break;
       }
@@ -186,6 +184,13 @@ namespace srrg_bench {
       //ds no leafs - draw this node as a leaf (GREEN) and terminate recursion
       glColor4f(0.0, 1.0, 0.0, 1.0);
       glVertex3d(node_position_.x(), node_position_.y(), node_position_.z());
+    }
+  }
+
+  void ViewerBonsai::setMatches(const srrg_hbst::BinaryTree256::MatchVector& matches_) {
+    _matches.clear();
+    for (srrg_hbst::BinaryTree256::Match match: matches_) {
+      _matches.push_back(match);
     }
   }
 

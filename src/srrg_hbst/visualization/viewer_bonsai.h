@@ -10,26 +10,15 @@ namespace srrg_bench {
 class ViewerBonsai: public srrg_core_viewers::SimpleViewer{
 public:
 
-  ViewerBonsai(const srrg_hbst::BinaryTree256* tree_ = 0,
+  ViewerBonsai(const std::shared_ptr<srrg_hbst::BinaryTree256> tree_,
                const double& object_scale_ = 1,
                const std::string& window_name_ = "Binary search tree view");
-
-  void configure(std::mutex* mutex_data_transfer_) {_mutex_data_transfer = mutex_data_transfer_;}
 
   ~ViewerBonsai() {_matches.clear();}
 
 public:
 
-  inline const bool& optionRequested() const {return _option_requested;}
-  inline void setOptionRequested(const bool& option_requested_) {_option_requested = option_requested_;}
-
-  void setTree(const srrg_hbst::BinaryTree256* tree_) {_tree = tree_;}
-  void setMatches(const srrg_hbst::BinaryTree256::MatchVector& matches_) {
-    _matches.clear();
-    for (srrg_hbst::BinaryTree256::Match match: matches_) {
-      _matches.push_back(match);
-    }
-  }
+  void setMatches(const srrg_hbst::BinaryTree256::MatchVector& matches_);
   const srrg_hbst::BinaryTree256::MatchVector matches() const {return _matches;}
 
   inline const bool& optionStepwisePlayback() const {return _option_stepwise_playback;}
@@ -52,12 +41,8 @@ protected:
 
 protected:
 
-  //! @brief thread communication
-  std::mutex* _mutex_data_transfer;
-  bool _option_requested = false;
-
   //! @brief active tree instance
-  const srrg_hbst::BinaryTree256* _tree = 0;
+  const std::shared_ptr<srrg_hbst::BinaryTree256> _tree = 0;
 
   //! @brief active matches from last query
   srrg_hbst::BinaryTree256::MatchVector _matches;
