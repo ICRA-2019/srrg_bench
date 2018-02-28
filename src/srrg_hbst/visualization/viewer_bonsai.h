@@ -23,7 +23,7 @@ public:
 
   inline const bool& optionStepwisePlayback() const {return _option_stepwise_playback;}
   inline const uint32_t& requestedPlaybackSteps() const {return _requested_playback_steps;}
-  inline void resetRequestedPlaybackSteps() {_requested_playback_steps = 0;}
+  inline void decrementRequestedPlaybackSteps() {if (_requested_playback_steps > 0) {--_requested_playback_steps;}}
 
 protected:
 

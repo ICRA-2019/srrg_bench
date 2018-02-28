@@ -99,14 +99,12 @@ namespace srrg_bench {
 
         //ds if we switched back to benchmark - reset the steps
         if (!_option_stepwise_playback) {
-          std::cerr << "switched to benchmark playback" << std::endl;
           _requested_playback_steps = 0;
         }
         break;
       }
       case Qt::Key_Up: {
         if (_option_stepwise_playback) {
-          std::cerr << "switched to stepwise playback" << std::endl;
           ++_requested_playback_steps;
         }
         break;

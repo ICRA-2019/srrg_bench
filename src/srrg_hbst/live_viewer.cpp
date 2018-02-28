@@ -16,8 +16,6 @@
 
 using namespace srrg_hbst;
 
-const uint32_t minimum_number_of_matches_for_display = 100;
-
 int32_t main(int32_t argc_, char** argv_) {
 
   //ds validate input
@@ -79,9 +77,27 @@ int32_t main(int32_t argc_, char** argv_) {
   //ds dataset variables
   uint64_t image_number_query = 0;
   const uint64_t& number_of_images = parameters->evaluator->numberOfImages();
+  const uint32_t minimum_number_of_matches_for_display = 0.05*parameters->target_number_of_descriptors;
 
   //ds display GUI while active and we have images to process
-  while (viewer_tree->isVisible() && viewer_closures->isVisible() && image_number_query < number_of_images) {
+  while (viewer_tree->isVisible()             &&
+         viewer_closures->isVisible()         &&
+         image_number_query < number_of_images) {
+
+    //ds if stepwise playback is desired and no steps are set
+    if(viewer_tree->optionStepwisePlayback()     &&
+       viewer_tree->requestedPlaybackSteps() == 0) {
+      viewer_closures->draw();
+      viewer_closures->updateGL();
+      viewer_tree->updateGL();
+      ui_server->processEvents();
+      continue;
+    }
+
+    //ds decrement steps if stepwise playback
+    if (viewer_tree->optionStepwisePlayback()) {
+      viewer_tree->decrementRequestedPlaybackSteps();
+    }
 
     //ds load current image from disk
     image_query = cv::imread(parameters->evaluator->imagePosesGroundTruth()[image_number_query]->file_name, CV_LOAD_IMAGE_GRAYSCALE);
