@@ -12,8 +12,6 @@
 using namespace srrg_hbst;
 
 //ds descriptor configuration
-#define DESCRIPTOR_SIZE_BYTES 32
-#define DESCRIPTOR_SIZE_BITS DESCRIPTOR_SIZE_BYTES*8
 typedef BinaryMatchable<DESCRIPTOR_SIZE_BITS> Matchable;
 typedef Matchable::Descriptor Descriptor;
 typedef BinaryNode<Matchable> Node;

@@ -42,7 +42,7 @@ int32_t main(int32_t argc_, char** argv_) {
   }
 
   //ds allocate an empty tree
-  std::shared_ptr<BinaryTree256> tree = std::make_shared<BinaryTree256>();
+  std::shared_ptr<Tree> tree = std::make_shared<Tree>();
 
   //ds allocate a qt UI server in the main scope (required)
   std::shared_ptr<QApplication> ui_server = std::make_shared<QApplication>(argc_, argv_);
@@ -66,9 +66,6 @@ int32_t main(int32_t argc_, char** argv_) {
   std::cerr << "main|launched, press [Space] or [ARROW_UP] in GL window (title: BonsaiTree256) to start processing" << std::endl;
   std::cerr << "===================================================================================================" << std::endl;
 
-//  //ds image dumping
-//  uint64_t number_of_saved_images = 0;
-
   //ds current and previous image
   cv::Mat image_query;
   cv::Mat image_reference_best;
@@ -77,7 +74,7 @@ int32_t main(int32_t argc_, char** argv_) {
   //ds dataset variables
   uint64_t image_number_query = 0;
   const uint64_t& number_of_images = parameters->evaluator->numberOfImages();
-  const uint32_t minimum_number_of_matches_for_display = 0.05*parameters->target_number_of_descriptors;
+  const uint32_t minimum_number_of_matches_for_display = 40;
 
   //ds display GUI while active and we have images to process
   while (viewer_tree->isVisible()             &&
@@ -133,10 +130,10 @@ int32_t main(int32_t argc_, char** argv_) {
     keypoints_per_image.push_back(keypoints);
 
     //ds convert to keypoints linked to descriptors to HBST matchables
-    BinaryTree256::MatchableVector current_matchables(BinaryTree256::getMatchablesWithPointer<cv::KeyPoint>(descriptors, keypoints_per_image.back(), image_number_query));
+    Tree::MatchableVector current_matchables(Tree::getMatchablesWithPointer<cv::KeyPoint>(descriptors, keypoints_per_image.back(), image_number_query));
 
     //ds match map for this query image
-    BinaryTree256::MatchVectorMap matches;
+    Tree::MatchVectorMap matches;
 
     //ds current reference poses
     std::vector<Eigen::Isometry3d, Eigen::aligned_allocator<Eigen::Isometry3d>> reference_poses(0);
@@ -149,12 +146,12 @@ int32_t main(int32_t argc_, char** argv_) {
 
       //ds query the tree for a similar matchable vector (e.g. an image)
       std::chrono::time_point<std::chrono::system_clock> time_begin = std::chrono::system_clock::now();
-      tree->match(current_matchables, matches);
+      tree->match(current_matchables, matches, parameters->maximum_distance_hamming);
       std::chrono::duration<double> duration_seconds_query = std::chrono::system_clock::now()-time_begin;
 
       //ds check for the best matching ratio in the result
       uint32_t best_matches = 0;
-      for (const BinaryTree256::MatchVectorMapElement& match_vector: matches) {
+      for (const Tree::MatchVectorMapElement& match_vector: matches) {
 
         //ds if in chronological order and not to recent
         if (match_vector.first <= image_number_query-parameters->minimum_distance_between_closure_images) {
@@ -212,7 +209,7 @@ int32_t main(int32_t argc_, char** argv_) {
         cv::hconcat(image_query, empty_image, image_display);
       }
       cv::cvtColor(image_display, image_display, CV_GRAY2RGB);
-      for (const BinaryTree256::Matchable* matchable: current_matchables) {
+      for (const Tree::Matchable* matchable: current_matchables) {
         const cv::KeyPoint& keypoint = *(reinterpret_cast<const cv::KeyPoint*>(matchable->pointer));
         cv::circle(image_display, keypoint.pt, 2, cv::Scalar(255, 0, 0));
       }
@@ -236,7 +233,7 @@ int32_t main(int32_t argc_, char** argv_) {
       }
 
       //ds draw correspondences in opencv image
-      for (const BinaryTree256::Match& match: viewer_tree->matches()) {
+      for (const Tree::Match& match: viewer_tree->matches()) {
 
         //ds directly get the keypoint objects
         const cv::KeyPoint& keypoint_reference = *(reinterpret_cast<const cv::KeyPoint*>(match.pointer_reference));
@@ -261,24 +258,21 @@ int32_t main(int32_t argc_, char** argv_) {
     cv::imshow("Descriptor Matching (top: QUERY, bot: REFERENCE)", image_display);
     cv::waitKey(1);
 
-//    //ds save whole image to disk
-//    char buffer_file_name[32];
-//    std::snprintf(buffer_file_name, 32, "images/input-%04lu.jpg", number_of_saved_images);
-
     //ds update GL
     viewer_closures->draw();
     viewer_closures->updateGL();
     viewer_tree->updateGL();
     ui_server->processEvents();
 
+//    //ds save whole image to disk
+//    char buffer_file_name[32];
+//    std::snprintf(buffer_file_name, 32, "images/input-%04lu.jpg", image_number_query);
+
 //    //ds safe images if new
-//    if (have_new_image) {
-//      viewer_closures->setSnapshotFileName("images/trajectory.jpg");
-//      viewer_closures->saveSnapshot();
-//      viewer_tree->setSnapshotFileName("images/tree.jpg");
-//      viewer_tree->saveSnapshot();
-//      ++number_of_saved_images;
-//    }
+//    viewer_closures->setSnapshotFileName("images/trajectory.jpg");
+//    viewer_closures->saveSnapshot();
+//    viewer_tree->setSnapshotFileName("images/tree.jpg");
+//    viewer_tree->saveSnapshot();
 
     //ds process next image
     ++image_number_query;

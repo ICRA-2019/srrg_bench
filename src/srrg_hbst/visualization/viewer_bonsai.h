@@ -5,12 +5,14 @@
 #include "srrg_hbst_types/binary_tree.hpp"
 #include <Eigen/Geometry>
 
+typedef srrg_hbst::BinaryTree512 Tree;
+
 namespace srrg_bench {
 
 class ViewerBonsai: public srrg_core_viewers::SimpleViewer{
 public:
 
-  ViewerBonsai(const std::shared_ptr<srrg_hbst::BinaryTree256> tree_,
+  ViewerBonsai(const std::shared_ptr<Tree> tree_,
                const double& object_scale_ = 1,
                const std::string& window_name_ = "Binary search tree view");
 
@@ -18,8 +20,8 @@ public:
 
 public:
 
-  void setMatches(const srrg_hbst::BinaryTree256::MatchVector& matches_);
-  const srrg_hbst::BinaryTree256::MatchVector matches() const {return _matches;}
+  void setMatches(const Tree::MatchVector& matches_);
+  const Tree::MatchVector matches() const {return _matches;}
 
   inline const bool& optionStepwisePlayback() const {return _option_stepwise_playback;}
   inline const uint32_t& requestedPlaybackSteps() const {return _requested_playback_steps;}
@@ -33,19 +35,19 @@ protected:
 
   virtual QString helpString() const;
 
-  void _drawNodesRecursive(const srrg_hbst::BinaryTree256::Node* node_,
+  void _drawNodesRecursive(const Tree::Node* node_,
                            const QVector3D& node_position_,
                            const uint32_t& angle_degrees_) const;
 
-  void _drawSuccessfulMatches(const srrg_hbst::BinaryTree256::MatchVector& matches_) const;
+  void _drawSuccessfulMatches(const Tree::MatchVector& matches_) const;
 
 protected:
 
   //! @brief active tree instance
-  const std::shared_ptr<srrg_hbst::BinaryTree256> _tree = 0;
+  const std::shared_ptr<Tree> _tree = 0;
 
   //! @brief active matches from last query
-  srrg_hbst::BinaryTree256::MatchVector _matches;
+  Tree::MatchVector _matches;
 
   //! @brief display properties
   double _object_scale          = 1;

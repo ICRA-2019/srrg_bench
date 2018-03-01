@@ -21,7 +21,7 @@
   std::cerr << #VARIABLE_ << ": " << VARIABLE_ << std::endl;
 
 //ds descriptor configuration
-#define DESCRIPTOR_SIZE_BYTES 32
+#define DESCRIPTOR_SIZE_BYTES 64
 #define DESCRIPTOR_SIZE_BITS DESCRIPTOR_SIZE_BYTES*8
 
 namespace srrg_bench {

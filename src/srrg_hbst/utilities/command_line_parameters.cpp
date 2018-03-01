@@ -38,15 +38,18 @@ void CommandLineParameters::parse(const int32_t& argc_, char** argv_) {
     } else if (!std::strcmp(argv_[argc_parsed], "-t")) {
       argc_parsed++; if (argc_parsed == argc_) {break;}
       fast_detector_threshold = std::stoi(argv_[argc_parsed]);
-    } else if (!std::strcmp(argv_[argc_parsed], "-timestamps")) {
+    } else if (!std::strcmp(argv_[argc_parsed], "-m")) {
       argc_parsed++; if (argc_parsed == argc_) {break;}
-      file_name_image_timestamps = argv_[argc_parsed];
+      maximum_distance_hamming = std::stoi(argv_[argc_parsed]);
     } else if (!std::strcmp(argv_[argc_parsed], "-r")) {
       argc_parsed++; if (argc_parsed == argc_) {break;}
       target_recall = std::stod(argv_[argc_parsed]);
     } else if (!std::strcmp(argv_[argc_parsed], "-space")) {
       argc_parsed++; if (argc_parsed == argc_) {break;}
       query_interspace = std::stoi(argv_[argc_parsed]);
+    } else if (!std::strcmp(argv_[argc_parsed], "-distance")) {
+      argc_parsed++; if (argc_parsed == argc_) {break;}
+      minimum_distance_between_closure_images = std::stoi(argv_[argc_parsed]);
     } else if (!std::strcmp(argv_[argc_parsed], "-descriptor")) {
       argc_parsed++; if (argc_parsed == argc_) {break;}
       if (method_name.compare("bow") == 0) {std::cerr << "WARNING: -descriptor is parameter ignored (bow)" << std::endl;}

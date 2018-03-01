@@ -6,7 +6,7 @@ namespace srrg_bench {
   using namespace srrg_gl_helpers;
   using namespace srrg_core_viewers;
 
-  ViewerBonsai::ViewerBonsai(const std::shared_ptr<srrg_hbst::BinaryTree256> tree_,
+  ViewerBonsai::ViewerBonsai(const std::shared_ptr<Tree> tree_,
                              const double& object_scale_,
                              const std::string& window_name_): _tree(tree_),
                                                                _object_scale(object_scale_),
@@ -131,7 +131,7 @@ namespace srrg_bench {
       return "See keyboard tab for controls";
   }
 
-  void ViewerBonsai::_drawNodesRecursive(const srrg_hbst::BinaryTree256::Node* node_,
+  void ViewerBonsai::_drawNodesRecursive(const Tree::Node* node_,
                                          const QVector3D& node_position_,
                                          const uint32_t& angle_degrees_) const {
 
@@ -185,15 +185,15 @@ namespace srrg_bench {
     }
   }
 
-  void ViewerBonsai::setMatches(const srrg_hbst::BinaryTree256::MatchVector& matches_) {
+  void ViewerBonsai::setMatches(const Tree::MatchVector& matches_) {
     _matches.clear();
-    for (srrg_hbst::BinaryTree256::Match match: matches_) {
+    for (Tree::Match match: matches_) {
       _matches.push_back(match);
     }
   }
 
-  void ViewerBonsai::_drawSuccessfulMatches(const srrg_hbst::BinaryTree256::MatchVector& matches_) const {
-    for (const srrg_hbst::BinaryTree256::Match& match: matches_) {
+  void ViewerBonsai::_drawSuccessfulMatches(const Tree::MatchVector& matches_) const {
+    for (const Tree::Match& match: matches_) {
 
       //ds evolved during query propagation
       QVector3D position(0.0, 0.0, 0.0);
@@ -201,7 +201,7 @@ namespace srrg_bench {
       uint32_t angle_degrees(0);
 
       //ds mimic tree matching behavior while simultaneously drawing the path
-      const srrg_hbst::BinaryTree256::Node* node_current = _tree->root();
+      const Tree::Node* node_current = _tree->root();
       while (node_current) {
 
         //ds draw line to previous
@@ -229,7 +229,7 @@ namespace srrg_bench {
             }
 
             //ds update node and position
-            node_current = static_cast<const srrg_hbst::BinaryTree256::Node*>(node_current->right);
+            node_current = static_cast<const Tree::Node*>(node_current->right);
             ++angle_degrees;
 
           } else {
@@ -244,7 +244,7 @@ namespace srrg_bench {
             }
 
             //ds update node and position
-            node_current = static_cast<const srrg_hbst::BinaryTree256::Node*>(node_current->left);
+            node_current = static_cast<const Tree::Node*>(node_current->left);
             ++angle_degrees;
           }
         } else {
