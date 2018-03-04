@@ -37,7 +37,7 @@ class CommandLineParameters {
   public:
 
     //ds general configuration
-    std::string method_name                     = "hbst";
+    std::string method_name                     = "";
     std::string folder_images                   = "";
     std::string file_name_poses_ground_truth    = "";
     std::string file_name_closures_ground_truth = "";

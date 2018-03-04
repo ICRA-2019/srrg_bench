@@ -1,4 +1,4 @@
-#include "utilities/loop_closure_evaluator.h"
+#include "utilities/command_line_parameters.h"
 #include "srrg_hbst_types/binary_tree.hpp"
 
 #if CV_MAJOR_VERSION == 2
@@ -42,6 +42,9 @@ const double getMeanRelativeNumberOfMatches(const std::shared_ptr<Tree> tree_,
                                             const std::map<const Matchable*, uint64_t>& feasible_number_of_matches_per_query_,
                                             const uint32_t& maximum_distance_matching_);
 
+const MatchableVector getAvailableDescriptors(const MatchableVector& descriptors_,
+                                              const std::vector<uint32_t>& splitting_bits_);
+
 int32_t main(int32_t argc_, char** argv_) {
 
   //ds validate input
@@ -51,14 +54,15 @@ int32_t main(int32_t argc_, char** argv_) {
     return EXIT_FAILURE;
   }
 
-  //ds configuration
-  std::string images_folder                = "";
-  std::string file_name_poses_ground_truth = "";
-  std::string descriptor_type              = "brief";
-  double detector_threshold                = 10;
-  uint32_t target_number_of_descriptors_per_image = 1000;
-  uint32_t target_depth                    = 17;
-  uint32_t maximum_distance_matching       = 25;
+  //ds grab configuration
+  std::shared_ptr<srrg_bench::CommandLineParameters> parameters = std::make_shared<srrg_bench::CommandLineParameters>();
+  parameters->parse(argc_, argv_);
+  parameters->validate(std::cerr);
+  parameters->configure(std::cerr);
+  parameters->write(std::cerr);
+
+  //ds target maximum test depth
+  uint32_t maximum_depth = 5;
 
   //ds test mode 0: resulting bit-wise completeness at depth 1 for a bit index k
   //ds test mode 1: resulting mean completeness for multiple depths, choosing the balanced k
@@ -67,109 +71,29 @@ int32_t main(int32_t argc_, char** argv_) {
   //ds scan the command line for configuration file input
   int32_t argc_parsed = 1;
   while(argc_parsed < argc_){
-    if (!std::strcmp(argv_[argc_parsed], "-images")) {
+    if (!std::strcmp(argv_[argc_parsed], "-depth")) {
       argc_parsed++; if (argc_parsed == argc_) {break;}
-      images_folder = argv_[argc_parsed];
-    } else if(!std::strcmp(argv_[argc_parsed], "-poses")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      file_name_poses_ground_truth = argv_[argc_parsed];
-    } else if (!std::strcmp(argv_[argc_parsed], "-descriptor")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      descriptor_type = argv_[argc_parsed];
-    } else if (!std::strcmp(argv_[argc_parsed], "-t")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      detector_threshold = std::stod(argv_[argc_parsed]);
-    } else if (!std::strcmp(argv_[argc_parsed], "-n")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      target_number_of_descriptors_per_image = std::stoi(argv_[argc_parsed]);
-    } else if (!std::strcmp(argv_[argc_parsed], "-m")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      maximum_distance_matching = std::stoi(argv_[argc_parsed]);
+      maximum_depth = std::stoi(argv_[argc_parsed]);
     } else if (!std::strcmp(argv_[argc_parsed], "-test")) {
       argc_parsed++; if (argc_parsed == argc_) {break;}
       test = std::stoi(argv_[argc_parsed]);
     }
     argc_parsed++;
   }
-  if (images_folder.empty()) {
-    std::cerr << "ERROR: no images specified (use -images <images_folder>)" << std::endl;
-    return EXIT_FAILURE;
-  }
-  if (file_name_poses_ground_truth.empty()) {
-    std::cerr << "ERROR: no images specified (use -poses <file_poses_ground_truth>)" << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  //ds image name pattern
-  const std::string image_name_pattern = "camera_left.image_raw_";
-  const std::string image_file_format  = ".pgm";
-  const std::string suffix             = "-"+descriptor_type+"-"+std::to_string(target_number_of_descriptors_per_image)+".txt";
-
-  //ds log benchmark configuration
-  std::cerr << "--------------------------------- CONFIGURATION ---------------------------------" << std::endl;
+  LOG_VARIABLE(maximum_depth)
   LOG_VARIABLE(test)
-  LOG_VARIABLE(images_folder)
-  LOG_VARIABLE(image_name_pattern)
-  LOG_VARIABLE(file_name_poses_ground_truth)
-  LOG_VARIABLE(descriptor_type)
-  LOG_VARIABLE(maximum_distance_matching)
-  LOG_VARIABLE(detector_threshold)
-  LOG_VARIABLE(target_number_of_descriptors_per_image)
-  LOG_VARIABLE(suffix)
-  LOG_VARIABLE(DESCRIPTOR_SIZE_BYTES)
-  std::cerr << "---------------------------------------------------------------------------------" << std::endl;
 
   //ds enable multithreading
   cv::setNumThreads(4);
 
-  //ds grab a loop closure evaluator instance
-  evaluator = std::make_shared<srrg_bench::LoopClosureEvaluator>();
-
-  //ds load ground truth poses
-  evaluator->loadImagesWithPosesFromFileKITTI(file_name_poses_ground_truth, images_folder);
+  //ds set globals
+  evaluator            = parameters->evaluator;
+  feature_detector     = parameters->feature_detector;
+  descriptor_extractor = parameters->descriptor_extractor;
 
   //ds compute ground truth
   evaluator->computeLoopClosureFeasibilityMap(1, 1, M_PI/10, 500);
   LOG_VARIABLE(evaluator->totalNumberOfValidClosures())
-
-  //ds feature handling
-#if CV_MAJOR_VERSION == 2
-  feature_detector = new cv::FastFeatureDetector(detector_threshold);
-#elif CV_MAJOR_VERSION == 3
-  feature_detector = cv::FastFeatureDetector::create(detector_threshold);
-#endif
-
-  //ds chose descriptor extractor
-#if CV_MAJOR_VERSION == 2
-  if (descriptor_type == "brief") {
-    descriptor_extractor = new cv::BriefDescriptorExtractor(DESCRIPTOR_SIZE_BYTES);
-  } else if (descriptor_type == "orb") {
-    descriptor_extractor = new cv::ORB();
-  } else if (descriptor_type == "brisk") {
-    descriptor_extractor = new cv::BRISK();
-  } else {
-    std::cerr << "ERROR: unknown descriptor type: " << descriptor_type << std::endl;
-    return EXIT_FAILURE;
-  }
-#elif CV_MAJOR_VERSION == 3
-  if (descriptor_type == "brief") {
-    descriptor_extractor = cv::xfeatures2d::BriefDescriptorExtractor::create(DESCRIPTOR_SIZE_BYTES); //DESCRIPTOR_SIZE_BITS bits
-  } else if (descriptor_type == "orb") {
-    feature_detector = cv::ORB::create(2*target_number_of_descriptors_per_image);
-    descriptor_extractor = cv::ORB::create(); //256 bits
-  } else if (descriptor_type == "brisk") {
-    feature_detector = cv::BRISK::create(detector_threshold);
-    descriptor_extractor = cv::BRISK::create(); //512 bits
-  } else if (descriptor_type == "freak") {
-    descriptor_extractor = cv::xfeatures2d::FREAK::create(); //512 bits
-  } else if (descriptor_type == "akaze") {
-    feature_detector     = cv::AKAZE::create(cv::AKAZE::DESCRIPTOR_MLDB, 0, 3, detector_threshold); //486 bits
-    descriptor_extractor = cv::AKAZE::create(); //486 bits
-  } else {
-    std::cerr << "ERROR: unknown descriptor type: " << descriptor_type << std::endl;
-    return EXIT_FAILURE;
-  }
-#endif
 
   //ds empty tree handles
   hbst_balanced    = std::make_shared<Tree>();
@@ -178,7 +102,7 @@ int32_t main(int32_t argc_, char** argv_) {
   //ds compute all sets of input descriptors
   MatchableVector input_descriptors_total;
   std::cerr << "computing input image descriptors: " << std::endl;
-  loadMatchables(input_descriptors_total, evaluator->validTrainImagesWithPoses(), target_number_of_descriptors_per_image);
+  loadMatchables(input_descriptors_total, evaluator->validTrainImagesWithPoses(), parameters->target_number_of_descriptors);
   std::cerr << std::endl;
   LOG_VARIABLE(input_descriptors_total.size());
   const uint64_t number_of_input_images(evaluator->validTrainImagesWithPoses().size());
@@ -186,12 +110,12 @@ int32_t main(int32_t argc_, char** argv_) {
   //ds compute all sets of query descriptors
   MatchableVector query_descriptors_total;
   std::cerr << "computing query image descriptors: " << std::endl;
-  loadMatchables(query_descriptors_total, evaluator->validQueryImagesWithPoses(), target_number_of_descriptors_per_image);
+  loadMatchables(query_descriptors_total, evaluator->validQueryImagesWithPoses(), parameters->target_number_of_descriptors);
   std::cerr << std::endl;
   LOG_VARIABLE(query_descriptors_total.size());
 
   //ds for all query descriptors
-  std::cerr << "computing total number of feasible matches N_M in root node for tau: " << maximum_distance_matching
+  std::cerr << "computing total number of feasible matches N_M in root node for tau: " << parameters->maximum_distance_hamming
             << " complexity: " << static_cast<double>(query_descriptors_total.size())*input_descriptors_total.size() << std::endl;
   double mean_number_of_matches_per_query = 0;
   std::map<const Matchable*, uint64_t> feasible_number_of_matches_per_query;
@@ -202,12 +126,14 @@ int32_t main(int32_t argc_, char** argv_) {
     for (const Matchable* input_descriptor: input_descriptors_total) {
 
       //ds if the distance is within the threshold
-      if ((query_descriptor->descriptor^input_descriptor->descriptor).count() < maximum_distance_matching) {
+      if ((query_descriptor->descriptor^input_descriptor->descriptor).count() < parameters->maximum_distance_hamming) {
         ++feasible_number_of_matches_per_query.at(query_descriptor);
         ++mean_number_of_matches_per_query;
       }
     }
-    std::cerr << "completed: " << feasible_number_of_matches_per_query.size() << "/" << query_descriptors_total.size() << std::endl;
+    if (feasible_number_of_matches_per_query.size()%1000 == 0) {
+      std::cerr << "completed: " << feasible_number_of_matches_per_query.size() << "/" << query_descriptors_total.size() << std::endl;
+    }
   }
   mean_number_of_matches_per_query /= input_descriptors_total.size();
   LOG_VARIABLE(mean_number_of_matches_per_query);
@@ -215,69 +141,100 @@ int32_t main(int32_t argc_, char** argv_) {
   //ds depending on the mode
   if (test == 0) {
 
-    //ds bitwise statistics
-    EigenBitset mean_completeness(EigenBitset::Zero());
-    EigenBitset bit_means(EigenBitset::Zero());
+    //ds chosen splitting bits (depth analysis) - for now only the left-most branch
+    std::vector<uint32_t> splitting_bits(0);
 
-    //ds for each bit index
-    for (uint32_t k = 0; k < DESCRIPTOR_SIZE_BITS; ++k) {
-      double bit_values_accumulated = 0;
+    //ds start trials for different depths
+    for (uint32_t depth = 0; depth < maximum_depth; ++depth) {
 
-      //ds partition the input set according to the checked bit
-      MatchableVector input_descriptors_left;
-      MatchableVector input_descriptors_right;
-      for (const Matchable* input_descriptor: input_descriptors_total) {
-        if (input_descriptor->descriptor[k]) {
-          input_descriptors_right.push_back(input_descriptor);
-          ++bit_values_accumulated;
-        } else {
-          input_descriptors_left.push_back(input_descriptor);
+      //ds closes bit mean value to 0.5 so far (splitting bit choice)
+      double best_bit_mean_distance = 0.5;
+      uint32_t best_bit_index       = 0;
+
+      //ds available descriptors in this node
+      const MatchableVector input_descriptors_available(getAvailableDescriptors(input_descriptors_total, splitting_bits));
+      const MatchableVector query_descriptors_available(getAvailableDescriptors(query_descriptors_total, splitting_bits));
+
+      //ds bitwise statistics
+      EigenBitset mean_completeness(EigenBitset::Zero());
+      EigenBitset bit_means(EigenBitset::Zero());
+
+      //ds for each bit index
+      for (uint32_t k = 0; k < DESCRIPTOR_SIZE_BITS; ++k) {
+        double bit_values_accumulated = 0;
+
+        //ds partition the input set according to the checked bit
+        MatchableVector input_descriptors_left;
+        MatchableVector input_descriptors_right;
+        for (const Matchable* input_descriptor: input_descriptors_available) {
+          if (input_descriptor->descriptor[k]) {
+            input_descriptors_right.push_back(input_descriptor);
+            ++bit_values_accumulated;
+          } else {
+            input_descriptors_left.push_back(input_descriptor);
+          }
         }
+
+        //ds compute bit mean for current index
+        bit_means[k] = bit_values_accumulated/input_descriptors_available.size();
+
+        //ds check if better and not already contained in splitting
+        if (std::fabs(0.5-bit_means[k]) < best_bit_mean_distance &&
+            std::find(splitting_bits.begin(), splitting_bits.end(), k) == splitting_bits.end()) {
+          best_bit_mean_distance  = std::fabs(0.5-bit_means[k]);
+          best_bit_index = k;
+        }
+
+        //ds counting
+        double relative_number_of_matches_accumulated = 0;
+
+        //ds match all queries in the corresponding leafs to compute the completeness
+        for (const Matchable* query_descriptor: query_descriptors_available) {
+          uint64_t number_of_matches = 0;
+          if (query_descriptor->descriptor[k]) {
+
+            //ds match against all descriptors in right leaf
+            number_of_matches = getNumberOfMatches(query_descriptor, input_descriptors_right, parameters->maximum_distance_hamming);
+          } else {
+
+            //ds match against all descriptors in left leaf
+            number_of_matches = getNumberOfMatches(query_descriptor, input_descriptors_left, parameters->maximum_distance_hamming);
+          }
+
+          //ds update completeness for this descriptor and bit
+          if (feasible_number_of_matches_per_query.at(query_descriptor) > 0) {
+            relative_number_of_matches_accumulated += static_cast<double>(number_of_matches)/feasible_number_of_matches_per_query.at(query_descriptor);
+          } else {
+            relative_number_of_matches_accumulated += 1;
+          }
+        }
+
+        //ds compute mean completeness over all queries for the current bit index
+        mean_completeness[k] = relative_number_of_matches_accumulated/query_descriptors_available.size();
+        std::cerr << "completed depth: " << splitting_bits.size() << " bit index: " << k << "/" << DESCRIPTOR_SIZE_BITS << " : " << mean_completeness[k] << std::endl;
       }
 
-      //ds compute bit mean for current index
-      bit_means[k] = bit_values_accumulated/input_descriptors_total.size();
-
-      //ds counting
-      double relative_number_of_matches_accumulated = 0;
-
-      //ds match all queries in the corresponding leafs to compute the completeness
-      for (const Matchable* query_descriptor: query_descriptors_total) {
-        uint64_t number_of_matches = 0;
-        if (query_descriptor->descriptor[k]) {
-
-          //ds match against all descriptors in right leaf
-          number_of_matches = getNumberOfMatches(query_descriptor, input_descriptors_right, maximum_distance_matching);
-        } else {
-
-          //ds match against all descriptors in left leaf
-          number_of_matches = getNumberOfMatches(query_descriptor, input_descriptors_left, maximum_distance_matching);
-        }
-
-        //ds update completeness for this descriptor and bit
-        if (feasible_number_of_matches_per_query.at(query_descriptor) > 0) {
-          relative_number_of_matches_accumulated += static_cast<double>(number_of_matches)/feasible_number_of_matches_per_query.at(query_descriptor);
-        } else {
-          relative_number_of_matches_accumulated += 1;
-        }
+      //ds save completeness to file
+      std::ofstream outfile_bitwise_completeness("bitwise_completeness-"
+                                                 +std::to_string(evaluator->totalNumberOfValidClosures())+"-"
+                                                 +std::to_string(parameters->maximum_distance_hamming)+"_"
+                                                 +parameters->descriptor_type+"_depth-"
+                                                 +std::to_string(splitting_bits.size())+".txt", std::ifstream::out);
+      outfile_bitwise_completeness << "#0:BIT_INDEX 1:BIT_COMPLETENESS 2:BIT_MEAN" << std::endl;
+      outfile_bitwise_completeness << std::fixed;
+      for (uint32_t k = 0; k < DESCRIPTOR_SIZE_BITS; ++k) {
+        outfile_bitwise_completeness << k << " " << mean_completeness[k] << " " << bit_means[k] << std::endl;
       }
+      outfile_bitwise_completeness.close();
 
-      //ds compute mean completeness over all queries for the current bit index
-      mean_completeness[k] = relative_number_of_matches_accumulated/query_descriptors_total.size();
-      std::cerr << "completed: " << k << "/" << DESCRIPTOR_SIZE_BITS << " : " << mean_completeness[k] << std::endl;
+      //ds if a splitting bit was found
+      if (best_bit_mean_distance < 0.5) {
+        splitting_bits.push_back(best_bit_index);
+      } else {
+        std::cerr << "terminated at depth: " << splitting_bits.size() << std::endl;
+        break;
+      }
     }
-
-    //ds save completeness to file
-    std::ofstream outfile_bitwise_completeness("bitwise_completeness-"
-                                               +std::to_string(evaluator->totalNumberOfValidClosures())+"-"
-                                               +std::to_string(maximum_distance_matching)+suffix, std::ifstream::out);
-    outfile_bitwise_completeness << "#0:BIT_INDEX 1:BIT_COMPLETENESS 2:BIT_MEAN" << std::endl;
-    outfile_bitwise_completeness << std::fixed;
-    for (uint32_t k = 0; k < DESCRIPTOR_SIZE_BITS; ++k) {
-      outfile_bitwise_completeness << k << " " << mean_completeness[k] << " " << bit_means[k] << std::endl;
-    }
-    outfile_bitwise_completeness.close();
-
   } else {
 
     //ds initial estimate for comparison
@@ -286,7 +243,8 @@ int32_t main(int32_t argc_, char** argv_) {
     //ds save completeness to file
     std::ofstream outfile_cumulative_completeness("cumulative_completeness-"
                                                   +std::to_string(evaluator->totalNumberOfValidClosures())+"-"
-                                                  +std::to_string(maximum_distance_matching)+suffix, std::ifstream::out);
+                                                  +std::to_string(parameters->maximum_distance_hamming)+"-"
+                                                  +parameters->descriptor_type+".txt", std::ifstream::out);
     outfile_cumulative_completeness << "#0:DEPTH 1:PREDICTION 2:TOTAL 3:INCREMENTAL" << std::endl;
     outfile_cumulative_completeness << std::fixed;
     outfile_cumulative_completeness << "0 1.0 1.0 1.0" << std::endl;
@@ -295,7 +253,7 @@ int32_t main(int32_t argc_, char** argv_) {
     std::printf("depth: %2i C(h) = P: %4.2f T: %4.2f I: %4.2f\n", 0, 1.0, 1.0, 1.0);
 
     //ds start trials for different depths
-    for (uint32_t depth = 1; depth < target_depth; ++depth) {
+    for (uint32_t depth = 1; depth < maximum_depth; ++depth) {
 
       //ds construct tree with new maximum depth (only constraint)
       hbst_balanced->clear(false);
@@ -309,19 +267,19 @@ int32_t main(int32_t argc_, char** argv_) {
 
       //ds construct incremental tree - in batches
       for (uint64_t number_of_insertions = 0; number_of_insertions < number_of_input_images; ++number_of_insertions) {
-        hbst_incremental->add(MatchableVector(input_descriptors_total.begin()+number_of_insertions*target_number_of_descriptors_per_image,
-                                              input_descriptors_total.begin()+(number_of_insertions+1)*target_number_of_descriptors_per_image));
+        hbst_incremental->add(MatchableVector(input_descriptors_total.begin()+number_of_insertions*parameters->target_number_of_descriptors,
+                                              input_descriptors_total.begin()+(number_of_insertions+1)*parameters->target_number_of_descriptors));
       }
 
       //ds obtain mean of relative number of matches
       const double mean_completeness_balanced    = getMeanRelativeNumberOfMatches(hbst_balanced,
                                                                                   query_descriptors_total,
                                                                                   feasible_number_of_matches_per_query,
-                                                                                  maximum_distance_matching);
+                                                                                  parameters->maximum_distance_hamming);
       const double mean_completeness_incremental = getMeanRelativeNumberOfMatches(hbst_incremental,
                                                                                   query_descriptors_total,
                                                                                   feasible_number_of_matches_per_query,
-                                                                                  maximum_distance_matching);
+                                                                                  parameters->maximum_distance_hamming);
 
       //ds buffer first split
       if (depth == 1) {
@@ -438,4 +396,26 @@ const double getMeanRelativeNumberOfMatches(const std::shared_ptr<Tree> tree_,
     }
   }
   return relative_number_of_matches_accumulated/query_descriptors_.size();
+}
+
+const MatchableVector getAvailableDescriptors(const MatchableVector& descriptors_,
+                                              const std::vector<uint32_t>& splitting_bits_) {
+  MatchableVector descriptors_available(0);
+  for (const Matchable* descriptor: descriptors_) {
+
+    //ds check if some of the splitting bits are set (otherwise we would not end up in the left-most branch)
+    bool available = true;
+    for (const uint32_t& splitting_bit: splitting_bits_) {
+      if (descriptor->descriptor[splitting_bit]) {
+        available = false;
+        break;
+      }
+    }
+
+    //ds skip the evaluation of this descriptor
+    if (available) {
+      descriptors_available.push_back(descriptor);
+    }
+  }
+  return descriptors_available;
 }
