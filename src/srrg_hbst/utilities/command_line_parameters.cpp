@@ -74,6 +74,9 @@ void CommandLineParameters::parse(const int32_t& argc_, char** argv_) {
     } else if (!std::strcmp(argv_[argc_parsed], "-delay")) {
       argc_parsed++; if (argc_parsed == argc_) {break;}
       training_delay_in_frames = std::stoi(argv_[argc_parsed]);
+    } else if (!std::strcmp(argv_[argc_parsed], "-leaf-size") || !std::strcmp(argv_[argc_parsed], "-ls")) {
+      argc_parsed++; if (argc_parsed == argc_) {break;}
+      maximum_leaf_size = std::stoi(argv_[argc_parsed]);
     }
     argc_parsed++;
   }
