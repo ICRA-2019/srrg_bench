@@ -111,7 +111,7 @@ int32_t main(int32_t argc_, char** argv_) {
     //ds enable optimization
     cv::setUseOptimized(true);
   } else if (method_name == "flannhc") {
-#ifdef SRRG_BENCH_BUILD_FLANN_HC
+#ifdef SRRG_BENCH_BUILD_FLANNHC
     matcher = std::make_shared<FLANNHCMatcher>(parameters->query_interspace,
                                                parameters->minimum_distance_between_closure_images);
 #else
