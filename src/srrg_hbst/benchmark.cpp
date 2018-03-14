@@ -265,7 +265,7 @@ int32_t main(int32_t argc_, char** argv_) {
     } else {
 
       //ds directly write precision recall results to file
-      parameters->evaluator->computePrecisionRecallCurve(closures, maximum_f1_score, 1, "precision_recall-"+benchmark_suffix);
+      parameters->evaluator->computePrecisionRecallCurve(closures, maximum_f1_score, 1, "precision_recall_"+benchmark_suffix);
     }
     maximum_f1_scores.push_back(maximum_f1_score);
 

@@ -218,7 +218,7 @@ int32_t main(int32_t argc_, char** argv_) {
       std::ofstream outfile_bitwise_completeness("bitwise_completeness-"
                                                  +std::to_string(evaluator->totalNumberOfValidClosures())+"-"
                                                  +std::to_string(parameters->maximum_distance_hamming)+"_"
-                                                 +parameters->descriptor_type+"_depth-"
+                                                 +parameters->descriptor_type+"-"+std::to_string(DESCRIPTOR_SIZE_BITS)+"_depth-"
                                                  +std::to_string(splitting_bits.size())+".txt", std::ifstream::out);
       outfile_bitwise_completeness << "#0:BIT_INDEX 1:BIT_COMPLETENESS 2:BIT_MEAN" << std::endl;
       outfile_bitwise_completeness << std::fixed;
@@ -244,7 +244,7 @@ int32_t main(int32_t argc_, char** argv_) {
     std::ofstream outfile_cumulative_completeness("cumulative_completeness-"
                                                   +std::to_string(evaluator->totalNumberOfValidClosures())+"-"
                                                   +std::to_string(parameters->maximum_distance_hamming)+"-"
-                                                  +parameters->descriptor_type+".txt", std::ifstream::out);
+                                                  +parameters->descriptor_type+"-"+std::to_string(DESCRIPTOR_SIZE_BITS)+".txt", std::ifstream::out);
     outfile_cumulative_completeness << "#0:DEPTH 1:PREDICTION 2:TOTAL 3:INCREMENTAL" << std::endl;
     outfile_cumulative_completeness << std::fixed;
     outfile_cumulative_completeness << "0 1.0 1.0 1.0" << std::endl;

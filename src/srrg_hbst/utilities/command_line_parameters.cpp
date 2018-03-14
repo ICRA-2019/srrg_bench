@@ -135,6 +135,8 @@ void CommandLineParameters::write(std::ostream& stream_) {
   WRITE_VARIABLE(stream_, load_cross_datasets);
   stream_ << BAR << std::endl;
   WRITE_VARIABLE(stream_, descriptor_type);
+  WRITE_VARIABLE(stream_, DESCRIPTOR_SIZE_BYTES);
+  WRITE_VARIABLE(stream_, DESCRIPTOR_SIZE_BITS);
   WRITE_VARIABLE(stream_, maximum_distance_hamming);
   WRITE_VARIABLE(stream_, fast_detector_threshold);
   WRITE_VARIABLE(stream_, use_gui);
@@ -250,7 +252,7 @@ void CommandLineParameters::configure(std::ostream& stream_) {
   } else if (descriptor_type == "freak") {
     descriptor_extractor = cv::xfeatures2d::FREAK::create(); //512 bits
   } else if (descriptor_type == "akaze") {
-    feature_detector     = cv::AKAZE::create(cv::AKAZE::DESCRIPTOR_MLDB, 0, 3, fast_detector_threshold); //486 bits
+    feature_detector     = cv::AKAZE::create(cv::AKAZE::DESCRIPTOR_MLDB, 0, 3, fast_detector_threshold/1e4); //486 bits
     descriptor_extractor = cv::AKAZE::create(); //486 bits
   } else {
     stream_ << "ERROR: unknown descriptor type: " << descriptor_type << std::endl;
