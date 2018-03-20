@@ -11,5 +11,6 @@
   <build_depend>srrg_core</build_depend>
   <build_depend>srrg_core_viewers</build_depend>
   <build_depend>srrg_hbst</build_depend>
+  <build_depend>obindex2</build_depend>
 </package>
 

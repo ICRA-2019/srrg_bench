@@ -14,7 +14,7 @@ add_definitions(-Ofast -march=native -Wall -pedantic -std=c++11)
 #add_definitions(-O0 -march=native -Wall -pedantic -std=c++11 -g)
 
 #ds locate external dependencies
-find_package(catkin QUIET COMPONENTS srrg_cmake_modules srrg_core_viewers srrg_gl_helpers obindex2 srrg_hbst)
+find_package(catkin QUIET COMPONENTS srrg_cmake_modules srrg_core_viewers srrg_gl_helpers srrg_hbst obindex2)
 find_package(Eigen3 QUIET)
 find_package(OpenCV QUIET)
 find_package(DBoW2 QUIET)

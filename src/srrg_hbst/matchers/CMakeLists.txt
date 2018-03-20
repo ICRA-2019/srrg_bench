@@ -24,7 +24,7 @@ endif()
 #ds iBoW-LCD -> obindex
 if(obindex2_FOUND)
   set(MATCHERS_SOURCES "ibow_matcher.cpp;${MATCHERS_SOURCES}")
-  set(MATCHERS_LIBRARIES "${obindex2_LIBRARIES}")
+  set(MATCHERS_LIBRARIES "${obindex2_LIBRARIES};${MATCHERS_LIBRARIES}")
 endif()
 
 #ds create target library
