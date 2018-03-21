@@ -77,8 +77,8 @@ Benchmarks: <br>
 
 ---
 Additional files: <br>
-- DBoW2 BRIEF vocabulary:  (DLoopDetector)
-- DBoW2 ORB vocabulary:  (ORB-SLAM2)
+- DBoW2 BRIEF vocabulary: https://drive.google.com/open?id=1J5mQH96GA8zfsp0AYx2XdfrZIpAUwEhK (DLoopDetector)
+- DBoW2 ORB vocabulary: https://drive.google.com/open?id=1Yh83ZfAH18m035y2PJiPeN0KUhDc8UD1 (ORB-SLAM2)
 - Image Retrieval (Closure) ground truth files: [srrg_hbst wiki](https://gitlab.com/srrg-software/srrg_hbst/wikis/home)
 
 ### It doesn't work? ###
