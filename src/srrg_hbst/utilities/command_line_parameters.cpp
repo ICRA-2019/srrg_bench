@@ -106,18 +106,6 @@ void CommandLineParameters::validate(std::ostream& stream_) {
     stream_ << "ERROR: no vocabulary provided (use -voc <file_descriptor_vocabulary>)" << std::endl;
     throw std::runtime_error("");
   }
-
-  //ds for dbow2 the descriptor type must be set in a hardcoded manner - hence we have to overwrite it here
-  if (method_name == "bow") {
-#if DBOW2_DESCRIPTOR_TYPE == 0
-    descriptor_type = "brief";
-#elif DBOW2_DESCRIPTOR_TYPE == 1
-    descriptor_type = "orb";
-#else
-    stream_ << "ERROR: bow descriptor type not set" << std::endl;
-    throw std::runtime_error("");
-#endif
-  }
 }
 
 void CommandLineParameters::write(std::ostream& stream_) {

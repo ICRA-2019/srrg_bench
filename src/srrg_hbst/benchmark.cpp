@@ -86,6 +86,14 @@ int32_t main(int32_t argc_, char** argv_) {
     if (parameters->compute_score_only) {
       method_name += "-so";
     }
+
+  //ds adjust descriptor type
+  #if DBOW2_DESCRIPTOR_TYPE == 0
+    parameters->descriptor_type = "brief";
+  #elif DBOW2_DESCRIPTOR_TYPE == 1
+    parameters->descriptor_type = "orb";
+  #endif
+
 #else
     std::cerr << "ERROR: unknown method name: " << method_name << std::endl;
     return EXIT_FAILURE;
