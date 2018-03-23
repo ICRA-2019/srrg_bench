@@ -8,7 +8,7 @@
 using namespace DBoW2;
 
 //ds bow descriptor type (only effective when chosen as method)
-#define DBOW2_DESCRIPTOR_TYPE 0 //ds 0: BRIEF, 1: ORB
+#define DBOW2_DESCRIPTOR_TYPE 1 //ds 0: BRIEF, 1: ORB
 
 #if DBOW2_DESCRIPTOR_TYPE == 0
   #define DBOW2_DESCRIPTOR_CLASS FBrief

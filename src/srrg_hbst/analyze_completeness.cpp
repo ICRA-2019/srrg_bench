@@ -29,6 +29,11 @@ cv::Ptr<cv::DescriptorExtractor> descriptor_extractor;
 std::shared_ptr<Tree> hbst_balanced;
 std::shared_ptr<Tree> hbst_incremental;
 
+//ds result containers
+std::map<const Matchable*, uint64_t> feasible_number_of_matches_per_query;
+std::vector<EigenBitset> accumulated_bitwise_completeness_per_depth;
+std::vector<uint32_t> number_of_evaluated_leafs_per_depth; //ds the elements should have values of the sequence 1, 2, 4, 8, 16, 32, .. for increasing depths
+
 void loadMatchables(MatchableVector& matchables_,
                     const std::set<const srrg_bench::ImageWithPose*>& images_,
                     const uint64_t& target_number_of_descriptors_per_image_);
@@ -43,7 +48,15 @@ const double getMeanRelativeNumberOfMatches(const std::shared_ptr<Tree> tree_,
                                             const uint32_t& maximum_distance_matching_);
 
 const MatchableVector getAvailableDescriptors(const MatchableVector& descriptors_,
-                                              const std::vector<uint32_t>& splitting_bits_);
+                                              const std::vector<uint32_t>& splitting_bits_left_,
+                                              const std::vector<uint32_t>& splitting_bits_right_);
+
+void evaluateBitWiseCompleteness(const MatchableVector& parent_query_descriptors_,
+                                 const MatchableVector& parent_reference_descriptors_,
+                                 std::vector<uint32_t> splitting_bits_left_,
+                                 std::vector<uint32_t> splitting_bits_right_,
+                                 const uint32_t& maximum_depth_,
+                                 const uint32_t& maximum_distance_hamming_);
 
 int32_t main(int32_t argc_, char** argv_) {
 
@@ -62,10 +75,10 @@ int32_t main(int32_t argc_, char** argv_) {
   parameters->write(std::cerr);
 
   //ds target maximum test depth
-  uint32_t maximum_depth = 5;
+  uint32_t maximum_depth = 3;
 
-  //ds test mode 0: resulting bit-wise completeness at depth 1 for a bit index k
-  //ds test mode 1: resulting mean completeness for multiple depths, choosing the balanced k
+  //ds test mode 0: resulting neab bit-wise completeness at various depths for a bit index k
+  //ds test mode 1: resulting mean completeness for multiple depths, choosing the balanced k with HBST
   uint32_t test = 0;
 
   //ds scan the command line for configuration file input
@@ -118,7 +131,7 @@ int32_t main(int32_t argc_, char** argv_) {
   std::cerr << "computing total number of feasible matches N_M in root node for tau: " << parameters->maximum_distance_hamming
             << " complexity: " << static_cast<double>(query_descriptors_total.size())*input_descriptors_total.size() << std::endl;
   double mean_number_of_matches_per_query = 0;
-  std::map<const Matchable*, uint64_t> feasible_number_of_matches_per_query;
+  feasible_number_of_matches_per_query.clear();
   for (const Matchable* query_descriptor: query_descriptors_total) {
     feasible_number_of_matches_per_query.insert(std::make_pair(query_descriptor, 0));
 
@@ -138,102 +151,43 @@ int32_t main(int32_t argc_, char** argv_) {
   mean_number_of_matches_per_query /= input_descriptors_total.size();
   LOG_VARIABLE(mean_number_of_matches_per_query);
 
-  //ds depending on the mode
+  //ds depending on the mode - 0: bit-wise evaluation, 1: mean evaluation against HBST
   if (test == 0) {
 
-    //ds chosen splitting bits (depth analysis) - for now only the left-most branch
-    std::vector<uint32_t> splitting_bits(0);
+    //ds result containers
+    accumulated_bitwise_completeness_per_depth.clear();
+    number_of_evaluated_leafs_per_depth.clear();
 
-    //ds start trials for different depths
-    for (uint32_t depth = 0; depth < maximum_depth; ++depth) {
+    //ds chosen splitting bits (depth analysis) - propagated indivudally for each path
+    std::vector<uint32_t> splitting_bits_left(0);
+    std::vector<uint32_t> splitting_bits_right(0);
 
-      //ds closes bit mean value to 0.5 so far (splitting bit choice)
-      double best_bit_mean_distance = 0.5;
-      uint32_t best_bit_index       = 0;
+    //ds start recursive evaluation of descriptor splits - this will start recursive evaluations on left and right subtrees
+    evaluateBitWiseCompleteness(query_descriptors_total,
+                                input_descriptors_total,
+                                splitting_bits_left,
+                                splitting_bits_right,
+                                maximum_depth,
+                                parameters->maximum_distance_hamming);
 
-      //ds available descriptors in this node
-      const MatchableVector input_descriptors_available(getAvailableDescriptors(input_descriptors_total, splitting_bits));
-      const MatchableVector query_descriptors_available(getAvailableDescriptors(query_descriptors_total, splitting_bits));
+    //ds print results
+    for (uint32_t d = 0; d < maximum_depth; ++d) {
 
-      //ds bitwise statistics
-      EigenBitset mean_completeness(EigenBitset::Zero());
-      EigenBitset bit_means(EigenBitset::Zero());
-
-      //ds for each bit index
-      for (uint32_t k = 0; k < DESCRIPTOR_SIZE_BITS; ++k) {
-        double bit_values_accumulated = 0;
-
-        //ds partition the input set according to the checked bit
-        MatchableVector input_descriptors_left;
-        MatchableVector input_descriptors_right;
-        for (const Matchable* input_descriptor: input_descriptors_available) {
-          if (input_descriptor->descriptor[k]) {
-            input_descriptors_right.push_back(input_descriptor);
-            ++bit_values_accumulated;
-          } else {
-            input_descriptors_left.push_back(input_descriptor);
-          }
-        }
-
-        //ds compute bit mean for current index
-        bit_means[k] = bit_values_accumulated/input_descriptors_available.size();
-
-        //ds check if better and not already contained in splitting
-        if (std::fabs(0.5-bit_means[k]) < best_bit_mean_distance &&
-            std::find(splitting_bits.begin(), splitting_bits.end(), k) == splitting_bits.end()) {
-          best_bit_mean_distance  = std::fabs(0.5-bit_means[k]);
-          best_bit_index = k;
-        }
-
-        //ds counting
-        double relative_number_of_matches_accumulated = 0;
-
-        //ds match all queries in the corresponding leafs to compute the completeness
-        for (const Matchable* query_descriptor: query_descriptors_available) {
-          uint64_t number_of_matches = 0;
-          if (query_descriptor->descriptor[k]) {
-
-            //ds match against all descriptors in right leaf
-            number_of_matches = getNumberOfMatches(query_descriptor, input_descriptors_right, parameters->maximum_distance_hamming);
-          } else {
-
-            //ds match against all descriptors in left leaf
-            number_of_matches = getNumberOfMatches(query_descriptor, input_descriptors_left, parameters->maximum_distance_hamming);
-          }
-
-          //ds update completeness for this descriptor and bit
-          if (feasible_number_of_matches_per_query.at(query_descriptor) > 0) {
-            relative_number_of_matches_accumulated += static_cast<double>(number_of_matches)/feasible_number_of_matches_per_query.at(query_descriptor);
-          } else {
-            relative_number_of_matches_accumulated += 1;
-          }
-        }
-
-        //ds compute mean completeness over all queries for the current bit index
-        mean_completeness[k] = relative_number_of_matches_accumulated/query_descriptors_available.size();
-        std::cerr << "completed depth: " << splitting_bits.size() << " bit index: " << k << "/" << DESCRIPTOR_SIZE_BITS << " : " << mean_completeness[k] << std::endl;
-      }
+      //ds compute mean bitwise vector at each depth (i.e. at depth=1 we have 2^1, at depth=2 we have 2^2 measurements)
+      const EigenBitset mean_bitwise_completeness = accumulated_bitwise_completeness_per_depth[d]/number_of_evaluated_leafs_per_depth[d];
 
       //ds save completeness to file
       std::ofstream outfile_bitwise_completeness("bitwise_completeness-"
                                                  +std::to_string(evaluator->totalNumberOfValidClosures())+"-"
                                                  +std::to_string(parameters->maximum_distance_hamming)+"_"
                                                  +parameters->descriptor_type+"-"+std::to_string(DESCRIPTOR_SIZE_BITS)+"_depth-"
-                                                 +std::to_string(splitting_bits.size())+".txt", std::ifstream::out);
+                                                 +std::to_string(d)+".txt", std::ifstream::out);
       outfile_bitwise_completeness << "#0:BIT_INDEX 1:BIT_COMPLETENESS 2:BIT_MEAN" << std::endl;
       outfile_bitwise_completeness << std::fixed;
       for (uint32_t k = 0; k < DESCRIPTOR_SIZE_BITS; ++k) {
-        outfile_bitwise_completeness << k << " " << mean_completeness[k] << " " << bit_means[k] << std::endl;
+        outfile_bitwise_completeness << k << " " << mean_bitwise_completeness[k] << std::endl;
       }
       outfile_bitwise_completeness.close();
-
-      //ds if a splitting bit was found
-      if (best_bit_mean_distance < 0.5) {
-        splitting_bits.push_back(best_bit_index);
-      } else {
-        std::cerr << "terminated at depth: " << splitting_bits.size() << std::endl;
-        break;
-      }
     }
   } else {
 
@@ -399,14 +353,25 @@ const double getMeanRelativeNumberOfMatches(const std::shared_ptr<Tree> tree_,
 }
 
 const MatchableVector getAvailableDescriptors(const MatchableVector& descriptors_,
-                                              const std::vector<uint32_t>& splitting_bits_) {
+                                              const std::vector<uint32_t>& splitting_bits_left_,
+                                              const std::vector<uint32_t>& splitting_bits_right_) {
   MatchableVector descriptors_available(0);
   for (const Matchable* descriptor: descriptors_) {
 
-    //ds check if some of the splitting bits are set (otherwise we would not end up in the left-most branch)
+    //ds check if some of the splitting bits are set for the corresponding side (left or right)
     bool available = true;
-    for (const uint32_t& splitting_bit: splitting_bits_) {
+
+    //ds check left splitting bits: descriptor is discarded if it matches a left split (would go right)
+    for (const uint32_t& splitting_bit: splitting_bits_left_) {
       if (descriptor->descriptor[splitting_bit]) {
+        available = false;
+        break;
+      }
+    }
+
+    //ds check right splitting bits: descriptor is discarded if it MISmatches a right split (would go left)
+    for (const uint32_t& splitting_bit: splitting_bits_right_) {
+      if (!descriptor->descriptor[splitting_bit]) {
         available = false;
         break;
       }
@@ -418,4 +383,132 @@ const MatchableVector getAvailableDescriptors(const MatchableVector& descriptors
     }
   }
   return descriptors_available;
+}
+
+void evaluateBitWiseCompleteness(const MatchableVector& parent_query_descriptors_,
+                                 const MatchableVector& parent_reference_descriptors_,
+                                 std::vector<uint32_t> splitting_bits_left_,
+                                 std::vector<uint32_t> splitting_bits_right_,
+                                 const uint32_t& maximum_depth_,
+                                 const uint32_t& maximum_distance_hamming_) {
+
+  //ds splitting bit choice
+  double best_bit_mean_distance = 0.5;
+  uint32_t best_bit_index       = 0;
+
+  //ds compute available descriptors in this leaf
+  const MatchableVector query_descriptors(getAvailableDescriptors(parent_query_descriptors_, splitting_bits_left_, splitting_bits_right_));
+  const MatchableVector reference_descriptors(getAvailableDescriptors(parent_reference_descriptors_, splitting_bits_left_, splitting_bits_right_));
+
+  //ds current depth
+  const uint32_t depth = splitting_bits_left_.size()+splitting_bits_right_.size();
+
+  //ds check if we have to terminate because of missing descriptors
+  if (query_descriptors.size() == 0) {
+    std::cerr << "WARNING: no query descriptors at depth: " << depth
+              << " parent descriptors: " << parent_query_descriptors_.size() << std::endl;
+    return;
+  }
+  if (reference_descriptors.size() == 0) {
+    std::cerr << "WARNING: no reference descriptors at depth: " << depth
+              << " parent descriptors: " << parent_reference_descriptors_.size() << std::endl;
+    return;
+  }
+
+  //ds bitwise statistics
+  EigenBitset mean_completeness(EigenBitset::Zero());
+  EigenBitset bit_means(EigenBitset::Zero());
+
+  //ds check if we're the first leaf the current depth to evaluate - create result container
+  if (number_of_evaluated_leafs_per_depth.size() == depth) {
+    accumulated_bitwise_completeness_per_depth.push_back(mean_completeness);
+    number_of_evaluated_leafs_per_depth.push_back(0);
+  }
+
+  //ds for each bit index
+  for (uint32_t k = 0; k < DESCRIPTOR_SIZE_BITS; ++k) {
+    double bit_values_accumulated = 0;
+
+    //ds partition the input set according to the checked bit
+    MatchableVector input_descriptors_left;
+    MatchableVector input_descriptors_right;
+    for (const Matchable* input_descriptor: reference_descriptors) {
+      if (input_descriptor->descriptor[k]) {
+        input_descriptors_right.push_back(input_descriptor);
+        ++bit_values_accumulated;
+      } else {
+        input_descriptors_left.push_back(input_descriptor);
+      }
+    }
+
+    //ds compute bit mean for current index
+    bit_means[k] = bit_values_accumulated/reference_descriptors.size();
+
+    //ds check if better and not already contained in a past splitting
+    if (std::fabs(0.5-bit_means[k]) < best_bit_mean_distance &&
+        std::find(splitting_bits_left_.begin(), splitting_bits_left_.end(), k) == splitting_bits_left_.end() &&
+        std::find(splitting_bits_right_.begin(), splitting_bits_right_.end(), k) == splitting_bits_right_.end() ) {
+      best_bit_mean_distance = std::fabs(0.5-bit_means[k]);
+      best_bit_index = k;
+    }
+
+    //ds counting
+    double relative_number_of_matches_accumulated = 0;
+
+    //ds match all queries in the corresponding leafs to compute the completeness
+    for (const Matchable* query_descriptor: query_descriptors) {
+      uint64_t number_of_matches = 0;
+      if (query_descriptor->descriptor[k]) {
+
+        //ds match against all descriptors in right leaf
+        number_of_matches = getNumberOfMatches(query_descriptor, input_descriptors_right, maximum_distance_hamming_);
+      } else {
+
+        //ds match against all descriptors in left leaf
+        number_of_matches = getNumberOfMatches(query_descriptor, input_descriptors_left, maximum_distance_hamming_);
+      }
+
+      //ds update completeness for this descriptor and bit
+      if (feasible_number_of_matches_per_query.at(query_descriptor) > 0) {
+        relative_number_of_matches_accumulated += static_cast<double>(number_of_matches)/feasible_number_of_matches_per_query.at(query_descriptor);
+      } else {
+        relative_number_of_matches_accumulated += 1;
+      }
+    }
+
+    //ds compute mean completeness over all queries for the current bit index
+    mean_completeness[k] = relative_number_of_matches_accumulated/query_descriptors.size();
+    std::cerr << "completed depth: " << depth << "/" << number_of_evaluated_leafs_per_depth[depth]
+              << " bit index: " << k << "/" << DESCRIPTOR_SIZE_BITS << " : " << mean_completeness[k] << std::endl;
+  }
+
+  //ds update result containers
+  accumulated_bitwise_completeness_per_depth[depth] += mean_completeness;
+  ++number_of_evaluated_leafs_per_depth[depth];
+
+  //ds if maximum depth is not yet reached
+  if (depth < maximum_depth_) {
+
+    //ds increase splitting bits (identical for first split)
+    std::vector<uint32_t> splitting_bits_left_next(splitting_bits_left_);
+    std::vector<uint32_t> splitting_bits_right_next(splitting_bits_right_);
+    splitting_bits_left_next.push_back(best_bit_index);
+    splitting_bits_right_next.push_back(best_bit_index);
+
+    //ds continue evaluating the potential splits on LEFT of the current node
+    evaluateBitWiseCompleteness(query_descriptors,
+                                reference_descriptors,
+                                splitting_bits_left_next,
+                                splitting_bits_right_,
+                                maximum_depth_,
+                                maximum_distance_hamming_);
+
+    //ds continue evaluating the potential splits on RIGHT of the current node
+    evaluateBitWiseCompleteness(query_descriptors,
+                                reference_descriptors,
+                                splitting_bits_left_,
+                                splitting_bits_right_next,
+                                maximum_depth_,
+                                maximum_distance_hamming_);
+  }
 }

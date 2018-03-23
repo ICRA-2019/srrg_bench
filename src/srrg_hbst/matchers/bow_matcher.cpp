@@ -29,9 +29,9 @@ namespace srrg_bench {
     std::cerr << "DBoW2Matcher::DBoW2Matcher|loading ORB vocabulary: " << file_path_vocabulary_ << std::endl;
     _vocabulary.loadFromTextFile(file_path_vocabulary_);
     if (_compute_score_only) {
-      _database = new BriefDatabase(_vocabulary, false);
+      _database = new OrbDatabase(_vocabulary, false);
     } else {
-      _database = new TemplatedDatabase<FORB::TDescriptor, FORB>(_vocabulary, use_direct_index_, direct_index_levels_);
+      _database = new TemplatedDatabase<FORB::TDescriptor, FORB>(_vocabulary, use_direct_index_, number_of_direct_index_levels_);
     }
 #endif
   }
