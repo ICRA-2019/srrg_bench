@@ -8,12 +8,14 @@
 using namespace DBoW2;
 
 //ds bow descriptor type (only effective when chosen as method)
-#define DBOW2_DESCRIPTOR_TYPE 1 //ds 0: BRIEF, 1: ORB
+#define DBOW2_DESCRIPTOR_TYPE 2 //ds 0: BRIEF, 1: ORB, 2: BRISK
 
 #if DBOW2_DESCRIPTOR_TYPE == 0
   #define DBOW2_DESCRIPTOR_CLASS FBrief
 #elif DBOW2_DESCRIPTOR_TYPE == 1
   #define DBOW2_DESCRIPTOR_CLASS FORB
+#elif DBOW2_DESCRIPTOR_TYPE == 2
+  #define DBOW2_DESCRIPTOR_CLASS FBRISK
 #endif
 
 namespace srrg_bench {
@@ -84,18 +86,10 @@ protected:
 protected:
 
   //! @brief BoW vocabulary
-#if DBOW2_DESCRIPTOR_TYPE == 0
-  BriefVocabulary _vocabulary;
-#elif DBOW2_DESCRIPTOR_TYPE == 1
-  TemplatedVocabulary<FORB::TDescriptor, FORB> _vocabulary;
-#endif
+  TemplatedVocabulary<DBOW2_DESCRIPTOR_CLASS::TDescriptor, DBOW2_DESCRIPTOR_CLASS> _vocabulary;
 
   //! @brief BoW database
-#if DBOW2_DESCRIPTOR_TYPE == 0
-  BriefDatabase* _database;
-#elif DBOW2_DESCRIPTOR_TYPE == 1
-  TemplatedDatabase<FORB::TDescriptor, FORB>* _database;
-#endif
+  TemplatedDatabase<DBOW2_DESCRIPTOR_CLASS::TDescriptor, DBOW2_DESCRIPTOR_CLASS>* _database;
 
   //! @brief bookkeeping: mapping from matcher index to image_number
   std::map<int32_t, ImageNumber> _image_numbers;

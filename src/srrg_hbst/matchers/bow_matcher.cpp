@@ -17,23 +17,13 @@ namespace srrg_bench {
     _durations_seconds_query_and_train.clear();
 
     //ds allocate vocabulary and database
-#if DBOW2_DESCRIPTOR_TYPE == 0
-    std::cerr << "DBoW2Matcher::DBoW2Matcher|loading BRIEF vocabulary: " << file_path_vocabulary_ << std::endl;
+    std::cerr << "DBoW2Matcher::DBoW2Matcher|loading vocabulary: " << file_path_vocabulary_ << std::endl;
     _vocabulary.load(file_path_vocabulary_);
     if (_compute_score_only) {
-      _database = new BriefDatabase(_vocabulary, false);
+      _database = new TemplatedDatabase<DBOW2_DESCRIPTOR_CLASS::TDescriptor, DBOW2_DESCRIPTOR_CLASS>(_vocabulary, false);
     } else {
-      _database = new BriefDatabase(_vocabulary, use_direct_index_, number_of_direct_index_levels_);
+      _database = new TemplatedDatabase<DBOW2_DESCRIPTOR_CLASS::TDescriptor, DBOW2_DESCRIPTOR_CLASS>(_vocabulary, use_direct_index_, number_of_direct_index_levels_);
     }
-#elif DBOW2_DESCRIPTOR_TYPE == 1
-    std::cerr << "DBoW2Matcher::DBoW2Matcher|loading ORB vocabulary: " << file_path_vocabulary_ << std::endl;
-    _vocabulary.loadFromTextFile(file_path_vocabulary_);
-    if (_compute_score_only) {
-      _database = new OrbDatabase(_vocabulary, false);
-    } else {
-      _database = new TemplatedDatabase<FORB::TDescriptor, FORB>(_vocabulary, use_direct_index_, number_of_direct_index_levels_);
-    }
-#endif
   }
 
   BoWMatcher::~BoWMatcher() {
@@ -64,7 +54,7 @@ namespace srrg_bench {
     //ds obtain descriptors in dbow2 format
     std::vector<DBOW2_DESCRIPTOR_CLASS::TDescriptor> raw_descriptors(query_descriptors_.rows);
     for (int32_t index = 0; index < query_descriptors_.rows; ++index) {
-#if DBOW2_DESCRIPTOR_TYPE == 0
+#if DBOW2_DESCRIPTOR_TYPE == 0 or DBOW2_DESCRIPTOR_TYPE == 2
       _setDescriptor(query_descriptors_.row(index), raw_descriptors[index]);
 #elif DBOW2_DESCRIPTOR_TYPE == 1
       raw_descriptors[index] = query_descriptors_.row(index);

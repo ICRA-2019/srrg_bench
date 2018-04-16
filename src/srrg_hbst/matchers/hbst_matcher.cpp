@@ -29,9 +29,12 @@ void HBSTMatcher::query(const cv::Mat& query_descriptors_,
     //ds match result handle
     Tree::MatchVectorMap matches;
 
+    //ds obtain matchables (not timed being raw data, same for bow)
+    const Tree::MatchableVector matchables(_database->getMatchablesWithIndex(query_descriptors_, image_number_));
+
     //ds match against database (tracking or match and add with simultaneous training)
     TIC(_time_begin);
-    _database->matchAndAdd(query_descriptors_, image_number_, matches, maximum_distance_hamming_, _train_mode);
+    _database->matchAndAdd(matchables, matches, maximum_distance_hamming_, _train_mode);
     _durations_seconds_query_and_train.push_back(TOC(_time_begin).count());
 
     //ds result evaluation

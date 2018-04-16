@@ -235,7 +235,7 @@ void CommandLineParameters::configure(std::ostream& stream_) {
     feature_detector     = cv::ORB::create(2*target_number_of_descriptors);
     descriptor_extractor = cv::ORB::create();
   } else if (descriptor_type == "brisk") {
-    feature_detector     = cv::BRISK::create(fast_detector_threshold);
+    feature_detector     = cv::BRISK::create(2*fast_detector_threshold);
     descriptor_extractor = cv::BRISK::create();
   } else if (descriptor_type == "freak") {
     descriptor_extractor = cv::xfeatures2d::FREAK::create(); //512 bits

@@ -346,8 +346,8 @@ int32_t main(int32_t argc_, char** argv_) {
                              + std::to_string(parameters->minimum_distance_between_closure_images) + "-"
                              + std::to_string(parameters->fast_detector_threshold) + "-"
                              + std::to_string(parameters->target_number_of_descriptors) + "-"
-                             + std::to_string(parameters->maximum_distance_hamming) + "-"
-                             + parameters->descriptor_type + "_" + parameters->file_name_poses_ground_truth;
+                             + std::to_string(parameters->maximum_distance_hamming) + "_"
+                             + parameters->descriptor_type+"-"+std::to_string(DESCRIPTOR_SIZE_BITS) + ".txt";
 
     //ds buffers
     ClosureMap closure_map_bf;
