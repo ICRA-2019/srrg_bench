@@ -16,13 +16,8 @@ class FLANNHCMatcher: public BaseMatcher {
 public:
 
   //! @brief constructor
-  //! @param[in] interspace_image_number_ image querying interspace
   //! @param[in] minimum_distance_between_closure_images_ minimum image number distance between closures
-  //! @param[in] table_number_
-  //! @param[in] key_size_
-  //! @param[in] multi_probe_level_
-  FLANNHCMatcher(const uint32_t& interspace_image_number_,
-                 const uint32_t& minimum_distance_between_closure_images_);
+  FLANNHCMatcher(const uint32_t& minimum_distance_between_closure_images_);
 
   //! @brief default destructor
   ~FLANNHCMatcher();
@@ -58,9 +53,6 @@ protected:
 
   //! @brief added descriptor matrices (for deallocation)
   std::vector<flann::Matrix<DescriptorFLANN>> _added_descriptors;
-
-  //! @brief query interspace
-  uint32_t _interspace_image_number;
 
   //! @brief minimum image number distance between closures
   uint32_t _minimum_distance_between_closure_images;

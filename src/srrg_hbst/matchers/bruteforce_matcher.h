@@ -10,10 +10,9 @@ class BruteforceMatcher: public BaseMatcher {
 public:
 
   //! @brief constructor
-  //! @param[in] interspace_image_number_ image querying interspace
   //! @param[in] minimum_distance_between_closure_images_ minimum image number distance between closures
-  BruteforceMatcher(const uint32_t& interspace_image_number_,
-                    const uint32_t& minimum_distance_between_closure_images_);
+  BruteforceMatcher(const uint32_t& minimum_distance_between_closure_images_,
+                    const int32_t& norm_type_ = cv::NORM_HAMMING);
 
   //! @brief default destructor
   ~BruteforceMatcher();
@@ -44,7 +43,7 @@ public:
   //! query function for results with descriptor associations
   void query(const cv::Mat& query_descriptors_,
              const ImageNumberQuery& image_number_,
-             const uint32_t& maximum_distance_hamming_,
+             const uint32_t& maximum_descriptor_distance_,
              std::vector<ResultDescriptorMatching>& closures_);
 
 //ds attributes
@@ -55,9 +54,6 @@ protected:
 
   //! @brief bookkeeping: trained descriptors - for true, deep bruteforce matching
   std::map<ImageNumber, cv::Mat> _train_descriptors;
-
-  //! @brief query interspace
-  uint32_t _interspace_image_number;
 
   //! @brief minimum image number distance between closures
   uint32_t _minimum_distance_between_closure_images;

@@ -2,12 +2,10 @@
 
 namespace srrg_bench {
 
-FLANNLSHMatcher::FLANNLSHMatcher(const uint32_t& interspace_image_number_,
-                                 const uint32_t& minimum_distance_between_closure_images_,
+FLANNLSHMatcher::FLANNLSHMatcher(const uint32_t& minimum_distance_between_closure_images_,
                                  const int32_t& table_number_,
                                  const int32_t& key_size_,
                                  const int32_t& multi_probe_level_): _matcher(new cv::FlannBasedMatcher(new cv::flann::LshIndexParams(table_number_, key_size_, multi_probe_level_))),
-                                                                     _interspace_image_number(interspace_image_number_),
                                                                      _minimum_distance_between_closure_images(minimum_distance_between_closure_images_) {
   _train_descriptor_details.clear();
   _image_numbers.clear();
@@ -72,18 +70,14 @@ void FLANNLSHMatcher::query(const cv::Mat& query_descriptors_,
     //ds generate sortable score vector
     for (ImageNumberTrain image_number_train = 0; image_number_train < image_number_; ++image_number_train) {
 
-      //ds if the database entry is queriable for precision recall evaluation
-      if (image_number_train%_interspace_image_number == 0) {
+      //ds if we can report the score for precision/recall evaluation
+      if (image_number_ >= _minimum_distance_between_closure_images && image_number_train <= image_number_-_minimum_distance_between_closure_images) {
 
-        //ds if we can report the score for precision/recall evaluation
-        if (image_number_ >= _minimum_distance_between_closure_images && image_number_train <= image_number_-_minimum_distance_between_closure_images) {
+        //ds compute relative matching score
+        const double score = static_cast<double>(number_of_matches_per_image.count(image_number_train))/query_descriptors_.rows;
 
-          //ds compute relative matching score
-          const double score = static_cast<double>(number_of_matches_per_image.count(image_number_train))/query_descriptors_.rows;
-
-          //ds add the closure
-          closures_.push_back(ResultImageRetrieval(score, ImageNumberAssociation(image_number_, image_number_train)));
-        }
+        //ds add the closure
+        closures_.push_back(ResultImageRetrieval(score, ImageNumberAssociation(image_number_, image_number_train)));
       }
     }
   }

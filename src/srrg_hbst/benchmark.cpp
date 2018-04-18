@@ -56,18 +56,15 @@ int32_t main(int32_t argc_, char** argv_) {
     Tree::Node::maximum_leaf_size     = parameters->maximum_leaf_size;
     Tree::Node::maximum_partitioning  = parameters->maximum_partitioning;
     if (parameters->use_random_splitting) {
-      matcher = std::make_shared<HBSTMatcher>(parameters->query_interspace,
-                                              parameters->minimum_distance_between_closure_images,
+      matcher = std::make_shared<HBSTMatcher>(parameters->minimum_distance_between_closure_images,
                                               srrg_hbst::SplittingStrategy::SplitRandomUniform);
       method_name += "-random-" + std::to_string(Tree::Node::maximum_leaf_size);
     } else if (parameters->use_uneven_splitting) {
-      matcher = std::make_shared<HBSTMatcher>(parameters->query_interspace,
-                                              parameters->minimum_distance_between_closure_images,
+      matcher = std::make_shared<HBSTMatcher>(parameters->minimum_distance_between_closure_images,
                                               srrg_hbst::SplittingStrategy::SplitUneven);
       method_name += "-uneven-" + std::to_string(Tree::Node::maximum_leaf_size);
     } else {
-      matcher = std::make_shared<HBSTMatcher>(parameters->query_interspace,
-                                              parameters->minimum_distance_between_closure_images,
+      matcher = std::make_shared<HBSTMatcher>(parameters->minimum_distance_between_closure_images,
                                               srrg_hbst::SplittingStrategy::SplitEven);
       method_name += "-even-" + std::to_string(Tree::Node::maximum_leaf_size);
     }
@@ -77,8 +74,7 @@ int32_t main(int32_t argc_, char** argv_) {
 #endif
   } else if (method_name == "bow") {
 #ifdef SRRG_BENCH_BUILD_DBOW2
-    matcher = std::make_shared<BoWMatcher>(parameters->query_interspace,
-                                           parameters->minimum_distance_between_closure_images,
+    matcher = std::make_shared<BoWMatcher>(parameters->minimum_distance_between_closure_images,
                                            parameters->file_path_vocabulary,
                                            parameters->use_direct_index,
                                            parameters->direct_index_levels,
@@ -100,8 +96,7 @@ int32_t main(int32_t argc_, char** argv_) {
 #endif
   } else if (method_name == "ibow") {
 #ifdef SRRG_BENCH_BUILD_IBOW
-    matcher = std::make_shared<iBoWMatcher>(parameters->query_interspace,
-                                            parameters->minimum_distance_between_closure_images);
+    matcher = std::make_shared<iBoWMatcher>(parameters->minimum_distance_between_closure_images);
     if (parameters->compute_score_only) {
       method_name += "-so";
     }
@@ -110,8 +105,7 @@ int32_t main(int32_t argc_, char** argv_) {
     return EXIT_FAILURE;
 #endif
   } else if (method_name == "flannlsh") {
-    matcher = std::make_shared<FLANNLSHMatcher>(parameters->query_interspace,
-                                                parameters->minimum_distance_between_closure_images,
+    matcher = std::make_shared<FLANNLSHMatcher>(parameters->minimum_distance_between_closure_images,
                                                 parameters->table_number,
                                                 parameters->key_size,
                                                 parameters->multi_probe_level);
@@ -120,15 +114,13 @@ int32_t main(int32_t argc_, char** argv_) {
     cv::setUseOptimized(true);
   } else if (method_name == "flannhc") {
 #ifdef SRRG_BENCH_BUILD_FLANNHC
-    matcher = std::make_shared<FLANNHCMatcher>(parameters->query_interspace,
-                                               parameters->minimum_distance_between_closure_images);
+    matcher = std::make_shared<FLANNHCMatcher>(parameters->minimum_distance_between_closure_images);
 #else
     std::cerr << "ERROR: unknown method name: " << method_name << std::endl;
     return EXIT_FAILURE;
 #endif
   } else if (method_name == "bf") {
-    matcher = std::make_shared<BruteforceMatcher>(parameters->query_interspace,
-                                                  parameters->minimum_distance_between_closure_images);
+    matcher = std::make_shared<BruteforceMatcher>(parameters->minimum_distance_between_closure_images);
 
     //ds enable optimization and multithreading
     cv::setNumThreads(4);

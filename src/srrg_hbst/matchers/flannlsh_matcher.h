@@ -10,13 +10,11 @@ class FLANNLSHMatcher: public BaseMatcher {
 public:
 
   //! @brief constructor
-  //! @param[in] interspace_image_number_ image querying interspace
   //! @param[in] minimum_distance_between_closure_images_ minimum image number distance between closures
   //! @param[in] table_number_
   //! @param[in] key_size_
   //! @param[in] multi_probe_level_
-  FLANNLSHMatcher(const uint32_t& interspace_image_number_,
-                  const uint32_t& minimum_distance_between_closure_images_,
+  FLANNLSHMatcher(const uint32_t& minimum_distance_between_closure_images_,
                   const int32_t& table_number_,
                   const int32_t& key_size_,
                   const int32_t& multi_probe_level_);
@@ -58,9 +56,6 @@ protected:
 
   //! @brief bookkeeping: number of descriptors in images, match check list to block N query to 1 train descriptor matchings
   std::map<ImageNumberTrain, std::pair<uint64_t, std::set<int32_t>>> _train_descriptor_details;
-
-  //! @brief query interspace
-  uint32_t _interspace_image_number;
 
   //! @brief minimum image number distance between closures
   uint32_t _minimum_distance_between_closure_images;

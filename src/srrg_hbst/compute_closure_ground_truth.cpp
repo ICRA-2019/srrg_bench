@@ -23,13 +23,6 @@ int32_t main(int32_t argc_, char** argv_) {
     return EXIT_FAILURE;
   }
 
-  //ds grab configuration
-  std::shared_ptr<CommandLineParameters> parameters = std::make_shared<CommandLineParameters>();
-  parameters->parse(argc_, argv_);
-  parameters->validate(std::cerr);
-  parameters->configure(std::cerr);
-  parameters->write(std::cerr);
-
   //ds default arguments
   bool compute_plausible_confusion    = false;
   bool compute_geometric_verification = false;
@@ -55,6 +48,26 @@ int32_t main(int32_t argc_, char** argv_) {
     argc_parsed++;
   }
   keypoints_per_image.clear();
+
+  //ds grab remaining configuration
+  std::shared_ptr<CommandLineParameters> parameters = std::make_shared<CommandLineParameters>();
+  parameters->parse(argc_, argv_);
+
+  //ds relax parameters if geometric verification is performed
+  if (compute_geometric_verification) {
+    parameters->maximum_difference_position_meters *= 2;
+    parameters->maximum_difference_angle_radians   *= 2;
+  }
+
+  //ds setup
+  parameters->validate(std::cerr);
+  parameters->configure(std::cerr);
+  parameters->write(std::cerr);
+
+  //ds relax parameters if geometric verification is performed
+  if (compute_geometric_verification) {
+
+  }
 
   //ds if geometric verification is desired - confusion will always computed
   if (compute_geometric_verification) {
@@ -142,6 +155,12 @@ int32_t main(int32_t argc_, char** argv_) {
     LOG_VARIABLE(maximum_essential_error)
   }
 
+  //ds we will be using the robust SIFT keypoint detector and descriptor extractor
+  cv::Ptr<cv::xfeatures2d::SIFT> sift_feature_handler = cv::xfeatures2d::SIFT::create(parameters->target_number_of_descriptors);
+
+  //ds SIFT maximum descriptor matching distance
+  const double maximum_descriptor_distance = 100.0;
+
   //ds info
   double relative_number_of_points_removed_by_gv = 0;
 
@@ -151,9 +170,9 @@ int32_t main(int32_t argc_, char** argv_) {
     //ds enable multithreading
     cv::setNumThreads(4);
 
-    //ds in order to have perfect precion-recall with brute-force matching we need to check if there are plausible false positive situations
-    std::shared_ptr<BruteforceMatcher> matcher = std::make_shared<BruteforceMatcher>(parameters->query_interspace,
-                                                                                     parameters->minimum_distance_between_closure_images);
+    //ds allocate an exhaustive matcher, L2 norm for SIFT matching
+    std::shared_ptr<BruteforceMatcher> matcher = std::make_shared<BruteforceMatcher>(parameters->minimum_distance_between_closure_images,
+                                                                                     cv::NORM_L2);
 
     //ds first load all images and compute the descriptors for each of them
     const uint32_t number_of_images = parameters->evaluator->numberOfImages();
@@ -180,7 +199,6 @@ int32_t main(int32_t argc_, char** argv_) {
 
       //ds if we got a query image
       if (image_number_query%parameters->query_interspace == 0) {
-        uint32_t number_of_available_descriptors = parameters->target_number_of_descriptors;
 
         //ds load image from disk
         cv::Mat image = cv::imread(parameters->evaluator->imagePosesGroundTruth()[image_number_query]->file_name, CV_LOAD_IMAGE_GRAYSCALE);
@@ -190,27 +208,13 @@ int32_t main(int32_t argc_, char** argv_) {
           cv::cvtColor(image, image, CV_BayerGR2GRAY);
         }
 
-        //ds detect FAST keypoints
+        //ds detect SIFT keypoints and extract SIFT descriptors
         std::vector<cv::KeyPoint> keypoints;
-        parameters->feature_detector->detect(image, keypoints);
-
-        //ds sort keypoints descendingly by response value (for culling after descriptor computation)
-        std::sort(keypoints.begin(), keypoints.end(), [](const cv::KeyPoint& a_, const cv::KeyPoint& b_){return a_.response > b_.response;});
-
-        //ds compute descriptors
         cv::Mat descriptors;
-        parameters->descriptor_extractor->compute(image, keypoints, descriptors);
+        cv::Mat mask(image.rows, image.cols, CV_8UC1, cv::Scalar(1));
+        sift_feature_handler->detectAndCompute(image, mask, keypoints, descriptors);
 
-        //ds check insufficient descriptor number
-        if (keypoints.size() < parameters->target_number_of_descriptors) {
-          std::cerr << "\nWARNING: insufficient number of descriptors computed: " << keypoints.size()
-                    << " < " << parameters->target_number_of_descriptors << ", adjust detector threshold\n" << std::endl;
-          number_of_available_descriptors = keypoints.size();
-        }
-
-        //ds rebuild keypoint vector and descriptor matrix
-        keypoints.resize(number_of_available_descriptors);
-        descriptors = descriptors(cv::Rect(0, 0, descriptors.cols, number_of_available_descriptors));
+        //ds backup keypoints for geometric verification
         keypoints_per_image.insert(std::make_pair(image_number_query, keypoints));
 
         //ds update statistics
@@ -219,7 +223,7 @@ int32_t main(int32_t argc_, char** argv_) {
 
         //ds query against all past images, retrieving closures with relative scores
         std::vector<ResultDescriptorMatching> closures_current_query(0);
-        matcher->query(descriptors, image_number_query, parameters->maximum_distance_hamming, closures_current_query);
+        matcher->query(descriptors, image_number_query, maximum_descriptor_distance, closures_current_query);
 
         //ds update confusion matrix for the current query
         for (ResultDescriptorMatching& result: closures_current_query) {
@@ -310,7 +314,7 @@ int32_t main(int32_t argc_, char** argv_) {
                         << " images: " << image_number_query+1
                         << " queries: " << number_of_descriptors_accumulated.size()
                         << " descriptors: " << number_of_descriptors_total
-                        << " (average: " << static_cast<double>(number_of_descriptors_total)/(image_number_query+1) << ")\r";
+                        << " (average: " << static_cast<double>(number_of_descriptors_total)/keypoints_per_image.size() << ")\r";
     }
     std::cerr << std::endl;
     if (parameters->use_gui) {
@@ -344,10 +348,8 @@ int32_t main(int32_t argc_, char** argv_) {
     //ds file suffix
     const std::string suffix = std::to_string(parameters->query_interspace) + "-"
                              + std::to_string(parameters->minimum_distance_between_closure_images) + "-"
-                             + std::to_string(parameters->fast_detector_threshold) + "-"
-                             + std::to_string(parameters->target_number_of_descriptors) + "-"
-                             + std::to_string(parameters->maximum_distance_hamming) + "_"
-                             + parameters->descriptor_type+"-"+std::to_string(DESCRIPTOR_SIZE_BITS) + ".txt";
+                             + std::to_string(static_cast<int32_t>(maximum_descriptor_distance)) + "_"
+                             + "SIFT.txt";
 
     //ds buffers
     ClosureMap closure_map_bf;
@@ -380,7 +382,9 @@ int32_t main(int32_t argc_, char** argv_) {
       } else {
 
         //ds terminate as soon as a false positive would be reported by BF
-        std::cerr << "obtained false closure, terminated (recall: " << recall << " closures: " << total_number_of_valid_closures << ")" << std::endl;
+        std::cerr << "obtained false closure: " << result.result_image_retrieval.image_association.query
+                                       << " > " << result.result_image_retrieval.image_association.train << std::endl;
+        std::cerr << "terminated (recall: " << recall << " closures: " << total_number_of_valid_closures << ")" << std::endl;
         break;
       }
 
@@ -392,10 +396,10 @@ int32_t main(int32_t argc_, char** argv_) {
     //ds if we have valid closures
     if (number_of_matches_per_closure.size() > 0) {
 
-      //ds dump first 1000 number of matches (or less)
+      //ds dump top number of matches
       std::ofstream outfile_matches("number-of-matches_bf-"+suffix, std::ifstream::out);
       std::sort(number_of_matches_per_closure.begin(), number_of_matches_per_closure.end(), std::greater<uint64_t>());
-      for (uint64_t u = 0; u < (number_of_matches_per_closure.size() && 1000); ++u) {
+      for (uint64_t u = 0; u < number_of_matches_per_closure.size(); ++u) {
         outfile_matches << number_of_matches_per_closure[u] << std::endl;
       }
       outfile_matches.close();

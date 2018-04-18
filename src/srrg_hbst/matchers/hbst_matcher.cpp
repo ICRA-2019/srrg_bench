@@ -2,10 +2,8 @@
 
 namespace srrg_bench {
 
-HBSTMatcher::HBSTMatcher(const uint32_t& interspace_image_number_,
-                         const uint32_t& minimum_distance_between_closure_images_,
-                         const srrg_hbst::SplittingStrategy& train_mode_): _interspace_image_number(interspace_image_number_),
-                                                                           _minimum_distance_between_closure_images(minimum_distance_between_closure_images_),
+HBSTMatcher::HBSTMatcher(const uint32_t& minimum_distance_between_closure_images_,
+                         const srrg_hbst::SplittingStrategy& train_mode_): _minimum_distance_between_closure_images(minimum_distance_between_closure_images_),
                                                                            _train_mode(train_mode_) {
   clear();
 }

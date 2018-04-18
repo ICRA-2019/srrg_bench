@@ -27,14 +27,12 @@ class BoWMatcher: public BaseMatcher {
 public:
 
   //! @brief constructor
-  //! @param[in] interspace_image_number_ image querying interspace
   //! @param[in] minimum_distance_between_closure_images_ minimum image number distance between closures
   //! @param[in] file_path_vocabulary_
   //! @param[in] use_direct_index_
   //! @param[in] direct_index_levels_
   //! @param[in] compute_score_only_
-  BoWMatcher(const uint32_t& interspace_image_number_,
-             const uint32_t& minimum_distance_between_closure_images_,
+  BoWMatcher(const uint32_t& minimum_distance_between_closure_images_,
              const std::string& file_path_vocabulary_,
              const bool& use_direct_index_,
              const uint32_t& number_of_direct_index_levels_,
@@ -65,6 +63,9 @@ public:
                      const ImageNumberQuery& image_number_,
                      const uint32_t& maximum_distance_hamming_,
                      std::vector<ResultImageRetrieval>& closures_);
+
+  //! @brief resets the matcher and all structures - base method should be called from subclasses
+  virtual void clear() override;
 
 //ds helpers
 protected:
@@ -105,9 +106,6 @@ protected:
 
   //! @brief bookkeeping: BoW features (required for training and association retrieval)
   std::map<ImageNumber, FeatureVector> _bow_features_per_image;
-
-  //! @brief query interspace
-  uint32_t _interspace_image_number;
 
   //! @brief minimum image number distance between closures
   uint32_t _minimum_distance_between_closure_images;

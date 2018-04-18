@@ -2,8 +2,7 @@
 
 namespace srrg_bench {
 
-  iBoWMatcher::iBoWMatcher(const uint32_t& interspace_image_number_,
-                           const uint32_t& minimum_distance_between_closure_images_,
+  iBoWMatcher::iBoWMatcher(const uint32_t& minimum_distance_between_closure_images_,
                            const unsigned k,
                            const unsigned s,
                            const unsigned t,
@@ -11,7 +10,6 @@ namespace srrg_bench {
                            const bool purge_descriptors,
                            const unsigned min_feat_apps,
                            const uint32_t& number_of_leaf_checks_): _index(obindex2::ImageIndex(k, s, t, merge_policy, purge_descriptors, min_feat_apps)),
-                                                                    _interspace_image_number(interspace_image_number_),
                                                                     _minimum_distance_between_closure_images(minimum_distance_between_closure_images_),
                                                                     _number_of_leaf_checks(number_of_leaf_checks_) {
     _durations_seconds_query_and_train.clear();
