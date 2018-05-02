@@ -78,7 +78,7 @@ int32_t main(int32_t argc_, char** argv_) {
 
   //ds if geometric verfication is desired
   if (compute_geometric_verification) {
-    if (file_name_calibration == "") {
+    if (file_name_calibration == "" && parameters->parsing_mode != "lucia") {
       std::cerr << "ERROR: no camera calibration file provided for geometric verification" << std::endl;
       return EXIT_FAILURE;
     }
@@ -142,8 +142,14 @@ int32_t main(int32_t argc_, char** argv_) {
         std::getline(file_calibration, line_buffer);
       }
       file_calibration.close();
-    }
-      else {
+    } else if (parameters->parsing_mode == "lucia") {
+
+      //ds hardcoded for now
+      f_u = 1246.56167;
+      f_v = 1247.09234;
+      c_u = 532.28794;
+      c_v = 383.60407;
+    } else {
       std::cerr << "ERROR: geometric verification is not implemented for the target parsing mode" << std::endl;
       return EXIT_FAILURE;
     }

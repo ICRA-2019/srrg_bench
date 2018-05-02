@@ -134,10 +134,12 @@ public:
                                          const std::string& file_name_poses_ground_truth_1_ = "",
                                          const std::string& images_folder_1_ = "");
 
-  void computeLoopClosureFeasibilityMap(const uint32_t& interspace_image_number_                = 1,
-                                        const double& maximum_difference_position_meters_       = 25,
-                                        const double& maximum_difference_angle_radians_         = M_PI/10,
-                                        const int32_t& minimum_distance_between_closure_images_ = 500);
+  void computeLoopClosureFeasibilityMap(const uint32_t& image_number_start_                      = 0,
+                                        const uint32_t& image_number_stop_                       = 0,
+                                        const uint32_t& interspace_image_number_                 = 1,
+                                        const double& maximum_difference_position_meters_        = 25,
+                                        const double& maximum_difference_angle_radians_          = M_PI/10,
+                                        const uint32_t& minimum_distance_between_closure_images_ = 500);
 
   std::pair<double, double> getPrecisionRecall(ImagePairVector& reported_closures_, const double& target_recall_);
 

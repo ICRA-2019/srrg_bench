@@ -44,8 +44,11 @@ public:
   //! @brief resets the matcher and all structures - base method should be called from subclasses
   virtual void clear() {_durations_seconds_query_and_train.clear();}
 
-  //! @brief
+  //! @brief duration for query and train operation
   const std::vector<double>& durationsSecondsQueryAndTrain() const {return _durations_seconds_query_and_train;}
+
+  //! @brief number of simultaneous queries train operations
+  const uint64_t numberOfQueries() const {return _durations_seconds_query_and_train.size();}
 
 //ds attributes
 protected:
@@ -55,6 +58,5 @@ protected:
 
   //! @brief timing handle
   std::chrono::time_point<std::chrono::system_clock> _time_begin;
-
 };
 }

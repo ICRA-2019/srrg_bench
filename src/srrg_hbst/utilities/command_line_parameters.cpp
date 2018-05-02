@@ -8,77 +8,89 @@
 namespace srrg_bench {
 
 void CommandLineParameters::parse(const int32_t& argc_, char** argv_) {
-  int32_t argc_parsed = 1;
-  while(argc_parsed < argc_){
-    if (!std::strcmp(argv_[argc_parsed], "-cross")) {
+  int32_t c = 1;
+  while(c < argc_){
+    if (!std::strcmp(argv_[c], "-cross")) {
       load_cross_datasets = true;
-    } else if (!std::strcmp(argv_[argc_parsed], "-method")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      method_name = argv_[argc_parsed];
-    } else if (!std::strcmp(argv_[argc_parsed], "-images")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      folder_images = argv_[argc_parsed];
+    } else if (!std::strcmp(argv_[c], "-method")) {
+      c++; if (c == argc_) {break;}
+      method_name = argv_[c];
+    } else if (!std::strcmp(argv_[c], "-images")) {
+      c++; if (c == argc_) {break;}
+      folder_images = argv_[c];
       if (load_cross_datasets) {
-        argc_parsed++; if (argc_parsed == argc_) {break;}
-        folder_images_cross = argv_[argc_parsed];
+        c++; if (c == argc_) {break;}
+        folder_images_cross = argv_[c];
       }
-    } else if(!std::strcmp(argv_[argc_parsed], "-poses")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      file_name_poses_ground_truth = argv_[argc_parsed];
+    } else if(!std::strcmp(argv_[c], "-start")) {
+      c++; if (c == argc_) {break;}
+      image_number_start = std::stoi(argv_[c]);
+    } else if(!std::strcmp(argv_[c], "-stop")) {
+      c++; if (c == argc_) {break;}
+      image_number_stop = std::stoi(argv_[c]);
+    } else if(!std::strcmp(argv_[c], "-poses")) {
+      c++; if (c == argc_) {break;}
+      file_name_poses_ground_truth = argv_[c];
       if (load_cross_datasets) {
-        argc_parsed++; if (argc_parsed == argc_) {break;}
-        file_name_poses_ground_truth_cross = argv_[argc_parsed];
+        c++; if (c == argc_) {break;}
+        file_name_poses_ground_truth_cross = argv_[c];
       }
-    } else if(!std::strcmp(argv_[argc_parsed], "-closures")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      file_name_closures_ground_truth = argv_[argc_parsed];
-    } else if (!std::strcmp(argv_[argc_parsed], "-mode")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      parsing_mode = argv_[argc_parsed];
-    } else if (!std::strcmp(argv_[argc_parsed], "-t")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      fast_detector_threshold = std::stoi(argv_[argc_parsed]);
-    } else if (!std::strcmp(argv_[argc_parsed], "-m")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      maximum_distance_hamming = std::stoi(argv_[argc_parsed]);
-    } else if (!std::strcmp(argv_[argc_parsed], "-r")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      target_recall = std::stod(argv_[argc_parsed]);
-    } else if (!std::strcmp(argv_[argc_parsed], "-space")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      query_interspace = std::stoi(argv_[argc_parsed]);
-    } else if (!std::strcmp(argv_[argc_parsed], "-distance")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      minimum_distance_between_closure_images = std::stoi(argv_[argc_parsed]);
-    } else if (!std::strcmp(argv_[argc_parsed], "-descriptor")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
+    } else if(!std::strcmp(argv_[c], "-closures")) {
+      c++; if (c == argc_) {break;}
+      file_name_closures_ground_truth = argv_[c];
+    } else if (!std::strcmp(argv_[c], "-mode")) {
+      c++; if (c == argc_) {break;}
+      parsing_mode = argv_[c];
+    } else if (!std::strcmp(argv_[c], "-t")) {
+      c++; if (c == argc_) {break;}
+      fast_detector_threshold = std::stoi(argv_[c]);
+    } else if (!std::strcmp(argv_[c], "-m")) {
+      c++; if (c == argc_) {break;}
+      maximum_distance_hamming = std::stoi(argv_[c]);
+    } else if (!std::strcmp(argv_[c], "-r")) {
+      c++; if (c == argc_) {break;}
+      target_recall = std::stod(argv_[c]);
+    } else if (!std::strcmp(argv_[c], "-space")) {
+      c++; if (c == argc_) {break;}
+      query_interspace = std::stoi(argv_[c]);
+    } else if (!std::strcmp(argv_[c], "-distance")) {
+      c++; if (c == argc_) {break;}
+      minimum_distance_between_closure_images = std::stoi(argv_[c]);
+    } else if (!std::strcmp(argv_[c], "-descriptor")) {
+      c++; if (c == argc_) {break;}
       if (method_name.compare("bow") == 0) {std::cerr << "WARNING: -descriptor is parameter ignored (bow)" << std::endl;}
-      descriptor_type = argv_[argc_parsed];
-    } else if (!std::strcmp(argv_[argc_parsed], "-voc")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      file_path_vocabulary = argv_[argc_parsed];
-    } else if (!std::strcmp(argv_[argc_parsed], "-use-gui") || !std::strcmp(argv_[argc_parsed], "-ug")) {
+      descriptor_type = argv_[c];
+    } else if (!std::strcmp(argv_[c], "-voc")) {
+      c++; if (c == argc_) {break;}
+      file_path_vocabulary = argv_[c];
+    } else if (!std::strcmp(argv_[c], "-use-gui") || !std::strcmp(argv_[c], "-ug")) {
       use_gui = true;
-    } else if (!std::strcmp(argv_[argc_parsed], "-score-only") || !std::strcmp(argv_[argc_parsed], "-so")) {
+    } else if (!std::strcmp(argv_[c], "-score-only") || !std::strcmp(argv_[c], "-so")) {
       compute_score_only = true;
-    } else if (!std::strcmp(argv_[argc_parsed], "-n")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      target_number_of_descriptors = std::stoi(argv_[argc_parsed]);
-    } else if (!std::strcmp(argv_[argc_parsed], "-random")) {
+    } else if (!std::strcmp(argv_[c], "-n")) {
+      c++; if (c == argc_) {break;}
+      target_number_of_descriptors = std::stoi(argv_[c]);
+    } else if (!std::strcmp(argv_[c], "-random")) {
       use_random_splitting = true;
-    } else if (!std::strcmp(argv_[argc_parsed], "-samples")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      number_of_samples = std::stoi(argv_[argc_parsed]);
-    } else if (!std::strcmp(argv_[argc_parsed], "-uneven")) {
+    } else if (!std::strcmp(argv_[c], "-samples")) {
+      c++; if (c == argc_) {break;}
+      number_of_samples = std::stoi(argv_[c]);
+    } else if (!std::strcmp(argv_[c], "-uneven")) {
       use_uneven_splitting = true;
-    } else if (!std::strcmp(argv_[argc_parsed], "-delay")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      training_delay_in_frames = std::stoi(argv_[argc_parsed]);
-    } else if (!std::strcmp(argv_[argc_parsed], "-leaf-size") || !std::strcmp(argv_[argc_parsed], "-ls")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      maximum_leaf_size = std::stoi(argv_[argc_parsed]);
+    } else if (!std::strcmp(argv_[c], "-delay")) {
+      c++; if (c == argc_) {break;}
+      training_delay_in_frames = std::stoi(argv_[c]);
+    } else if (!std::strcmp(argv_[c], "-leaf-size") || !std::strcmp(argv_[c], "-ls")) {
+      c++; if (c == argc_) {break;}
+      maximum_leaf_size = std::stoi(argv_[c]);
+    } else if (!std::strcmp(argv_[c], "-display-scale") || !std::strcmp(argv_[c], "-ds")) {
+      c++; if (c == argc_) {break;}
+      display_scale = std::stod(argv_[c]);
+    } else if (!std::strcmp(argv_[c], "-timestamps")) {
+      c++; if (c == argc_) {break;}
+      file_name_image_timestamps = argv_[c];
     }
-    argc_parsed++;
+    c++;
   }
 }
 
@@ -115,6 +127,8 @@ void CommandLineParameters::write(std::ostream& stream_) {
   WRITE_VARIABLE(stream_, file_name_poses_ground_truth);
   WRITE_VARIABLE(stream_, file_name_closures_ground_truth);
   WRITE_VARIABLE(stream_, parsing_mode);
+  WRITE_VARIABLE(stream_, image_number_start);
+  WRITE_VARIABLE(stream_, image_number_stop);
   stream_ << BAR << std::endl;
   WRITE_VARIABLE(stream_, query_interspace);
   WRITE_VARIABLE(stream_, minimum_distance_between_closure_images);
@@ -148,10 +162,8 @@ void CommandLineParameters::write(std::ostream& stream_) {
     WRITE_VARIABLE(stream_, multi_probe_level);
   }
   if (parsing_mode == "lucia") {
-    stream_ << BAR << std::endl;
     WRITE_VARIABLE(stream_, file_name_image_timestamps);
   } else if (parsing_mode == "oxford") {
-    stream_ << BAR << std::endl;
     WRITE_VARIABLE(stream_, file_name_poses_ground_truth_cross);
     WRITE_VARIABLE(stream_, folder_images_cross);
   }
@@ -189,11 +201,21 @@ void CommandLineParameters::configure(std::ostream& stream_) {
     throw std::runtime_error("");
   }
 
+  //ds update stop number of images to maximum possible if not set
+  if (image_number_stop == 0) {
+    image_number_stop = evaluator->numberOfImages()-1;
+  }
+
+  //ds compute total number of images to process (considering the interspace)
+  number_of_images_to_process = static_cast<double>(image_number_stop-image_number_start)/query_interspace;
+
   //ds compute all feasible closures for the given interspace - check if no closure ground truth file is provided
   if (file_name_closures_ground_truth == "") {
 
     //ds compute feasibility
-    evaluator->computeLoopClosureFeasibilityMap(query_interspace,
+    evaluator->computeLoopClosureFeasibilityMap(image_number_start,
+                                                image_number_stop,
+                                                query_interspace,
                                                 maximum_difference_position_meters,
                                                 maximum_difference_angle_radians,
                                                 minimum_distance_between_closure_images);

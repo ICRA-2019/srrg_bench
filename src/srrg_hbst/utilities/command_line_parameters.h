@@ -42,6 +42,9 @@ class CommandLineParameters {
     std::string file_name_poses_ground_truth    = "";
     std::string file_name_closures_ground_truth = "";
     std::string parsing_mode                    = "kitti";
+    uint32_t image_number_start                 = 0;
+    uint32_t image_number_stop                  = 0;
+    uint32_t number_of_images_to_process        = 0;
 
     //ds ground truth details
     uint32_t query_interspace                        = 1;
@@ -83,6 +86,9 @@ class CommandLineParameters {
     //ds oxford specific (multi sequence loading)
     std::string file_name_poses_ground_truth_cross = "";
     std::string folder_images_cross                = "";
+
+    //ds GUI
+    double display_scale = 1.0;
 
   //ds instantiated objects
   public:

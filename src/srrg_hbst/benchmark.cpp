@@ -151,11 +151,18 @@ int32_t main(int32_t argc_, char** argv_) {
     std::vector<ResultImageRetrieval> closures(0);
 
     //ds start benchmark
-    const uint32_t length_progress_bar   = 50;
+    const uint32_t length_progress_bar   = 20;
     uint64_t number_of_descriptors_total = 0;
     std::vector<uint64_t> query_identifiers;
     std::vector<uint64_t> number_of_descriptors_accumulated(0);
-    for (ImageNumberQuery image_number_query = 0; image_number_query < parameters->evaluator->numberOfImages(); ++image_number_query) {
+    for (ImageNumberQuery image_number_query = 0; image_number_query < parameters->image_number_stop; ++image_number_query) {
+
+      //ds check if the image number is not in the target range
+      if (image_number_query < parameters->image_number_start) {
+        std::cerr << "skipped images: " << image_number_query << "\r";
+        ++image_number_query;
+        continue;
+      }
 
       //ds if we got a query image
       if (image_number_query%parameters->query_interspace == 0) {
@@ -233,7 +240,7 @@ int32_t main(int32_t argc_, char** argv_) {
       }
 
       //ds progress feedback: compute printing configuration
-      const double progress           = static_cast<double>(image_number_query+1)/parameters->evaluator->numberOfImages();
+      const double progress           = static_cast<double>(matcher->numberOfQueries())/parameters->number_of_images_to_process;
       const uint32_t length_completed = progress*length_progress_bar;
 
       //ds draw progress bar
@@ -245,12 +252,12 @@ int32_t main(int32_t argc_, char** argv_) {
         std::cerr << " ";
       }
       std::cerr << "] " << static_cast<int32_t>(progress*100.0) << " %"
-                        << " images: " << image_number_query+1
-                        << " queries: " << number_of_descriptors_accumulated.size()
+                        << " | current image number: " << image_number_query
+                        << " | TOTAL queries: " << matcher->numberOfQueries()
                         << " descriptors: " << number_of_descriptors_total
-                        << " (average: " << static_cast<double>(number_of_descriptors_total)/(image_number_query+1) << ")"
-                        << " sample: " << sample_index
-                        << " current processing time (s): " << matcher->durationsSecondsQueryAndTrain().back() << "\r";
+                        << " (average: " << static_cast<double>(number_of_descriptors_total)/matcher->numberOfQueries() << ")"
+                        << " | sample: " << sample_index
+                        << " | current processing time (s): " << matcher->durationsSecondsQueryAndTrain().back() << "\r";
     }
 
     //ds retrieve precision/recall for current result and save it to a file
