@@ -149,6 +149,8 @@ public:
                                                                      const std::string& file_name_ = "");
 
   void loadClosures(const std::string& file_name_closure_map_,
+                    const uint32_t& image_number_start_                     = 0,
+                    const uint32_t& image_number_stop_                      = 0,
                     const uint32_t& interspace_image_number_                = 1,
                     const double& maximum_difference_position_meters_       = 25,
                     const double& maximum_difference_angle_radians_         = M_PI/10,

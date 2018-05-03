@@ -64,11 +64,6 @@ int32_t main(int32_t argc_, char** argv_) {
   parameters->configure(std::cerr);
   parameters->write(std::cerr);
 
-  //ds relax parameters if geometric verification is performed
-  if (compute_geometric_verification) {
-
-  }
-
   //ds if geometric verification is desired - confusion will always computed
   if (compute_geometric_verification) {
     compute_plausible_confusion = true;
@@ -198,10 +193,10 @@ int32_t main(int32_t argc_, char** argv_) {
 
     //ds for all images we have
     std::cerr << "computing plausible false positives using brute-force matching: " << std::endl;
-    const uint32_t length_progress_bar   = 50;
+    const uint32_t length_progress_bar   = 20;
     uint64_t number_of_descriptors_total = 0;
     std::vector<uint64_t> number_of_descriptors_accumulated(0);
-    for (ImageNumberQuery image_number_query = 0; image_number_query < number_of_images; ++image_number_query) {
+    for (ImageNumberQuery image_number_query = parameters->image_number_start; image_number_query < parameters->image_number_stop; ++image_number_query) {
 
       //ds if we got a query image
       if (image_number_query%parameters->query_interspace == 0) {
@@ -257,7 +252,7 @@ int32_t main(int32_t argc_, char** argv_) {
             const Eigen::Vector3d image_coordinates_query(u_query, v_query, 1);
             const Eigen::Vector3d image_coordinates_train(u_train, v_train, 1);
 
-            //ds compute epipolar error
+            //ds compute essential error
             const double error = std::fabs(image_coordinates_train.transpose()*essential_matrix*image_coordinates_query);
 
             //ds check if association is consistent
@@ -295,7 +290,8 @@ int32_t main(int32_t argc_, char** argv_) {
           cv::Mat image_display;
           cv::cvtColor(image, image_display, CV_GRAY2RGB);
           for (const cv::KeyPoint& keypoint: keypoints) {
-            cv::circle(image_display, keypoint.pt, 2, cv::Scalar(0, 255, 0), -1);
+            cv::circle(image_display, keypoint.pt, 2, cv::Scalar(0, 0, 255), -1);
+            cv::circle(image_display, keypoint.pt, keypoint.size, cv::Scalar(0, 0, 255), 1);
           }
 
           //ds display currently detected keypoints
@@ -305,7 +301,7 @@ int32_t main(int32_t argc_, char** argv_) {
       }
 
       //ds progress feedback: compute printing configuration
-      const double progress           = static_cast<double>(image_number_query+1)/number_of_images;
+      const double progress           = static_cast<double>(matcher->numberOfQueries())/parameters->number_of_images_to_process;
       const uint32_t length_completed = progress*length_progress_bar;
 
       //ds draw completed bar
@@ -317,10 +313,11 @@ int32_t main(int32_t argc_, char** argv_) {
         std::cerr << " ";
       }
       std::cerr << "] " << static_cast<int32_t>(progress*100.0) << " %"
-                        << " images: " << image_number_query+1
-                        << " queries: " << number_of_descriptors_accumulated.size()
+                        << " | current image number: " << image_number_query
+                        << " | TOTAL queries: " << matcher->numberOfQueries()
                         << " descriptors: " << number_of_descriptors_total
-                        << " (average: " << static_cast<double>(number_of_descriptors_total)/keypoints_per_image.size() << ")\r";
+                        << " (average: " << static_cast<double>(number_of_descriptors_total)/matcher->numberOfQueries() << ")"
+                        << " | current processing time (s): " << matcher->durationsSecondsQueryAndTrain().back() << "\r";
     }
     std::cerr << std::endl;
     if (parameters->use_gui) {
@@ -488,7 +485,8 @@ int32_t main(int32_t argc_, char** argv_) {
     viewer->update(parameters->evaluator->imagePosesGroundTruth(),
                    parameters->evaluator->closureMap(),
                    parameters->evaluator->validQueryImagesWithPoses(),
-                   parameters->evaluator->validTrainImagesWithPoses());
+                   parameters->evaluator->validTrainImagesWithPoses(),
+                   parameters->query_interspace);
 
     //ds show the viewer
     viewer->show();

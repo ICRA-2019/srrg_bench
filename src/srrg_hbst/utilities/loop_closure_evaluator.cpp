@@ -551,7 +551,6 @@ void LoopClosureEvaluator::computeLoopClosureFeasibilityMap(const uint32_t& imag
   if (image_number_stop_ != 0) {
     image_number_stop = image_number_stop_;
   }
-  const uint32_t image_number_start = std::max(image_number_start_, minimum_distance_between_closure_images_);
 
   //ds compute the total number of queries we can receive
   const uint64_t number_of_database_queries = _image_poses_ground_truth.size()/interspace_image_number_;
@@ -560,8 +559,8 @@ void LoopClosureEvaluator::computeLoopClosureFeasibilityMap(const uint32_t& imag
   _valid_train_image_numbers.clear();
   _total_number_of_valid_closures = 0;
 
-  //ds loop over the buffered poses in reverse order (since we cannot close loops forwards)
-  for (uint32_t image_number_query = image_number_stop; image_number_query >= image_number_start; --image_number_query) {
+  //ds loop over the buffered poses in reverse order (since we cannot close loops forwards) - stopping as we cannot close further
+  for (uint32_t image_number_query = image_number_stop; image_number_query >= std::max(image_number_start_, minimum_distance_between_closure_images_); --image_number_query) {
 
     //ds if we got a query image
     if (image_number_query%interspace_image_number_ == 0) {
@@ -570,10 +569,10 @@ void LoopClosureEvaluator::computeLoopClosureFeasibilityMap(const uint32_t& imag
       std::set<ImageNumberTrain> closed_training_images;
 
       //ds available closure range (must be above the minimum threshold, to avoid reporting closures when the vehicle was standing still)
-      ImageNumberQuery image_number_last = std::max(image_number_query-minimum_distance_between_closure_images_, image_number_start);
+      const ImageNumberQuery image_number_last = std::max(image_number_query-minimum_distance_between_closure_images_, image_number_start_);
 
       //ds loop over closure candidates
-      for (ImageNumberTrain image_number_train = image_number_start; image_number_train < image_number_last; ++image_number_train) {
+      for (ImageNumberTrain image_number_train = image_number_start_; image_number_train < image_number_last; ++image_number_train) {
 
         //ds if we got a query image
         if (image_number_train%interspace_image_number_ == 0) {
@@ -857,13 +856,20 @@ std::vector<std::pair<double, double>> LoopClosureEvaluator::computePrecisionRec
 }
 
 void LoopClosureEvaluator::loadClosures(const std::string& file_name_closures_,
+                                        const uint32_t& image_number_start_,
+                                        const uint32_t& image_number_stop_,
                                         const uint32_t& interspace_image_number_,
                                         const double& maximum_difference_position_meters_,
                                         const double& maximum_difference_angle_radians_,
                                         const int32_t& minimum_distance_between_closure_images_) {
 
   //ds compute full feasibility (in order to not reject correct but infeasible Brute-force closures)
-  computeLoopClosureFeasibilityMap(interspace_image_number_, maximum_difference_position_meters_, maximum_difference_angle_radians_, minimum_distance_between_closure_images_);
+  computeLoopClosureFeasibilityMap(image_number_start_,
+                                   image_number_stop_,
+                                   interspace_image_number_,
+                                   maximum_difference_position_meters_,
+                                   maximum_difference_angle_radians_,
+                                   minimum_distance_between_closure_images_);
 
   //ds prepare filtered feasibility
   _closure_map_bf.clear();

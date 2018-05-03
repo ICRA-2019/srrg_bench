@@ -106,7 +106,9 @@ void CommandLineParameters::validate(std::ostream& stream_) {
   if (file_name_closures_ground_truth == "") {
     stream_ << "WARNING: no closures ground truth specified (use -closures <closures_gt>) - computing full feasibility map" << std::endl;
   }
-  if (file_name_closures_ground_truth != "" && file_name_closures_ground_truth.find(descriptor_type) == std::string::npos) {
+  if (file_name_closures_ground_truth != ""                                      &&
+      file_name_closures_ground_truth.find(descriptor_type) == std::string::npos &&
+      file_name_closures_ground_truth.find("SIFT") == std::string::npos          ) {
     stream_ << "ERROR: invalid descriptor type in closures ground truth: " << file_name_closures_ground_truth << std::endl;
     throw std::runtime_error("");
   }
@@ -223,6 +225,8 @@ void CommandLineParameters::configure(std::ostream& stream_) {
 
     //ds load feasible closures (BF filtered) from a file
     evaluator->loadClosures(file_name_closures_ground_truth,
+                            image_number_start,
+                            image_number_stop,
                             query_interspace,
                             maximum_difference_position_meters,
                             maximum_difference_angle_radians,
