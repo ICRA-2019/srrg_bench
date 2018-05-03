@@ -648,42 +648,10 @@ std::pair<double, double> LoopClosureEvaluator::getPrecisionRecall(ImagePairVect
         }
       }
 
-      //ds if the closure would not be reported (not contained in Brute-force filtered gt)
-      if (!reported_closure.valid) {
-
-        //ds check if the closure is contained in the pose based gt (not a false positive)
-        if (_closure_map_trajectory.find(reported_closure.query) != _closure_map_trajectory.end()) {
-          if (_closure_map_trajectory.at(reported_closure.query).count(reported_closure.train)) {
-
-            //ds cancel report
-            --number_of_reported_closures;
-//            //ds count the closure positively while increasing recall
-//            ++number_of_correctly_reported_closures;
-//            reported_closure.valid = true;
-//            ++total_number_of_valid_closures;
-
-            //ds visualization (show additional, correctly detected closures which were not obtained in the BF ground truth)
-            if (!_reached_target_display_recall) {
-              _valid_closures.push_back(std::make_pair(_image_poses_ground_truth.at(reported_closure.query),
-                                                       _image_poses_ground_truth.at(reported_closure.train)));
-            }
-          } else {
-            if (!_reached_target_display_recall) {
-              _valid_closures.push_back(std::make_pair(_image_poses_ground_truth.at(reported_closure.query),
-                                                       _image_poses_ground_truth.at(reported_closure.train)));
-            }
-          }
-        } else {
-          if (!_reached_target_display_recall) {
-            _valid_closures.push_back(std::make_pair(_image_poses_ground_truth.at(reported_closure.query),
-                                                     _image_poses_ground_truth.at(reported_closure.train)));
-          }
-        }
-      } else {
-        if (!_reached_target_display_recall) {
-          _valid_closures.push_back(std::make_pair(_image_poses_ground_truth.at(reported_closure.query),
-                                                   _image_poses_ground_truth.at(reported_closure.train)));
-        }
+      //ds visualization (show additional, correctly detected closures which were not obtained in the BF ground truth)
+      if (!_reached_target_display_recall) {
+        _valid_closures.push_back(std::make_pair(_image_poses_ground_truth.at(reported_closure.query),
+                                                 _image_poses_ground_truth.at(reported_closure.train)));
       }
 
       //ds check if maximum recall is reached

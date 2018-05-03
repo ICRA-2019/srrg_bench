@@ -75,7 +75,7 @@ int32_t main(int32_t argc_, char** argv_) {
   parameters->write(std::cerr);
 
   //ds target maximum test depth
-  uint32_t maximum_depth = 3;
+  uint32_t maximum_depth = 10;
 
   //ds test mode 0: resulting neab bit-wise completeness at various depths for a bit index k
   //ds test mode 1: resulting mean completeness for multiple depths, choosing the balanced k with HBST
