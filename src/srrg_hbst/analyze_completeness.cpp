@@ -104,10 +104,6 @@ int32_t main(int32_t argc_, char** argv_) {
   feature_detector     = parameters->feature_detector;
   descriptor_extractor = parameters->descriptor_extractor;
 
-  //ds compute ground truth
-  evaluator->computeLoopClosureFeasibilityMap(1, 1, M_PI/10, 500);
-  LOG_VARIABLE(evaluator->totalNumberOfValidClosures())
-
   //ds empty tree handles
   hbst_balanced    = std::make_shared<Tree>();
   hbst_incremental = std::make_shared<Tree>();
@@ -158,7 +154,7 @@ int32_t main(int32_t argc_, char** argv_) {
     accumulated_bitwise_completeness_per_depth.clear();
     number_of_evaluated_leafs_per_depth.clear();
 
-    //ds chosen splitting bits (depth analysis) - propagated indivudally for each path
+    //ds chosen splitting bits (depth analysis) - propagated individually for each path
     std::vector<uint32_t> splitting_bits_left(0);
     std::vector<uint32_t> splitting_bits_right(0);
 
@@ -489,13 +485,9 @@ void evaluateBitWiseCompleteness(const MatchableVector& parent_query_descriptors
   //ds if maximum depth is not yet reached
   if (depth < maximum_depth_) {
 
-    //ds increase splitting bits (identical for first split)
-    std::vector<uint32_t> splitting_bits_left_next(splitting_bits_left_);
-    std::vector<uint32_t> splitting_bits_right_next(splitting_bits_right_);
-    splitting_bits_left_next.push_back(best_bit_index);
-    splitting_bits_right_next.push_back(best_bit_index);
-
     //ds continue evaluating the potential splits on LEFT of the current node
+    std::vector<uint32_t> splitting_bits_left_next(splitting_bits_left_);
+    splitting_bits_left_next.push_back(best_bit_index);
     evaluateBitWiseCompleteness(query_descriptors,
                                 reference_descriptors,
                                 splitting_bits_left_next,
@@ -504,6 +496,8 @@ void evaluateBitWiseCompleteness(const MatchableVector& parent_query_descriptors
                                 maximum_distance_hamming_);
 
     //ds continue evaluating the potential splits on RIGHT of the current node
+    std::vector<uint32_t> splitting_bits_right_next(splitting_bits_right_);
+    splitting_bits_right_next.push_back(best_bit_index);
     evaluateBitWiseCompleteness(query_descriptors,
                                 reference_descriptors,
                                 splitting_bits_left_,

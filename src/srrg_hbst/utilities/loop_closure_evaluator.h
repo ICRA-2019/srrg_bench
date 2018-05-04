@@ -20,6 +20,11 @@
 #define LOG_VARIABLE(VARIABLE_) \
   std::cerr << #VARIABLE_ << ": " << VARIABLE_ << std::endl;
 
+//ds easy logging macro - living from your expressiveness
+#define WRITE_VARIABLE(STREAM_, VARIABLE_) \
+  STREAM_ << #VARIABLE_ << ": " << VARIABLE_ << std::endl
+#define BAR "---------------------------------------------------------------------------------"
+
 //ds descriptor configuration
 #define DESCRIPTOR_SIZE_BYTES 32
 #define DESCRIPTOR_SIZE_BITS DESCRIPTOR_SIZE_BYTES*8
@@ -128,11 +133,17 @@ public:
 
   void loadImagesWithPosesFromFileLucia(const std::string& file_name_poses_ground_truth_, const std::string& file_name_images_with_timestamps_);
 
-  //! oxford dataset loading: requiring at least two separate dataset sequences (season closing possible)
+  //! @brief oxford dataset loading: requiring at least two separate dataset sequences (season closing possible)
   void loadImagesWithPosesFromFileOxford(const std::string& file_name_poses_ground_truth_0_,
                                          const std::string& images_folder_0_,
                                          const std::string& file_name_poses_ground_truth_1_ = "",
                                          const std::string& images_folder_1_ = "");
+
+  //! @brief nordland dataset loading: requiring at least two separate dataset sequences (season closing possible)
+  void loadImagesWithPosesFromFileNordland(const std::string& file_name_poses_ground_truth_query_,
+                                           const std::string& images_folder_query_,
+                                           const std::string& file_name_poses_ground_reference_,
+                                           const std::string& images_folder_reference_);
 
   void computeLoopClosureFeasibilityMap(const uint32_t& image_number_start_                      = 0,
                                         const uint32_t& image_number_stop_                       = 0,
@@ -177,6 +188,7 @@ protected:
   PoseWithTimestampVector _getPosesFromGPSOxford(const std::string& file_name_poses_ground_truth_) const;
   ImageFileWithTimestampVector _getImageFilesFromGPSOxford(const std::string& folder_images_) const;
   void _initializeImageConfiguration(const std::string& image_file_name_, const bool& bayer_decoding_ = false);
+  PoseWithTimestampVector _getPosesFromGPSNordland(const std::string& file_name_poses_) const;
 
 private:
 

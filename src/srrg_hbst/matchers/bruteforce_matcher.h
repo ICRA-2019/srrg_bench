@@ -12,7 +12,7 @@ public:
   //! @brief constructor
   //! @param[in] minimum_distance_between_closure_images_ minimum image number distance between closures
   BruteforceMatcher(const uint32_t& minimum_distance_between_closure_images_,
-                    const int32_t& norm_type_ = cv::NORM_HAMMING);
+                    const int32_t& norm_type_);
 
   //! @brief default destructor
   ~BruteforceMatcher();

@@ -2,6 +2,7 @@
 #include <memory>
 
 namespace srrg_bench {
+
 class CommandLineParameters {
 
   //ds object life
@@ -55,7 +56,8 @@ class CommandLineParameters {
 
     //ds method details
     std::string descriptor_type           = "brief"; //ds the descriptor type for bow has to be provided with DBOW2_DESCRIPTOR_TYPE in dbow_matcher.h
-    uint32_t maximum_distance_hamming     = 25;
+    int32_t distance_norm                 = cv::NORM_HAMMING;
+    int32_t maximum_distance_hamming      = 25;
     uint32_t fast_detector_threshold      = 10;
     bool use_gui                          = false;
     uint32_t target_number_of_descriptors = 1000;
@@ -86,6 +88,10 @@ class CommandLineParameters {
     //ds oxford specific (multi sequence loading)
     std::string file_name_poses_ground_truth_cross = "";
     std::string folder_images_cross                = "";
+
+    //ds nordland specific (multi video loading)
+    cv::VideoCapture video_player_query;
+    cv::VideoCapture video_player_reference;
 
     //ds GUI
     double display_scale = 1.0;

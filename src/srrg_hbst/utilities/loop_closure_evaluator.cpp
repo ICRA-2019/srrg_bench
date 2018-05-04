@@ -539,6 +539,41 @@ void LoopClosureEvaluator::loadImagesWithPosesFromFileOxford(const std::string& 
             << " ratio per odometry pose: " << static_cast<double>(_image_poses_ground_truth.size())/poses.size() << std::endl;
 }
 
+void LoopClosureEvaluator::loadImagesWithPosesFromFileNordland(const std::string& file_name_poses_ground_truth_query_,
+                                                               const std::string& images_folder_query_,
+                                                               const std::string& file_name_poses_ground_reference_,
+                                                               const std::string& images_folder_reference_) {
+  _trajectory_length_meters = 0;
+  _image_poses_ground_truth.clear();
+
+  //ds obtain pose data for both sequences
+  PoseWithTimestampVector poses_query(_getPosesFromGPSNordland(file_name_poses_ground_truth_query_));
+  PoseWithTimestampVector poses_reference(_getPosesFromGPSNordland(file_name_poses_ground_reference_));
+
+  Eigen::Isometry3d pose_previous(poses_reference.front().pose);
+  for (const PoseWithTimestamp& pose: poses_reference) {
+    const double translation_per_image = (pose.pose.inverse()*pose_previous).translation().norm();
+
+//    //ds compute average translation to filter bad measurements
+//    if (_trajectory_length_meters > 100) {
+//      const double average_translation_per_image = static_cast<double>(_trajectory_length_meters)/_image_poses_ground_truth.size();
+//      if (translation_per_image/average_translation_per_image > 5) {
+//        pose_previous = pose.pose;
+//        continue;
+//      }
+//    }
+
+    //ds add measurement
+    _trajectory_length_meters += translation_per_image;
+    _image_poses_ground_truth.push_back(new ImageWithPose(std::to_string(_image_poses_ground_truth.size()), _image_poses_ground_truth.size(), pose.pose));
+    pose_previous = pose.pose;
+  }
+
+  std::cerr << "LoopClosureEvaluator::loadImagesWithPosesFromFileNordland|images: " << _image_poses_ground_truth.size()
+            << " ratio per odometry pose: " << static_cast<double>(_image_poses_ground_truth.size())/poses_reference.size() << std::endl;
+  std::cerr << "LoopClosureEvaluator::loadImagesWithPosesFromFileNordland|total trajectory length (m): " << _trajectory_length_meters << std::endl;
+}
+
 void LoopClosureEvaluator::computeLoopClosureFeasibilityMap(const uint32_t& image_number_start_,
                                                             const uint32_t& image_number_stop_,
                                                             const uint32_t& interspace_image_number_,
@@ -1087,5 +1122,102 @@ void LoopClosureEvaluator::_initializeImageConfiguration(const std::string& imag
   //ds set dimensions
   _number_of_image_rows = image.rows;
   _number_of_image_cols = image.cols;
+}
+
+PoseWithTimestampVector LoopClosureEvaluator::_getPosesFromGPSNordland(const std::string& file_name_poses_) const {
+  if (file_name_poses_ == "") {
+    return PoseWithTimestampVector();
+  }
+
+  //ds load ground truth text file
+  std::ifstream file_ground_truth(file_name_poses_, std::ifstream::in);
+
+  //ds check failure
+  if (!file_ground_truth.is_open() || !file_ground_truth.good()) {
+    std::cerr << "LoopClosureEvaluator::_getPosesFromGPSNordland|ERROR: unable to open file: " << file_name_poses_ << std::endl;
+    throw std::runtime_error("unable to open file");
+  }
+
+  //ds parse timestamped poses (visual odometry)
+  PoseWithTimestampVector poses;
+
+  //ds earths radius for local path computation
+  const double radius_earth_mean_meters = 6371000;
+  Eigen::Vector3d initial_position(Eigen::Vector3d::Zero());
+
+  //ds read line by line (nordlandsbanen csv uses carriage returns before newlines)
+  std::string buffer_line;
+  while (std::getline(file_ground_truth, buffer_line, '\r')) {
+
+    //ds replace all commas with spaces for streamed parsing
+    std::replace(buffer_line.begin(), buffer_line.end(), ',', ' ');
+    std::istringstream stream(buffer_line);
+
+    //ds if line contains text/comments - skip it
+    if (buffer_line.find("tid") != std::string::npos) {
+      continue;
+    }
+
+    //ds if line is empty - terminate
+    if (buffer_line.empty()) {
+      break;
+    }
+
+    //ds parsables
+    double tid    = 0;
+    double lat    = 0;
+    double lon    = 0;
+    double speed  = 0;
+    double course = 0;
+    double alt    = 0;
+
+    //ds parse in fixed order
+    stream >> tid >> lat >> lon >> speed >> course >> alt;
+    const double latitude_degrees  = lat/100000;
+    const double longitude_degrees = lon/100000;
+    const double altitude_meters   = alt/100;
+
+    //ds conversions
+    const double latitude_radians  = latitude_degrees/180*M_PI;
+    const double longitude_radians = longitude_degrees/180*M_PI;
+
+    //ds if initial position is not initialized yet (start map from origin)
+    if (initial_position.norm() == 0) {
+      initial_position.x() = std::tan(longitude_radians)*radius_earth_mean_meters;
+      initial_position.y() = std::tan(latitude_radians)*radius_earth_mean_meters;
+      initial_position.z() = altitude_meters;
+    }
+
+    //ds pseudo-flat coordinates
+    const double coordinate_x = std::tan(longitude_radians)*radius_earth_mean_meters-initial_position.x();
+    const double coordinate_y = std::tan(latitude_radians)*radius_earth_mean_meters-initial_position.y();
+    const double coordinate_z = altitude_meters-initial_position.z();
+
+    //ds compose isometry
+    Eigen::Isometry3d pose(Eigen::Isometry3d::Identity());
+    pose.translation().x() = coordinate_x;
+    pose.translation().y() = coordinate_y;
+    pose.translation().z() = coordinate_z;
+
+    //ds rotate into camera frame
+    Eigen::Matrix3d orientation_robot_to_camera(Eigen::Matrix3d::Identity());
+    orientation_robot_to_camera << 0, 0, 1,
+                                   -1, 0, 0,
+                                   0, -1, 0;
+    pose.linear() = orientation_robot_to_camera;
+
+    //ds add pose
+    poses.push_back(PoseWithTimestamp(pose, tid));
+  }
+  file_ground_truth.close();
+
+  //ds check if we failed to parse poses
+  if (poses.size() == 0) {
+    std::cerr << "LoopClosureEvaluator::_getPosesFromGPSNordland|ERROR: unable to parse poses from: " << file_name_poses_ << std::endl;
+    throw std::runtime_error("unable to parse poses");
+  }
+
+  std::cerr << "LoopClosureEvaluator::_getPosesFromGPSNordland|ground truth poses: " << poses.size() << " (" << file_name_poses_ << ")" << std::endl;
+  return poses;
 }
 }

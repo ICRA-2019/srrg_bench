@@ -156,12 +156,6 @@ int32_t main(int32_t argc_, char** argv_) {
     LOG_VARIABLE(maximum_essential_error)
   }
 
-  //ds we will be using the robust SIFT keypoint detector and descriptor extractor
-  cv::Ptr<cv::xfeatures2d::SIFT> sift_feature_handler = cv::xfeatures2d::SIFT::create(parameters->target_number_of_descriptors);
-
-  //ds SIFT maximum descriptor matching distance
-  const double maximum_descriptor_distance = 100.0;
-
   //ds info
   double relative_number_of_points_removed_by_gv = 0;
 
@@ -171,9 +165,9 @@ int32_t main(int32_t argc_, char** argv_) {
     //ds enable multithreading
     cv::setNumThreads(4);
 
-    //ds allocate an exhaustive matcher, L2 norm for SIFT matching
+    //ds allocate an exhaustive matcher
     std::shared_ptr<BruteforceMatcher> matcher = std::make_shared<BruteforceMatcher>(parameters->minimum_distance_between_closure_images,
-                                                                                     cv::NORM_L2);
+                                                                                     parameters->distance_norm);
 
     //ds first load all images and compute the descriptors for each of them
     const uint32_t number_of_images = parameters->evaluator->numberOfImages();
@@ -190,30 +184,82 @@ int32_t main(int32_t argc_, char** argv_) {
 
     //ds bookkeep maximum scores and associated query to reference matching
     std::vector<ResultDescriptorMatching> closures(0);
+    ImageNumberQuery image_number_query = parameters->image_number_start;
+
+    //ds for video processing
+    if (parameters->parsing_mode == "nordland") {
+      image_number_query = 0;
+
+      //ds skip images up to start number
+      while (parameters->video_player_query.grab() && image_number_query < parameters->image_number_start) {
+        ++image_number_query;
+        std::cerr << "skipped images: " << image_number_query << "\r";
+      }
+    }
 
     //ds for all images we have
     std::cerr << "computing plausible false positives using brute-force matching: " << std::endl;
     const uint32_t length_progress_bar   = 20;
     uint64_t number_of_descriptors_total = 0;
     std::vector<uint64_t> number_of_descriptors_accumulated(0);
-    for (ImageNumberQuery image_number_query = parameters->image_number_start; image_number_query < parameters->image_number_stop; ++image_number_query) {
+    while (image_number_query < parameters->image_number_stop) {
+
+      //ds for video processing
+      if (parameters->parsing_mode == "nordland") {
+
+        //ds grab the next image and check for failure
+        if (!parameters->video_player_query.grab()) {
+
+          //ds escape
+          std::cerr << "\nERROR: no more images in video stream" << std::endl;
+          break;
+        }
+      }
 
       //ds if we got a query image
       if (image_number_query%parameters->query_interspace == 0) {
 
-        //ds load image from disk
-        cv::Mat image = cv::imread(parameters->evaluator->imagePosesGroundTruth()[image_number_query]->file_name, CV_LOAD_IMAGE_GRAYSCALE);
+        //ds query image
+        cv::Mat image;
+
+        //ds for video processing
+        if (parameters->parsing_mode == "nordland") {
+
+          //ds decode image from stream
+          parameters->video_player_query.retrieve(image);
+          cv::cvtColor(image, image, CV_RGB2GRAY);
+        } else {
+
+          //ds load image from disk
+          image = cv::imread(parameters->evaluator->imagePosesGroundTruth()[image_number_query]->file_name, CV_LOAD_IMAGE_GRAYSCALE);
+        }
 
         //ds apply bayer decoding if necessary
         if (parameters->parsing_mode == "lucia" || parameters->parsing_mode == "oxford") {
           cv::cvtColor(image, image, CV_BayerGR2GRAY);
         }
 
-        //ds detect SIFT keypoints and extract SIFT descriptors
+        //ds detect keypoints
         std::vector<cv::KeyPoint> keypoints;
+        parameters->feature_detector->detect(image, keypoints);
+
+        //ds sort keypoints descendingly by response value (for culling after descriptor computation)
+        std::sort(keypoints.begin(), keypoints.end(), [](const cv::KeyPoint& a_, const cv::KeyPoint& b_){return a_.response > b_.response;});
+
+        //ds compute descriptors
         cv::Mat descriptors;
-        cv::Mat mask(image.rows, image.cols, CV_8UC1, cv::Scalar(1));
-        sift_feature_handler->detectAndCompute(image, mask, keypoints, descriptors);
+        parameters->descriptor_extractor->compute(image, keypoints, descriptors);
+
+        //ds check insufficient descriptor number
+        if (keypoints.size() < parameters->target_number_of_descriptors) {
+          std::cerr << "\nWARNING: insufficient number of descriptors computed: " << keypoints.size()
+                    << " < " << parameters->target_number_of_descriptors << ", adjust detector threshold (skipping this image: " << image_number_query << ")" << std::endl;
+          continue;
+        }
+
+        //ds rebuild descriptor matrix and keypoints vector
+        keypoints.resize(parameters->target_number_of_descriptors);
+        descriptors = descriptors(cv::Rect(0, 0, descriptors.cols, parameters->target_number_of_descriptors));
 
         //ds backup keypoints for geometric verification
         keypoints_per_image.insert(std::make_pair(image_number_query, keypoints));
@@ -224,7 +270,7 @@ int32_t main(int32_t argc_, char** argv_) {
 
         //ds query against all past images, retrieving closures with relative scores
         std::vector<ResultDescriptorMatching> closures_current_query(0);
-        matcher->query(descriptors, image_number_query, maximum_descriptor_distance, closures_current_query);
+        matcher->query(descriptors, image_number_query, parameters->maximum_distance_hamming, closures_current_query);
 
         //ds update confusion matrix for the current query
         for (ResultDescriptorMatching& result: closures_current_query) {
@@ -318,6 +364,7 @@ int32_t main(int32_t argc_, char** argv_) {
                         << " descriptors: " << number_of_descriptors_total
                         << " (average: " << static_cast<double>(number_of_descriptors_total)/matcher->numberOfQueries() << ")"
                         << " | current processing time (s): " << matcher->durationsSecondsQueryAndTrain().back() << "\r";
+      ++image_number_query;
     }
     std::cerr << std::endl;
     if (parameters->use_gui) {
@@ -351,8 +398,9 @@ int32_t main(int32_t argc_, char** argv_) {
     //ds file suffix
     const std::string suffix = std::to_string(parameters->query_interspace) + "-"
                              + std::to_string(parameters->minimum_distance_between_closure_images) + "-"
-                             + std::to_string(static_cast<int32_t>(maximum_descriptor_distance)) + "_"
-                             + "SIFT.txt";
+                             + std::to_string(static_cast<int32_t>(parameters->maximum_distance_hamming)) + "_"
+                             + parameters->descriptor_type + "-"
+                             + std::to_string(DESCRIPTOR_SIZE_BITS) + ".txt";
 
     //ds buffers
     ClosureMap closure_map_bf;
@@ -490,6 +538,12 @@ int32_t main(int32_t argc_, char** argv_) {
 
     //ds show the viewer
     viewer->show();
+
+    //ds adjust viewer dimensions depending on dataset
+    if (parameters->parsing_mode == "nordland") {
+      viewer->standardCamera()->setZNear(1);
+      viewer->standardCamera()->setZFar(1e7);
+    }
 
     //ds while the viewer is open
     while (viewer->isVisible()) {

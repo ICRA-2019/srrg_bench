@@ -120,7 +120,7 @@ int32_t main(int32_t argc_, char** argv_) {
     return EXIT_FAILURE;
 #endif
   } else if (method_name == "bf") {
-    matcher = std::make_shared<BruteforceMatcher>(parameters->minimum_distance_between_closure_images);
+    matcher = std::make_shared<BruteforceMatcher>(parameters->minimum_distance_between_closure_images, parameters->distance_norm);
 
     //ds enable optimization and multithreading
     cv::setNumThreads(4);
@@ -176,7 +176,7 @@ int32_t main(int32_t argc_, char** argv_) {
           cv::cvtColor(image, image, CV_BayerGR2GRAY);
         }
 
-        //ds detect FAST keypoints
+        //ds detect keypoints
         std::vector<cv::KeyPoint> keypoints;
         parameters->feature_detector->detect(image, keypoints);
 

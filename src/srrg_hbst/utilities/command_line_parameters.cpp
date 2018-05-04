@@ -1,10 +1,5 @@
 #include "command_line_parameters.h"
 
-//ds easy logging macro - living from your expressiveness
-#define WRITE_VARIABLE(STREAM_, VARIABLE_) \
-  STREAM_ << #VARIABLE_ << ": " << VARIABLE_ << std::endl
-#define BAR "---------------------------------------------------------------------------------"
-
 namespace srrg_bench {
 
 void CommandLineParameters::parse(const int32_t& argc_, char** argv_) {
@@ -120,6 +115,18 @@ void CommandLineParameters::validate(std::ostream& stream_) {
     stream_ << "ERROR: no vocabulary provided (use -voc <file_descriptor_vocabulary>)" << std::endl;
     throw std::runtime_error("");
   }
+  if (parsing_mode == "nordland") {
+
+    //ds check if files are missing
+    if (folder_images.empty() || folder_images_cross.empty()) {
+      stream_ << "ERROR: no video streams provided (use -cross -images <video_query> <video_reference>)" << std::endl;
+      throw std::runtime_error("");
+    }
+    if (file_name_poses_ground_truth.empty() || file_name_poses_ground_truth_cross.empty()) {
+      stream_ << "ERROR: no GPS ground truth provided (use -poses <gps_query.csv> <gps_reference.csv>)" << std::endl;
+      throw std::runtime_error("");
+    }
+  }
 }
 
 void CommandLineParameters::write(std::ostream& stream_) {
@@ -153,23 +160,31 @@ void CommandLineParameters::write(std::ostream& stream_) {
     WRITE_VARIABLE(stream_, maximum_partitioning);
     WRITE_VARIABLE(stream_, use_random_splitting);
     WRITE_VARIABLE(stream_, use_uneven_splitting);
+    stream_ << BAR << std::endl;
   } else if (method_name == "bow") {
     WRITE_VARIABLE(stream_, file_path_vocabulary);
     WRITE_VARIABLE(stream_, use_direct_index);
     WRITE_VARIABLE(stream_, direct_index_levels);
     WRITE_VARIABLE(stream_, compute_score_only);
+    stream_ << BAR << std::endl;
   } else if (method_name == "flannlsh") {
     WRITE_VARIABLE(stream_, table_number);
     WRITE_VARIABLE(stream_, key_size);
     WRITE_VARIABLE(stream_, multi_probe_level);
+    stream_ << BAR << std::endl;
   }
   if (parsing_mode == "lucia") {
     WRITE_VARIABLE(stream_, file_name_image_timestamps);
+    stream_ << BAR << std::endl;
   } else if (parsing_mode == "oxford") {
     WRITE_VARIABLE(stream_, file_name_poses_ground_truth_cross);
     WRITE_VARIABLE(stream_, folder_images_cross);
+    stream_ << BAR << std::endl;
+  } else if (parsing_mode == "nordland") {
+    WRITE_VARIABLE(stream_, file_name_poses_ground_truth_cross);
+    WRITE_VARIABLE(stream_, folder_images_cross);
+    stream_ << BAR << std::endl;
   }
-  stream_ << BAR << std::endl;
 }
 
 void CommandLineParameters::configure(std::ostream& stream_) {
@@ -198,6 +213,23 @@ void CommandLineParameters::configure(std::ostream& stream_) {
     } else {
       evaluator->loadImagesWithPosesFromFileOxford(file_name_poses_ground_truth, folder_images);
     }
+  } else if (parsing_mode == "nordland") {
+
+    //ds open streams and exit on failure
+    if (!video_player_query.open(folder_images, cv::CAP_FFMPEG)) {
+      stream_ << "ERROR: unable to open video: " << folder_images << std::endl;
+      throw std::runtime_error("");
+    }
+    if (!video_player_reference.open(folder_images_cross, cv::CAP_FFMPEG)) {
+      stream_ << "ERROR: unable to open video: " << folder_images_cross << std::endl;
+      throw std::runtime_error("");
+    }
+
+    //ds ground truth loading (although we know that the image streams are synchronized by location)
+    evaluator->loadImagesWithPosesFromFileNordland(file_name_poses_ground_truth,
+                                                   folder_images,
+                                                   file_name_poses_ground_truth_cross,
+                                                   folder_images_cross);
   } else {
     stream_ << "ERROR: unknown selected parsing mode: '" << parsing_mode << "'" << std::endl;
     throw std::runtime_error("");
@@ -233,45 +265,62 @@ void CommandLineParameters::configure(std::ostream& stream_) {
                             minimum_distance_between_closure_images);
   }
 
-  //ds load default keypoint detector
-#if CV_MAJOR_VERSION == 2
-  feature_detector     = new cv::FastFeatureDetector(fast_detector_threshold);
-#elif CV_MAJOR_VERSION == 3
-  feature_detector = cv::FastFeatureDetector::create(fast_detector_threshold);
-#endif
-
-//ds chose descriptor extractor and matching keypoint detector if available TODO validate opencv2 compatibility
+//ds chose descriptor extractor and matching keypoint detector if available
 #if CV_MAJOR_VERSION == 2
   if (descriptor_type == "brief") {
+    feature_detector     = new cv::FastFeatureDetector(fast_detector_threshold);
     descriptor_extractor = new cv::BriefDescriptorExtractor(DESCRIPTOR_SIZE_BYTES);
+    distance_norm        = cv::NORM_HAMMING;
   } else if (descriptor_type == "orb") {
+    feature_detector     = new cv::FastFeatureDetector(fast_detector_threshold);
     descriptor_extractor = new cv::ORB();
+    distance_norm        = cv::NORM_HAMMING;
   } else if (descriptor_type == "brisk") {
+    feature_detector     = new cv::FastFeatureDetector(fast_detector_threshold);
     descriptor_extractor = new cv::BRISK();
+    distance_norm        = cv::NORM_HAMMING;
   } else if (descriptor_type == "freak") {
+    feature_detector     = new cv::FastFeatureDetector(fast_detector_threshold);
     descriptor_extractor = new cv::FREAK(); //512 bits
+    distance_norm        = cv::NORM_HAMMING;
   } else {
     stream_ << "ERROR: unknown descriptor type: " << descriptor_type << std::endl;
     throw std::runtime_error("");
   }
 #elif CV_MAJOR_VERSION == 3
   if (descriptor_type == "brief") {
+    feature_detector     = cv::FastFeatureDetector::create(fast_detector_threshold);
     descriptor_extractor = cv::xfeatures2d::BriefDescriptorExtractor::create(DESCRIPTOR_SIZE_BYTES);
+    distance_norm        = cv::NORM_HAMMING;
   } else if (descriptor_type == "orb") {
     feature_detector     = cv::ORB::create(2*target_number_of_descriptors);
     descriptor_extractor = cv::ORB::create();
+    distance_norm        = cv::NORM_HAMMING;
   } else if (descriptor_type == "brisk") {
     feature_detector     = cv::BRISK::create(2*fast_detector_threshold);
     descriptor_extractor = cv::BRISK::create();
+    distance_norm        = cv::NORM_HAMMING;
   } else if (descriptor_type == "freak") {
+    feature_detector     = cv::FastFeatureDetector::create(fast_detector_threshold);
     descriptor_extractor = cv::xfeatures2d::FREAK::create(); //512 bits
+    distance_norm        = cv::NORM_HAMMING;
   } else if (descriptor_type == "akaze") {
     feature_detector     = cv::AKAZE::create(cv::AKAZE::DESCRIPTOR_MLDB, 0, 3, fast_detector_threshold/1e4); //486 bits
     descriptor_extractor = cv::AKAZE::create(); //486 bits
+    distance_norm        = cv::NORM_HAMMING;
+  } else if (descriptor_type == "sift") {
+    feature_detector     = cv::xfeatures2d::SIFT::create(target_number_of_descriptors);
+    descriptor_extractor = cv::xfeatures2d::SIFT::create(target_number_of_descriptors);
+    distance_norm        = cv::NORM_L2;
   } else {
     stream_ << "ERROR: unknown descriptor type: " << descriptor_type << std::endl;
     throw std::runtime_error("");
   }
 #endif
+
+  //ds for nordland we use the GFTT for an even cross-season feature distribution
+  if (parsing_mode == "nordland") {
+    feature_detector = cv::GFTTDetector::create(1.5*target_number_of_descriptors, 1e-3, 10);
+  }
 }
 }
