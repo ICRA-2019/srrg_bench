@@ -281,7 +281,7 @@ int32_t main(int32_t argc_, char** argv_) {
                                                                                   parameters->maximum_descriptor_distance);
 
       std::cerr << "sample number: " << sample_number
-                << "mean completeness: " << mean_completeness_incremental
+                << " mean completeness: " << mean_completeness_incremental
                 << std::endl;
 
       //ds save result to file (we reopen it in order to not keep a file handle all the time)
