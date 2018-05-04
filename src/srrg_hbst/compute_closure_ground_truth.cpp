@@ -270,7 +270,7 @@ int32_t main(int32_t argc_, char** argv_) {
 
         //ds query against all past images, retrieving closures with relative scores
         std::vector<ResultDescriptorMatching> closures_current_query(0);
-        matcher->query(descriptors, image_number_query, parameters->maximum_distance_hamming, closures_current_query);
+        matcher->query(descriptors, image_number_query, parameters->maximum_descriptor_distance, closures_current_query);
 
         //ds update confusion matrix for the current query
         for (ResultDescriptorMatching& result: closures_current_query) {
@@ -398,7 +398,7 @@ int32_t main(int32_t argc_, char** argv_) {
     //ds file suffix
     const std::string suffix = std::to_string(parameters->query_interspace) + "-"
                              + std::to_string(parameters->minimum_distance_between_closure_images) + "-"
-                             + std::to_string(static_cast<int32_t>(parameters->maximum_distance_hamming)) + "_"
+                             + std::to_string(static_cast<int32_t>(parameters->maximum_descriptor_distance)) + "_"
                              + parameters->descriptor_type + "-"
                              + std::to_string(DESCRIPTOR_SIZE_BITS) + ".txt";
 

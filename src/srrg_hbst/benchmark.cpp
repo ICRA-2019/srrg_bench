@@ -230,7 +230,7 @@ int32_t main(int32_t argc_, char** argv_) {
         }
 
         //ds query against all past images, retrieving closures with relative scores
-        matcher->query(descriptors, image_number_query, parameters->maximum_distance_hamming, closures);
+        matcher->query(descriptors, image_number_query, parameters->maximum_descriptor_distance, closures);
 
         //ds train on the query image
         matcher->train(descriptors, image_number_query, keypoints);

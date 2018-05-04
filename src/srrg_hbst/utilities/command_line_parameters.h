@@ -57,7 +57,7 @@ class CommandLineParameters {
     //ds method details
     std::string descriptor_type           = "brief"; //ds the descriptor type for bow has to be provided with DBOW2_DESCRIPTOR_TYPE in dbow_matcher.h
     int32_t distance_norm                 = cv::NORM_HAMMING;
-    int32_t maximum_distance_hamming      = 25;
+    double maximum_descriptor_distance    = 25;
     uint32_t fast_detector_threshold      = 10;
     bool use_gui                          = false;
     uint32_t target_number_of_descriptors = 1000;
@@ -70,6 +70,7 @@ class CommandLineParameters {
     bool use_random_splitting   = false;
     bool use_uneven_splitting   = false;
     uint32_t number_of_samples  = 1;
+    uint32_t maximum_depth      = 5;
 
     //ds BoW specific
     std::string file_path_vocabulary = "";

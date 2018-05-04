@@ -151,7 +151,7 @@ int32_t main(int32_t argc_, char** argv_) {
 
       //ds query the tree for a similar matchable vector (e.g. an image)
       std::chrono::time_point<std::chrono::system_clock> time_begin = std::chrono::system_clock::now();
-      tree->match(current_matchables, matches, parameters->maximum_distance_hamming);
+      tree->match(current_matchables, matches, parameters->maximum_descriptor_distance);
       std::chrono::duration<double> duration_seconds_query = std::chrono::system_clock::now()-time_begin;
 
       //ds check for the best matching ratio in the result

@@ -70,30 +70,29 @@ int32_t main(int32_t argc_, char** argv_) {
   //ds grab configuration
   std::shared_ptr<srrg_bench::CommandLineParameters> parameters = std::make_shared<srrg_bench::CommandLineParameters>();
   parameters->parse(argc_, argv_);
+
+  //ds enforce hbst evaluation
+  parameters->method_name = "hbst";
+
+  //ds configure
   parameters->validate(std::cerr);
   parameters->configure(std::cerr);
   parameters->write(std::cerr);
 
-  //ds target maximum test depth
-  uint32_t maximum_depth = 10;
-
   //ds test mode 0: resulting neab bit-wise completeness at various depths for a bit index k
   //ds test mode 1: resulting mean completeness for multiple depths, choosing the balanced k with HBST
+  //ds test mode 2: resulting mean completeness for multiple depths, choosing k randomly with HBST, sampling a large number
   uint32_t test = 0;
 
   //ds scan the command line for configuration file input
   int32_t argc_parsed = 1;
   while(argc_parsed < argc_){
-    if (!std::strcmp(argv_[argc_parsed], "-depth")) {
-      argc_parsed++; if (argc_parsed == argc_) {break;}
-      maximum_depth = std::stoi(argv_[argc_parsed]);
-    } else if (!std::strcmp(argv_[argc_parsed], "-test")) {
+    if (!std::strcmp(argv_[argc_parsed], "-test")) {
       argc_parsed++; if (argc_parsed == argc_) {break;}
       test = std::stoi(argv_[argc_parsed]);
     }
     argc_parsed++;
   }
-  LOG_VARIABLE(maximum_depth)
   LOG_VARIABLE(test)
 
   //ds enable multithreading
@@ -107,6 +106,7 @@ int32_t main(int32_t argc_, char** argv_) {
   //ds empty tree handles
   hbst_balanced    = std::make_shared<Tree>();
   hbst_incremental = std::make_shared<Tree>();
+  Tree::Node::maximum_depth = parameters->maximum_depth;
 
   //ds compute all sets of input descriptors
   MatchableVector input_descriptors_total;
@@ -124,7 +124,7 @@ int32_t main(int32_t argc_, char** argv_) {
   LOG_VARIABLE(query_descriptors_total.size());
 
   //ds for all query descriptors
-  std::cerr << "computing total number of feasible matches N_M in root node for tau: " << parameters->maximum_distance_hamming
+  std::cerr << "computing total number of feasible matches (C_0=1) N_M in root node for tau: " << parameters->maximum_descriptor_distance
             << " complexity: " << static_cast<double>(query_descriptors_total.size())*input_descriptors_total.size() << std::endl;
   double mean_number_of_matches_per_query = 0;
   feasible_number_of_matches_per_query.clear();
@@ -135,7 +135,7 @@ int32_t main(int32_t argc_, char** argv_) {
     for (const Matchable* input_descriptor: input_descriptors_total) {
 
       //ds if the distance is within the threshold
-      if ((query_descriptor->descriptor^input_descriptor->descriptor).count() < parameters->maximum_distance_hamming) {
+      if ((query_descriptor->descriptor^input_descriptor->descriptor).count() < parameters->maximum_descriptor_distance) {
         ++feasible_number_of_matches_per_query.at(query_descriptor);
         ++mean_number_of_matches_per_query;
       }
@@ -163,11 +163,11 @@ int32_t main(int32_t argc_, char** argv_) {
                                 input_descriptors_total,
                                 splitting_bits_left,
                                 splitting_bits_right,
-                                maximum_depth,
-                                parameters->maximum_distance_hamming);
+                                parameters->maximum_depth,
+                                parameters->maximum_descriptor_distance);
 
     //ds print results
-    for (uint32_t d = 0; d < maximum_depth; ++d) {
+    for (uint32_t d = 0; d < parameters->maximum_depth; ++d) {
 
       //ds compute mean bitwise vector at each depth (i.e. at depth=1 we have 2^1, at depth=2 we have 2^2 measurements)
       const EigenBitset mean_bitwise_completeness = accumulated_bitwise_completeness_per_depth[d]/number_of_evaluated_leafs_per_depth[d];
@@ -175,7 +175,7 @@ int32_t main(int32_t argc_, char** argv_) {
       //ds save completeness to file
       std::ofstream outfile_bitwise_completeness("bitwise_completeness-"
                                                  +std::to_string(evaluator->totalNumberOfValidClosures())+"-"
-                                                 +std::to_string(parameters->maximum_distance_hamming)+"_"
+                                                 +std::to_string(parameters->maximum_descriptor_distance)+"_"
                                                  +parameters->descriptor_type+"-"+std::to_string(DESCRIPTOR_SIZE_BITS)+"_depth-"
                                                  +std::to_string(d)+".txt", std::ifstream::out);
       outfile_bitwise_completeness << "#0:BIT_INDEX 1:BIT_COMPLETENESS 2:BIT_MEAN" << std::endl;
@@ -185,7 +185,7 @@ int32_t main(int32_t argc_, char** argv_) {
       }
       outfile_bitwise_completeness.close();
     }
-  } else {
+  } else if (test == 1) {
 
     //ds initial estimate for comparison
     double completeness_first_split = 0;
@@ -193,7 +193,7 @@ int32_t main(int32_t argc_, char** argv_) {
     //ds save completeness to file
     std::ofstream outfile_cumulative_completeness("cumulative_completeness-"
                                                   +std::to_string(evaluator->totalNumberOfValidClosures())+"-"
-                                                  +std::to_string(parameters->maximum_distance_hamming)+"-"
+                                                  +std::to_string(parameters->maximum_descriptor_distance)+"-"
                                                   +parameters->descriptor_type+"-"+std::to_string(DESCRIPTOR_SIZE_BITS)+".txt", std::ifstream::out);
     outfile_cumulative_completeness << "#0:DEPTH 1:PREDICTION 2:TOTAL 3:INCREMENTAL" << std::endl;
     outfile_cumulative_completeness << std::fixed;
@@ -203,7 +203,7 @@ int32_t main(int32_t argc_, char** argv_) {
     std::printf("depth: %2i C(h) = P: %4.2f T: %4.2f I: %4.2f\n", 0, 1.0, 1.0, 1.0);
 
     //ds start trials for different depths
-    for (uint32_t depth = 1; depth < maximum_depth; ++depth) {
+    for (uint32_t depth = 1; depth < parameters->maximum_depth; ++depth) {
 
       //ds construct tree with new maximum depth (only constraint)
       hbst_balanced->clear(false);
@@ -225,11 +225,11 @@ int32_t main(int32_t argc_, char** argv_) {
       const double mean_completeness_balanced    = getMeanRelativeNumberOfMatches(hbst_balanced,
                                                                                   query_descriptors_total,
                                                                                   feasible_number_of_matches_per_query,
-                                                                                  parameters->maximum_distance_hamming);
+                                                                                  parameters->maximum_descriptor_distance);
       const double mean_completeness_incremental = getMeanRelativeNumberOfMatches(hbst_incremental,
                                                                                   query_descriptors_total,
                                                                                   feasible_number_of_matches_per_query,
-                                                                                  parameters->maximum_distance_hamming);
+                                                                                  parameters->maximum_descriptor_distance);
 
       //ds buffer first split
       if (depth == 1) {
@@ -249,6 +249,48 @@ int32_t main(int32_t argc_, char** argv_) {
                                       << mean_completeness_incremental << std::endl;
     }
     outfile_cumulative_completeness.close();
+  } else if (test == 2) {
+
+    //ds prepare result file
+    const std::string file_name_results = "completeness_monte-carlo_"
+                                        + parameters->descriptor_type + "-" + std::to_string(DESCRIPTOR_SIZE_BITS) + "_"
+                                        + "tau-" + std::to_string(static_cast<uint32_t>(parameters->maximum_descriptor_distance)) + "_"
+                                        + "depth-" + std::to_string(parameters->maximum_depth) + ".txt";
+    std::ofstream result_file(file_name_results, std::ios::trunc);
+    result_file << "#SAMPLE_NUMBER #MEAN_COMPLETENESS" << std::endl;
+    result_file.close();
+
+    //ds for each sample
+    std::cerr << "starting Monte-Carlo sampling for random split HBST completeness evaluation:" << std::endl;
+    for (uint32_t sample_number = 0; sample_number < parameters->number_of_samples; ++sample_number) {
+
+      //ds construct tree with new maximum depth (only constraint)
+      hbst_incremental->clear(false);
+
+      //ds construct incremental tree - in batches
+      for (uint64_t number_of_insertions = 0; number_of_insertions < number_of_input_images; ++number_of_insertions) {
+        hbst_incremental->add(MatchableVector(input_descriptors_total.begin()+number_of_insertions*parameters->target_number_of_descriptors,
+                                              input_descriptors_total.begin()+(number_of_insertions+1)*parameters->target_number_of_descriptors),
+                              SplittingStrategy::SplitRandomUniform);
+      }
+
+      //ds compute mean completeness
+      const double mean_completeness_incremental = getMeanRelativeNumberOfMatches(hbst_incremental,
+                                                                                  query_descriptors_total,
+                                                                                  feasible_number_of_matches_per_query,
+                                                                                  parameters->maximum_descriptor_distance);
+
+      std::cerr << "sample number: " << sample_number
+                << "mean completeness: " << mean_completeness_incremental
+                << std::endl;
+
+      //ds save result to file (we reopen it in order to not keep a file handle all the time)
+      result_file.open(file_name_results, std::ios::app);
+      result_file << sample_number << " " << mean_completeness_incremental << std::endl;
+      result_file.close();
+    }
+  } else {
+    std::cerr << "ERROR: unknown test " << test << std::endl;
   }
 
   //ds clear trees (without freeing matchables)

@@ -41,7 +41,7 @@ void CommandLineParameters::parse(const int32_t& argc_, char** argv_) {
       fast_detector_threshold = std::stoi(argv_[c]);
     } else if (!std::strcmp(argv_[c], "-m")) {
       c++; if (c == argc_) {break;}
-      maximum_distance_hamming = std::stoi(argv_[c]);
+      maximum_descriptor_distance = std::stoi(argv_[c]);
     } else if (!std::strcmp(argv_[c], "-r")) {
       c++; if (c == argc_) {break;}
       target_recall = std::stod(argv_[c]);
@@ -78,6 +78,9 @@ void CommandLineParameters::parse(const int32_t& argc_, char** argv_) {
     } else if (!std::strcmp(argv_[c], "-leaf-size") || !std::strcmp(argv_[c], "-ls")) {
       c++; if (c == argc_) {break;}
       maximum_leaf_size = std::stoi(argv_[c]);
+    } else if (!std::strcmp(argv_[c], "-depth")) {
+      c++; if (c == argc_) {break;}
+      maximum_depth = std::stoi(argv_[c]);
     } else if (!std::strcmp(argv_[c], "-display-scale") || !std::strcmp(argv_[c], "-ds")) {
       c++; if (c == argc_) {break;}
       display_scale = std::stod(argv_[c]);
@@ -148,7 +151,7 @@ void CommandLineParameters::write(std::ostream& stream_) {
   WRITE_VARIABLE(stream_, descriptor_type);
   WRITE_VARIABLE(stream_, DESCRIPTOR_SIZE_BYTES);
   WRITE_VARIABLE(stream_, DESCRIPTOR_SIZE_BITS);
-  WRITE_VARIABLE(stream_, maximum_distance_hamming);
+  WRITE_VARIABLE(stream_, maximum_descriptor_distance);
   WRITE_VARIABLE(stream_, fast_detector_threshold);
   WRITE_VARIABLE(stream_, use_gui);
   WRITE_VARIABLE(stream_, target_number_of_descriptors);
@@ -160,6 +163,7 @@ void CommandLineParameters::write(std::ostream& stream_) {
     WRITE_VARIABLE(stream_, maximum_partitioning);
     WRITE_VARIABLE(stream_, use_random_splitting);
     WRITE_VARIABLE(stream_, use_uneven_splitting);
+    WRITE_VARIABLE(stream_, maximum_depth);
     stream_ << BAR << std::endl;
   } else if (method_name == "bow") {
     WRITE_VARIABLE(stream_, file_path_vocabulary);
