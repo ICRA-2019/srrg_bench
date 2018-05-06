@@ -36,6 +36,9 @@ void CommandLineParameters::parse(const int32_t& argc_, char** argv_) {
     } else if (!std::strcmp(argv_[c], "-mode")) {
       c++; if (c == argc_) {break;}
       parsing_mode = argv_[c];
+    } else if (!std::strcmp(argv_[c], "-threads")) {
+      c++; if (c == argc_) {break;}
+      number_of_openmp_threads = std::stoi(argv_[c]);
     } else if (!std::strcmp(argv_[c], "-t")) {
       c++; if (c == argc_) {break;}
       fast_detector_threshold = std::stoi(argv_[c]);

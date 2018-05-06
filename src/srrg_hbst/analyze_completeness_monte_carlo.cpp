@@ -1,3 +1,4 @@
+#include <omp.h>
 #include "utilities/command_line_parameters.h"
 #include "srrg_hbst_types/binary_tree.hpp"
 
@@ -12,7 +13,7 @@ typedef srrg_hbst::BinaryTree<Node> Tree;
 
 
 
-void loadMatchables(MatchableVector& matchables_,
+void loadMatchables(MatchableVector& matchables_total_,
                     const std::set<const srrg_bench::ImageWithPose*>& images_,
                     const std::shared_ptr<srrg_bench::CommandLineParameters> parameters_);
 
@@ -22,7 +23,7 @@ const uint64_t getNumberOfMatches(const Matchable* query_descriptor_,
 
 const double getMeanRelativeNumberOfMatches(const std::shared_ptr<Tree> tree_,
                                             const MatchableVector& query_descriptors_,
-                                            const std::map<const Matchable*, uint64_t>& feasible_number_of_matches_per_query_,
+                                            const uint64_t* feasible_number_of_matches_per_query_,
                                             const uint32_t& maximum_distance_matching_);
 
 int32_t main(int32_t argc_, char** argv_) {
@@ -50,8 +51,14 @@ int32_t main(int32_t argc_, char** argv_) {
   parameters->configure(std::cerr);
   parameters->write(std::cerr);
 
-  //ds enable multithreading
-  cv::setNumThreads(4);
+  //ds configure openmp
+  omp_set_dynamic(0);
+  omp_set_num_threads(parameters->number_of_openmp_threads);
+  #pragma omp parallel
+  {
+    #pragma omp master
+    LOG_VARIABLE(omp_get_num_threads());
+  }
 
   //ds compute all sets of input descriptors
   MatchableVector input_descriptors_total;
@@ -71,34 +78,33 @@ int32_t main(int32_t argc_, char** argv_) {
   //ds for all query descriptors
   std::cerr << "computing total number of feasible matches (C_0=1) N_M in root node for tau: " << parameters->maximum_descriptor_distance
             << " complexity: " << static_cast<double>(query_descriptors_total.size())*input_descriptors_total.size() << std::endl;
-  double mean_number_of_matches_per_query = 0;
-  std::map<const Matchable*, uint64_t> feasible_number_of_matches_per_query;
-  feasible_number_of_matches_per_query.clear();
-  for (const Matchable* query_descriptor: query_descriptors_total) {
-    feasible_number_of_matches_per_query.insert(std::make_pair(query_descriptor, 0));
+  uint64_t* feasible_number_of_matches_per_query = new uint64_t[query_descriptors_total.size()];
+  uint64_t total_number_of_matches = 0;
+  #pragma omp parallel for reduction(+:total_number_of_matches)
+  for (uint64_t index_query = 0; index_query < query_descriptors_total.size(); ++index_query) {
+    feasible_number_of_matches_per_query[index_query] = 0;
 
-    //ds against all input descriptors
+    //ds current query descriptor
+    const Matchable* query_descriptor = query_descriptors_total[index_query];
+
+    //ds match against ALL input descriptors (maximum completeness)
     for (const Matchable* input_descriptor: input_descriptors_total) {
 
       //ds if the distance is within the threshold
       if ((query_descriptor->descriptor^input_descriptor->descriptor).count() < parameters->maximum_descriptor_distance) {
-        ++feasible_number_of_matches_per_query.at(query_descriptor);
-        ++mean_number_of_matches_per_query;
+        ++feasible_number_of_matches_per_query[index_query];
       }
     }
-    if (feasible_number_of_matches_per_query.size()%1000 == 0) {
-      std::cerr << "completed: " << feasible_number_of_matches_per_query.size() << "/" << query_descriptors_total.size() << std::endl;
-    }
+    total_number_of_matches += feasible_number_of_matches_per_query[index_query];
   }
-  mean_number_of_matches_per_query /= input_descriptors_total.size();
-  LOG_VARIABLE(mean_number_of_matches_per_query);
+  std::cerr << "average number of matches per query: " << static_cast<double>(total_number_of_matches)/query_descriptors_total.size() << std::endl;
 
   //ds prepare result file
   const std::string file_name_results = "completeness_monte-carlo_"
                                       + parameters->descriptor_type + "-" + std::to_string(DESCRIPTOR_SIZE_BITS) + "_"
                                       + "tau-" + std::to_string(static_cast<uint32_t>(parameters->maximum_descriptor_distance)) + ".txt";
   std::ofstream result_file(file_name_results, std::ios::trunc);
-  result_file << "#SAMPLE_NUMBER #MEAN_COMPLETENESS" << std::endl;
+  result_file << "#SAMPLE_NUMBER #MEAN_COMPLETENESS_DEPTH_0 #MEAN_COMPLETENESS_DEPTH_1 #MEAN_COMPLETENESS_DEPTH_.." << std::endl;
   result_file.close();
 
   //ds empty tree handle
@@ -160,15 +166,16 @@ int32_t main(int32_t argc_, char** argv_) {
   for (const Matchable* matchable: input_descriptors_total) {
     delete matchable;
   }
+  delete [] feasible_number_of_matches_per_query;
 
   //ds done
   return EXIT_SUCCESS;
 }
 
-void loadMatchables(MatchableVector& matchables_,
+void loadMatchables(MatchableVector& matchables_total_,
                     const std::set<const srrg_bench::ImageWithPose*>& images_,
                     const std::shared_ptr<srrg_bench::CommandLineParameters> parameters_) {
-  matchables_.clear();
+  matchables_total_.clear();
   for (const srrg_bench::ImageWithPose* image_with_pose: images_) {
     std::vector<cv::KeyPoint> keypoints;
     cv::Mat descriptors;
@@ -194,8 +201,9 @@ void loadMatchables(MatchableVector& matchables_,
 
     //ds compute matchables and store them
     MatchableVector matchables_current(Tree::getMatchablesWithIndex(descriptors(cv::Rect(0, 0, descriptors.cols, parameters_->target_number_of_descriptors)),
-                                                                    image_with_pose->image_number));
-    matchables_.insert(matchables_.end(), matchables_current.begin(), matchables_current.end());
+                                                                    image_with_pose->image_number,
+                                                                    matchables_total_.size()));
+    matchables_total_.insert(matchables_total_.end(), matchables_current.begin(), matchables_current.end());
     std::cerr << "x";
   }
 }
@@ -214,14 +222,16 @@ const uint64_t getNumberOfMatches(const Matchable* query_descriptor_,
 
 const double getMeanRelativeNumberOfMatches(const std::shared_ptr<Tree> tree_,
                                             const MatchableVector& query_descriptors_,
-                                            const std::map<const Matchable*, uint64_t>& feasible_number_of_matches_per_query_,
+                                            const uint64_t* feasible_number_of_matches_per_query_,
                                             const uint32_t& maximum_distance_matching_) {
 
   //ds relative number of matches summed up over all queries
   double relative_number_of_matches_accumulated = 0;
 
   //ds for each query descriptor
-  for (const Matchable* query_descriptor: query_descriptors_) {
+  #pragma omp parallel for reduction(+:relative_number_of_matches_accumulated)
+  for (uint64_t index_query = 0; index_query < query_descriptors_.size(); ++index_query) {
+    const Matchable* query_descriptor = query_descriptors_[index_query];
 
     //ds traverse the tree until no children are available -> we hit a leaf
     const Node* iterator = tree_->root();
@@ -237,8 +247,9 @@ const double getMeanRelativeNumberOfMatches(const std::shared_ptr<Tree> tree_,
     uint64_t number_of_matches = getNumberOfMatches(query_descriptor, iterator->matchables, maximum_distance_matching_);
 
     //ds compute completeness
-    if (feasible_number_of_matches_per_query_.at(query_descriptor) > 0) {
-      relative_number_of_matches_accumulated += static_cast<double>(number_of_matches)/feasible_number_of_matches_per_query_.at(query_descriptor);
+    const uint64_t feasible_number_of_matches = feasible_number_of_matches_per_query_[query_descriptor->identifier];
+    if (feasible_number_of_matches > 0) {
+      relative_number_of_matches_accumulated += static_cast<double>(number_of_matches)/feasible_number_of_matches;
     } else {
       relative_number_of_matches_accumulated += 1;
     }

@@ -46,6 +46,7 @@ class CommandLineParameters {
     uint32_t image_number_start                 = 0;
     uint32_t image_number_stop                  = 0;
     uint32_t number_of_images_to_process        = 0;
+    uint32_t number_of_openmp_threads           = 4;
 
     //ds ground truth details
     uint32_t query_interspace                        = 1;

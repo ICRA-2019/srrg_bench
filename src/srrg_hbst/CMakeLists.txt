@@ -56,5 +56,6 @@ if(srrg_hbst_FOUND)
   target_link_libraries(analyze_completeness srrg_bench_loop_closure_evaluator_library)
   
   add_executable(analyze_completeness_monte_carlo analyze_completeness_monte_carlo.cpp)
-  target_link_libraries(analyze_completeness_monte_carlo srrg_bench_loop_closure_evaluator_library)
+  target_compile_options(analyze_completeness_monte_carlo PUBLIC -fopenmp)
+  target_link_libraries(analyze_completeness_monte_carlo srrg_bench_loop_closure_evaluator_library -fopenmp)
 endif()
