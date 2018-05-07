@@ -115,17 +115,22 @@ int32_t main(int32_t argc_, char** argv_) {
   for (uint32_t sample_number = 0; sample_number < parameters->number_of_samples; ++sample_number) {
     std::cerr << "sample number: " << sample_number << std::endl;
     result_file.open(file_name_results, std::ios::app);
-    result_file << sample_number;
+    result_file << sample_number << " " << 1;
     result_file.close();
 
-    //ds for each feasible maximum depth starting from 0 (verification of trivial result 1)
-    for (uint32_t maximum_depth = 0; maximum_depth < parameters->maximum_depth; ++maximum_depth) {
+    //ds trivial
+    std::cerr << " - depth: " << 0
+              << " mean completeness: " << 1
+              << std::endl;
+
+    //ds for each feasible maximum depth starting from 1
+    for (uint32_t depth = 1; depth < parameters->maximum_depth; ++depth) {
 
       //ds clear previous structure (without deallocation memory for matchables)
       hbst_incremental->clear(false);
 
       //ds construct tree with new maximum depth (only constraint)
-      Tree::Node::maximum_depth = maximum_depth;
+      Tree::Node::maximum_depth = depth;
 
       //ds construct incremental tree - in batches
       for (uint64_t number_of_insertions = 0; number_of_insertions < number_of_input_images; ++number_of_insertions) {
@@ -140,7 +145,7 @@ int32_t main(int32_t argc_, char** argv_) {
                                                                                   feasible_number_of_matches_per_query,
                                                                                   parameters->maximum_descriptor_distance);
 
-      std::cerr << " - depth: " << maximum_depth
+      std::cerr << " - depth: " << depth
                 << " mean completeness: " << mean_completeness_incremental
                 << std::endl;
 

@@ -81,7 +81,6 @@ int32_t main(int32_t argc_, char** argv_) {
 
   //ds test mode 0: resulting neab bit-wise completeness at various depths for a bit index k
   //ds test mode 1: resulting mean completeness for multiple depths, choosing the balanced k with HBST
-  //ds test mode 2: resulting mean completeness for multiple depths, choosing k randomly with HBST, sampling a large number
   uint32_t test = 0;
 
   //ds scan the command line for configuration file input
@@ -249,46 +248,6 @@ int32_t main(int32_t argc_, char** argv_) {
                                       << mean_completeness_incremental << std::endl;
     }
     outfile_cumulative_completeness.close();
-  } else if (test == 2) {
-
-    //ds prepare result file
-    const std::string file_name_results = "completeness_monte-carlo_"
-                                        + parameters->descriptor_type + "-" + std::to_string(DESCRIPTOR_SIZE_BITS) + "_"
-                                        + "tau-" + std::to_string(static_cast<uint32_t>(parameters->maximum_descriptor_distance)) + "_"
-                                        + "depth-" + std::to_string(parameters->maximum_depth) + ".txt";
-    std::ofstream result_file(file_name_results, std::ios::trunc);
-    result_file << "#SAMPLE_NUMBER #MEAN_COMPLETENESS" << std::endl;
-    result_file.close();
-
-    //ds for each sample
-    std::cerr << "starting Monte-Carlo sampling for random split HBST completeness evaluation:" << std::endl;
-    for (uint32_t sample_number = 0; sample_number < parameters->number_of_samples; ++sample_number) {
-
-      //ds construct tree with new maximum depth (only constraint)
-      hbst_incremental->clear(false);
-
-      //ds construct incremental tree - in batches
-      for (uint64_t number_of_insertions = 0; number_of_insertions < number_of_input_images; ++number_of_insertions) {
-        hbst_incremental->add(MatchableVector(input_descriptors_total.begin()+number_of_insertions*parameters->target_number_of_descriptors,
-                                              input_descriptors_total.begin()+(number_of_insertions+1)*parameters->target_number_of_descriptors),
-                              SplittingStrategy::SplitRandomUniform);
-      }
-
-      //ds compute mean completeness
-      const double mean_completeness_incremental = getMeanRelativeNumberOfMatches(hbst_incremental,
-                                                                                  query_descriptors_total,
-                                                                                  feasible_number_of_matches_per_query,
-                                                                                  parameters->maximum_descriptor_distance);
-
-      std::cerr << "sample number: " << sample_number
-                << " mean completeness: " << mean_completeness_incremental
-                << std::endl;
-
-      //ds save result to file (we reopen it in order to not keep a file handle all the time)
-      result_file.open(file_name_results, std::ios::app);
-      result_file << sample_number << " " << mean_completeness_incremental << std::endl;
-      result_file.close();
-    }
   } else {
     std::cerr << "ERROR: unknown test " << test << std::endl;
   }

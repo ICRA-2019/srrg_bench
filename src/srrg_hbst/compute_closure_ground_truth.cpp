@@ -254,6 +254,7 @@ int32_t main(int32_t argc_, char** argv_) {
         if (keypoints.size() < parameters->target_number_of_descriptors) {
           std::cerr << "\nWARNING: insufficient number of descriptors computed: " << keypoints.size()
                     << " < " << parameters->target_number_of_descriptors << ", adjust detector threshold (skipping this image: " << image_number_query << ")" << std::endl;
+          ++image_number_query;
           continue;
         }
 
