@@ -15,8 +15,9 @@ Affiliated datasets: <br>
 - [Nordlandsbanen](https://nrkbeta.no/2013/01/15/nordlandsbanen-minute-by-minute-season-by-season/)
 
 Supported environments: <br>
-- Ubuntu 14.04 with gcc/g++-5 or higher
-- Ubuntu 16.04 with gcc/g++-5 or higher
+- Ubuntu 14.04 with gcc 5 or higher
+- Ubuntu 16.04 with gcc 5 or higher
+- Ubuntu 18.04 with gcc 7 or higher
 
 Reference software (required if a comparison is desired): <br>
 - DBoW2: https://github.com/dorian3d/DBoW2
