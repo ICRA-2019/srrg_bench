@@ -24,7 +24,21 @@ Reference software (required if a comparison is desired): <br>
 - iBoW: https://github.com/emiliofidalgo/obindex2
 
 ### SRRG HBST
-Image Retrieval (Closure) ground truth computation examples: <br>
+Analytical tools
+- Monte-Carlo BST sampling (random bit selection, for **all** nodes) with OpenMP support:
+
+        rosrun srrg_bench analyze_completeness_monte_carlo -mode kitti -images 06.txt.d/ -poses 06_gt.txt -descriptor brief -depth 10 -samples 100 -threads 4
+
+- Complete split evaluation in leafs (mean bit selection for nodes):
+
+        rosrun srrg_bench analyze_completeness_leafs -mode kitti -images 06.txt.d/ -poses 06_gt.txt -descriptor brief -depth 10
+
+- Mean split evaluation (proposed in HBST, balanced and incremental construction):
+
+        rosrun srrg_bench analyze_completeness_hbst -mode kitti -images 06.txt.d/ -poses 06_gt.txt -descriptor brief -depth 10
+
+---
+Image Retrieval (Closure) ground truth computation examples
 - KITTI sequence 06:
 
         rosrun srrg_bench compute_closure_ground_truth -mode kitti -images 06.txt.d/ -poses 06_gt.txt
@@ -50,7 +64,7 @@ when `-geometric-verification <camera_calibration>` or `-gv <camera_calibration>
 Note that the verification requires the camera calibration (e.g. `calib.txt` for KITTI) as additional parameter.
 
 ---
-Benchmarks: <br>
+Benchmarks
 - KITTI sequence 00 for HBST on pure trajectory ground truth:
   
         rosrun srrg_bench benchmark -mode kitti -images 00.txt.d/ -poses 00_gt.txt -method hbst
