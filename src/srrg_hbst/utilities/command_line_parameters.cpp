@@ -81,6 +81,9 @@ void CommandLineParameters::parse(const int32_t& argc_, char** argv_) {
     } else if (!std::strcmp(argv_[c], "-leaf-size") || !std::strcmp(argv_[c], "-ls")) {
       c++; if (c == argc_) {break;}
       maximum_leaf_size = std::stoi(argv_[c]);
+    } else if (!std::strcmp(argv_[c], "-multi-probe-level") || !std::strcmp(argv_[c], "-mpl")) {
+      c++; if (c == argc_) {break;}
+      multi_probe_level = std::stoi(argv_[c]);
     } else if (!std::strcmp(argv_[c], "-depth")) {
       c++; if (c == argc_) {break;}
       maximum_depth = std::stoi(argv_[c]);

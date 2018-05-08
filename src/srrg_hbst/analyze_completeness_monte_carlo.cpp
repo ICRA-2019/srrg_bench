@@ -31,6 +31,7 @@ int32_t main(int32_t argc_, char** argv_) {
   //ds validate input
   if (argc_ < 5) {
     std::cerr << "invalid call - please use: ./analyze_completeness_monte_carlo "
+                 "-mode kitti"
                  "-images <images_folder> "
                  "-poses <poses_ground_truth> "
                  "-depth <maximum_depth> "
