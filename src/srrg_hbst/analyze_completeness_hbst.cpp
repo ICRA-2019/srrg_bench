@@ -14,6 +14,7 @@ typedef srrg_hbst::BinaryTree<Node> Tree;
 std::shared_ptr<srrg_bench::LoopClosureEvaluator> evaluator;
 cv::Ptr<cv::FeatureDetector> feature_detector;
 cv::Ptr<cv::DescriptorExtractor> descriptor_extractor;
+const uint32_t number_of_checked_bits_for_mean_guess = 32;
 
 
 
@@ -114,8 +115,7 @@ int32_t main(int32_t argc_, char** argv_) {
 
   //ds save completeness to file
   std::ofstream outfile_cumulative_completeness("cumulative_completeness-"
-                                                +std::to_string(evaluator->totalNumberOfValidClosures())+"-"
-                                                +std::to_string(parameters->maximum_descriptor_distance)+"-"
+                                                +std::to_string(static_cast<uint32_t>(parameters->maximum_descriptor_distance))+"-"
                                                 +parameters->descriptor_type+"-"+std::to_string(DESCRIPTOR_SIZE_BITS)+".txt", std::ifstream::out);
   outfile_cumulative_completeness << "#0:DEPTH 1:PREDICTION 2:TOTAL 3:INCREMENTAL" << std::endl;
   outfile_cumulative_completeness << std::fixed;
@@ -279,7 +279,7 @@ const double getMeanRelativeNumberOfMatches(const MatchableVector& query_descrip
   double accumulated_mean_completeness = 0;
 
   //ds for each bit index
-  for (uint32_t k = 0; k < DESCRIPTOR_SIZE_BITS; ++k) {
+  for (uint32_t k = 0; k < number_of_checked_bits_for_mean_guess; ++k) {
 
     //ds partition the input set according to the checked bit
     MatchableVector reference_descriptors_left;
@@ -321,5 +321,5 @@ const double getMeanRelativeNumberOfMatches(const MatchableVector& query_descrip
   }
 
   //ds compute mean completeness over all queries for the current bit index
-  return accumulated_mean_completeness/DESCRIPTOR_SIZE_BITS;
+  return accumulated_mean_completeness/number_of_checked_bits_for_mean_guess;
 }
