@@ -409,7 +409,6 @@ int32_t main(int32_t argc_, char** argv_) {
     ImageNumber total_number_of_valid_closures = 0;
 
     //ds compute plausible false positives appearing before reaching 100% recall
-    std::vector<uint64_t> number_of_matches_per_closure(0);
     for (const ResultDescriptorMatching& result: closures) {
 
       //ds compute current recall rate
@@ -442,19 +441,6 @@ int32_t main(int32_t argc_, char** argv_) {
 
       //ds always added at this point
       ++total_number_of_valid_closures;
-      number_of_matches_per_closure.push_back(result.result_image_retrieval.number_of_matches_relative*parameters->target_number_of_descriptors);
-    }
-
-    //ds if we have valid closures
-    if (number_of_matches_per_closure.size() > 0) {
-
-      //ds dump top number of matches
-      std::ofstream outfile_matches("number-of-matches_bf-"+suffix, std::ifstream::out);
-      std::sort(number_of_matches_per_closure.begin(), number_of_matches_per_closure.end(), std::greater<uint64_t>());
-      for (uint64_t u = 0; u < number_of_matches_per_closure.size(); ++u) {
-        outfile_matches << number_of_matches_per_closure[u] << std::endl;
-      }
-      outfile_matches.close();
     }
 
     //ds dump closures to file: #QUERY #REFERENCE
@@ -485,32 +471,6 @@ int32_t main(int32_t argc_, char** argv_) {
     }
     outfile_confusion_matrix.close();
     std::cerr << "Brute-force confusion matrix saved to: " << outfile_confusion_matrix_name << std::endl;
-
-    //ds compute mean, variance and standard deviation for query and train duration
-    double mean_duration_seconds = 0;
-    for (const double& duration_seconds: matcher->durationsSecondsQueryAndTrain()) {
-      mean_duration_seconds += duration_seconds;
-    }
-    mean_duration_seconds /= matcher->durationsSecondsQueryAndTrain().size();
-    double variance_duration = 0;
-    for (const double& duration_seconds: matcher->durationsSecondsQueryAndTrain()) {
-      variance_duration += (duration_seconds-mean_duration_seconds)*(duration_seconds-mean_duration_seconds);
-    }
-    variance_duration /= matcher->durationsSecondsQueryAndTrain().size();
-    const double standard_deviation_duration = std::sqrt(variance_duration);
-
-    //ds save duration statistics to file (appending!)
-    std::ofstream outfile_duration_statistics("duration_statistics.txt", std::ifstream::app);
-    outfile_duration_statistics << suffix << " " << mean_duration_seconds << " " << standard_deviation_duration << std::endl;
-    outfile_duration_statistics.close();
-
-    //ds save timing results to file with continuous image indices for plotting
-    std::ofstream outfile_duration("duration_bf-"+ suffix, std::ifstream::out);
-    outfile_duration << "#IMAGE_NUMBER DESCRIPTOR_COUNT DURATION_MATCH_AND_ADD_SECONDS" << std::endl;
-    for (uint64_t index_query = 0; index_query < matcher->durationsSecondsQueryAndTrain().size(); ++index_query) {
-      outfile_duration << index_query << " " << number_of_descriptors_accumulated[index_query] << " " << matcher->durationsSecondsQueryAndTrain()[index_query] << std::endl;
-    }
-    outfile_duration.close();
 
     //ds free score matrix
     for (ImageNumberQuery row = 0; row < number_of_images; ++row) {

@@ -332,5 +332,10 @@ void CommandLineParameters::configure(std::ostream& stream_) {
   if (parsing_mode == "nordland") {
     feature_detector = cv::GFTTDetector::create(1.5*target_number_of_descriptors, 1e-3, 10);
   }
+
+  //ds increase hash key length for multiprobing
+  if (multi_probe_level > 0) {
+    key_size += multi_probe_level*5;
+  }
 }
 }

@@ -113,7 +113,8 @@ int32_t main(int32_t argc_, char** argv_) {
     //ds store multi-probe level in name (0 indicates uniform LSH)
     method_name += ("-"+std::to_string(parameters->multi_probe_level));
 
-    //ds enable optimization
+    //ds enable optimization and multithreading
+    cv::setNumThreads(4);
     cv::setUseOptimized(true);
   } else if (method_name == "flannhc") {
 #ifdef SRRG_BENCH_BUILD_FLANNHC
