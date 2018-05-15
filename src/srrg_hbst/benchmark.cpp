@@ -107,7 +107,7 @@ int32_t main(int32_t argc_, char** argv_) {
   } else if (method_name == "flannlsh") {
     matcher = std::make_shared<FLANNLSHMatcher>(parameters->minimum_distance_between_closure_images,
                                                 parameters->table_number,
-                                                parameters->key_size,
+                                                parameters->hash_key_size,
                                                 parameters->multi_probe_level);
 
     //ds store multi-probe level in name (0 indicates uniform LSH)

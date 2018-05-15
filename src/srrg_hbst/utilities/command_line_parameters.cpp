@@ -84,6 +84,9 @@ void CommandLineParameters::parse(const int32_t& argc_, char** argv_) {
     } else if (!std::strcmp(argv_[c], "-multi-probe-level") || !std::strcmp(argv_[c], "-mpl")) {
       c++; if (c == argc_) {break;}
       multi_probe_level = std::stoi(argv_[c]);
+    } else if (!std::strcmp(argv_[c], "-hash-key-length") || !std::strcmp(argv_[c], "-hkl")) {
+      c++; if (c == argc_) {break;}
+      hash_key_size = std::stoi(argv_[c]);
     } else if (!std::strcmp(argv_[c], "-depth")) {
       c++; if (c == argc_) {break;}
       maximum_depth = std::stoi(argv_[c]);
@@ -179,7 +182,7 @@ void CommandLineParameters::write(std::ostream& stream_) {
     stream_ << BAR << std::endl;
   } else if (method_name == "flannlsh") {
     WRITE_VARIABLE(stream_, table_number);
-    WRITE_VARIABLE(stream_, key_size);
+    WRITE_VARIABLE(stream_, hash_key_size);
     WRITE_VARIABLE(stream_, multi_probe_level);
     stream_ << BAR << std::endl;
   }
@@ -331,11 +334,6 @@ void CommandLineParameters::configure(std::ostream& stream_) {
   //ds for nordland we use the GFTT for an even cross-season feature distribution
   if (parsing_mode == "nordland") {
     feature_detector = cv::GFTTDetector::create(1.5*target_number_of_descriptors, 1e-3, 10);
-  }
-
-  //ds increase hash key length for multiprobing
-  if (multi_probe_level > 0) {
-    key_size += multi_probe_level*5;
   }
 }
 }

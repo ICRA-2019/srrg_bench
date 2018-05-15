@@ -81,8 +81,8 @@ class CommandLineParameters {
 
     //ds LSH specific
     int32_t table_number      = 10;
-    int32_t key_size          = 20;
-    int32_t multi_probe_level = 0;
+    int32_t hash_key_size     = 20;
+    int32_t multi_probe_level = 2;
 
     //ds lucia specific
     std::string file_name_image_timestamps = "";

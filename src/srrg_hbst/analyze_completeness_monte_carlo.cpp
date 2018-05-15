@@ -130,8 +130,10 @@ int32_t main(int32_t argc_, char** argv_) {
       //ds clear previous structure (without deallocation memory for matchables)
       hbst_incremental->clear(false);
 
-      //ds construct tree with new maximum depth (only constraint)
-      Tree::Node::maximum_depth = depth;
+      //ds construct tree with new maximum depth and no other constraints
+      Tree::Node::maximum_depth        = depth;
+      Tree::Node::maximum_leaf_size    = 1;
+      Tree::Node::maximum_partitioning = 0.5;
 
       //ds construct incremental tree - in batches
       for (uint64_t number_of_insertions = 0; number_of_insertions < number_of_input_images; ++number_of_insertions) {

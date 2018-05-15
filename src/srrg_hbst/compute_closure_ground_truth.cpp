@@ -55,8 +55,7 @@ int32_t main(int32_t argc_, char** argv_) {
 
   //ds relax parameters if geometric verification is performed
   if (compute_geometric_verification) {
-    parameters->maximum_difference_position_meters *= 5;
-    parameters->maximum_difference_angle_radians   *= 5;
+    parameters->maximum_difference_angle_radians *= 2;
   }
 
   //ds setup

@@ -5,7 +5,8 @@ namespace srrg_bench {
 FLANNLSHMatcher::FLANNLSHMatcher(const uint32_t& minimum_distance_between_closure_images_,
                                  const int32_t& table_number_,
                                  const int32_t& key_size_,
-                                 const int32_t& multi_probe_level_): _matcher(new cv::FlannBasedMatcher(new cv::flann::LshIndexParams(table_number_, key_size_, multi_probe_level_))),
+                                 const int32_t& multi_probe_level_): _matcher(new cv::FlannBasedMatcher(cv::makePtr<cv::flann::LshIndexParams>(table_number_, key_size_, multi_probe_level_),
+                                                                                                        cv::makePtr<cv::flann::SearchParams>(32))),
                                                                      _minimum_distance_between_closure_images(minimum_distance_between_closure_images_) {
   _train_descriptor_details.clear();
   _image_numbers.clear();
@@ -30,7 +31,7 @@ void FLANNLSHMatcher::train(const cv::Mat& train_descriptors_,
 
   //ds bookkeep added descriptors
   _image_numbers.insert(std::make_pair(_train_descriptor_details.size(), image_number_));
-  _train_descriptor_details.insert(std::make_pair(image_number_, std::make_pair(train_descriptors_.rows, std::set<int32_t>())));
+  _train_descriptor_details.insert(std::make_pair(image_number_, std::set<int32_t>()));
 }
 
 void FLANNLSHMatcher::query(const cv::Mat& query_descriptors_,
@@ -47,8 +48,8 @@ void FLANNLSHMatcher::query(const cv::Mat& query_descriptors_,
   _durations_seconds_query_and_train.push_back(TOC(_time_begin).count());
 
   //ds clear bookkeeping to block N query descriptor to 1 train descriptor matches (manual crosscheck)
-  for (std::pair<ImageNumberTrain, std::pair<uint64_t, std::set<int32_t>>> element: _train_descriptor_details) {
-    element.second.second.clear();
+  for (std::pair<ImageNumberTrain, std::set<int32_t>> element: _train_descriptor_details) {
+    element.second.clear();
   }
 
   //ds check for the best matching ratio over all neighbors
@@ -57,12 +58,18 @@ void FLANNLSHMatcher::query(const cv::Mat& query_descriptors_,
     for (const std::vector<cv::DMatch>& matches: k_matches_per_descriptor) {
       for (const cv::DMatch& match: matches) {
 
-        //ds if the descriptor distance is acceptable and the match is available
-        if (match.distance < maximum_distance_hamming_ && _train_descriptor_details[_image_numbers[match.imgIdx]].second.count(match.trainIdx) == 0) {
+        //ds readability
+        const int32_t& descriptor_index_reference      = match.trainIdx;
+        const ImageNumberTrain& image_number_reference = _image_numbers.at(match.imgIdx);
+        std::set<int32_t>& matched_descriptors         = _train_descriptor_details.at(image_number_reference);
 
-          //ds register and store it
-          _train_descriptor_details[_image_numbers[match.imgIdx]].second.insert(match.trainIdx);
-          number_of_matches_per_image.insert(_image_numbers[match.imgIdx]);
+        //ds if the descriptor distance is acceptable and we didn't already match the descriptor for this image (cross check)
+        if (match.distance < maximum_distance_hamming_                &&
+            matched_descriptors.count(descriptor_index_reference) == 0) {
+
+          //ds register descriptor match and store it (blocking further matching for this image)
+          matched_descriptors.insert(descriptor_index_reference);
+          number_of_matches_per_image.insert(image_number_reference);
         }
       }
     }
