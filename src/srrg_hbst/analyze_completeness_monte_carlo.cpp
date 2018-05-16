@@ -67,7 +67,6 @@ int32_t main(int32_t argc_, char** argv_) {
   loadMatchables(input_descriptors_total, parameters->evaluator->validTrainImagesWithPoses(), parameters);
   std::cerr << std::endl;
   LOG_VARIABLE(input_descriptors_total.size());
-  const uint64_t number_of_input_images(parameters->evaluator->validTrainImagesWithPoses().size());
 
   //ds compute all sets of query descriptors
   MatchableVector query_descriptors_total;
@@ -109,7 +108,7 @@ int32_t main(int32_t argc_, char** argv_) {
   result_file.close();
 
   //ds empty tree handle
-  std::shared_ptr<Tree> hbst_incremental = std::make_shared<Tree>();
+  std::shared_ptr<Tree> hbst = std::make_shared<Tree>();
 
   //ds for each sample
   std::cerr << "starting Monte-Carlo sampling for random split HBST completeness evaluation:" << std::endl;
@@ -128,22 +127,18 @@ int32_t main(int32_t argc_, char** argv_) {
     for (uint32_t depth = 1; depth < parameters->maximum_depth; ++depth) {
 
       //ds clear previous structure (without deallocation memory for matchables)
-      hbst_incremental->clear(false);
+      hbst->clear(false);
 
       //ds construct tree with new maximum depth and no other constraints
       Tree::Node::maximum_depth        = depth;
       Tree::Node::maximum_leaf_size    = 1;
       Tree::Node::maximum_partitioning = 0.5;
 
-      //ds construct incremental tree - in batches
-      for (uint64_t number_of_insertions = 0; number_of_insertions < number_of_input_images; ++number_of_insertions) {
-        hbst_incremental->add(MatchableVector(input_descriptors_total.begin()+number_of_insertions*parameters->target_number_of_descriptors,
-                                              input_descriptors_total.begin()+(number_of_insertions+1)*parameters->target_number_of_descriptors),
-                                              srrg_hbst::SplittingStrategy::SplitRandomUniform);
-      }
+      //ds construct tree
+      hbst->add(input_descriptors_total, srrg_hbst::SplittingStrategy::SplitRandomUniform);
 
       //ds compute mean completeness
-      const double mean_completeness_incremental = getMeanRelativeNumberOfMatches(hbst_incremental,
+      const double mean_completeness_incremental = getMeanRelativeNumberOfMatches(hbst,
                                                                                   query_descriptors_total,
                                                                                   feasible_number_of_matches_per_query,
                                                                                   parameters->maximum_descriptor_distance);
@@ -165,7 +160,7 @@ int32_t main(int32_t argc_, char** argv_) {
   }
 
   //ds clear tree (without freeing matchables)
-  hbst_incremental->clear(false);
+  hbst->clear(false);
 
   //ds free all matchables
   for (const Matchable* matchable: query_descriptors_total) {
