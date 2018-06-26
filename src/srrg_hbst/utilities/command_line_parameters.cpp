@@ -318,7 +318,7 @@ void CommandLineParameters::configure(std::ostream& stream_) {
     descriptor_extractor = cv::xfeatures2d::FREAK::create(); //512 bits
     distance_norm        = cv::NORM_HAMMING;
   } else if (descriptor_type == "akaze") {
-    feature_detector     = cv::AKAZE::create(cv::AKAZE::DESCRIPTOR_MLDB, 0, 3, fast_detector_threshold/1e4); //486 bits
+    feature_detector     = cv::AKAZE::create(cv::AKAZE::DESCRIPTOR_MLDB, 0, 3, fast_detector_threshold/1e5); //486 bits
     descriptor_extractor = cv::AKAZE::create(); //486 bits
     distance_norm        = cv::NORM_HAMMING;
   } else if (descriptor_type == "sift") {

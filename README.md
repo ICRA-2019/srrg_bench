@@ -1,7 +1,14 @@
 # SRRG Benchmark Utilities
-Collection of ground truth computation and performance evaluation utilities for SRRG packages
+Collection of ground truth computation and performance evaluation utilities for SRRG packages <br>
+This project is best built using the [catkin command line tools](https://catkin-tools.readthedocs.io)
 
-Affiliated packages: <br>
+Dependencies: <br>
+- [srrg_cmake_modules](https://gitlab.com/srrg-software/srrg_cmake_modules)
+- [srrg_core](https://gitlab.com/srrg-software/srrg_core)
+- [srrg_core_viewers](https://gitlab.com/srrg-software/srrg_core_viewers) (optional, for visualization)
+- [srrg_gl_helpers](https://gitlab.com/srrg-software/srrg_gl_helpers) (optional, for visualization)
+
+Affiliated packages (required if benchmarking is desired): <br>
 - [srrg_hbst](https://gitlab.com/srrg-software/srrg_hbst) - HBST: Hamming Binary Search Tree Header-only library <br>
 
 Affiliated datasets: <br>
@@ -24,77 +31,8 @@ Reference software (required if a comparison is desired): <br>
 - FLANN: https://github.com/mariusmuja/flann (used for Hierarchical Clustering Trees)
 - iBoW: https://github.com/emiliofidalgo/obindex2
 
-### SRRG HBST
-Analytical tools
-- Monte-Carlo BST sampling (random bit selection, for **all** nodes) with OpenMP support:
-
-        rosrun srrg_bench analyze_completeness_monte_carlo -mode kitti -images 06.txt.d/ -poses 06_gt.txt -descriptor brief -depth 10 -samples 100 -threads 4
-
-- Complete split evaluation in leafs (mean bit selection for nodes):
-
-        rosrun srrg_bench analyze_completeness_leafs -mode kitti -images 06.txt.d/ -poses 06_gt.txt -descriptor brief -depth 10
-
-- Mean split evaluation (proposed in HBST, balanced and incremental construction):
-
-        rosrun srrg_bench analyze_completeness_hbst -mode kitti -images 06.txt.d/ -poses 06_gt.txt -descriptor brief -depth 10
-
----
-Image Retrieval (Closure) ground truth computation examples
-- KITTI sequence 06:
-
-        rosrun srrg_bench compute_closure_ground_truth -mode kitti -images 06.txt.d/ -poses 06_gt.txt
-
-- Málaga extract 10:
-
-        rosrun srrg_bench compute_closure_ground_truth -mode malaga -images Images/ -poses malaga-urban-dataset-extract-10_all-sensors_GPS.txt -use-gui
-    
-- St. Lucia:
-
-        rosrun srrg_bench compute_closure_ground_truth -mode lucia -images 101215_153851_MultiCamera0/ -poses 101215_153851_Ins0.log -timestamps 101215_153851_MultiCamera0.log -ug
-    
-The command line argument `-use-gui` or `-ug` can be optionally appended to launch a viewer, <br>
-displaying the obtained ground truth on the trajectory.
-
-Brute-force filtered Descriptor Matching for the obtained Image Retrieval ground truth is triggered, <br>
-by adding `-compute-confusion` or `-cc`. <br>
-The brute-force filtering naturally requires an extensive amount of time for completion. <br>
-A set of computed ground truth files can be found in the [srrg_hbst wiki](https://gitlab.com/srrg-software/srrg_hbst/wikis/home)
-
-Geometric Verification on top of these filtered matches is performed <br>
-when `-geometric-verification <camera_calibration>` or `-gv <camera_calibration>` is set. <br>
-Note that the verification requires the camera calibration (e.g. `calib.txt` for KITTI) as additional parameter.
-
----
-Benchmarks
-- KITTI sequence 00 for HBST on pure trajectory ground truth:
-  
-        rosrun srrg_bench benchmark -mode kitti -images 00.txt.d/ -poses 00_gt.txt -method hbst
-    
-- KITTI sequence 00 for HBST with a generated ground truth file (filtered):
-
-        rosrun srrg_bench benchmark -mode kitti -images 00.txt.d/ -poses 00_gt.txt -method hbst -closures <bf-filtered-closures>
-
-- KITTI sequence 00 for FLANNLSH on pure trajectory ground truth:
-    
-        rosrun srrg_bench benchmark -mode kitti -images 00.txt.d/ -poses 00_gt.txt -method flannlsh
-
-- KITTI sequence 00 for DBoW2 on pure trajectory ground truth:
-
-        rosrun srrg_bench benchmark -mode kitti -images 00.txt.d/ -poses 00_gt.txt -method dbow2 -voc <vocabulary>
-    
-- Málaga extract 05 for HBST on pure trajectory ground truth with extracted keypoint display:
-
-        rosrun srrg_bench benchmark -mode malaga -images Images/ -poses malaga-urban-dataset-extract-05_all-sensors_GPS.txt -method hbst -ug
-    
-- St. Lucia for DBoW2 with image Score Only on pure trajectory ground truth:
-
-        rosrun srrg_bench benchmark -mode dbow2 -images 101215_153851_MultiCamera0/ -poses 101215_153851_Ins0.log -timestamps 101215_153851_MultiCamera0.log -so
-
----
-Additional files: <br>
-- DBoW2 BRIEF vocabulary: https://drive.google.com/open?id=1J5mQH96GA8zfsp0AYx2XdfrZIpAUwEhK (DLoopDetector)
-- DBoW2 ORB vocabulary: https://drive.google.com/open?id=1Yh83ZfAH18m035y2PJiPeN0KUhDc8UD1 (ORB-SLAM2)
-- Image Retrieval (Closure) ground truth files: [srrg_hbst wiki](https://gitlab.com/srrg-software/srrg_hbst/wikis/home)
+# Available benchmarks
+- [SRRG HBST](src/srrg_hbst/README.md) (read me)
 
 ### It doesn't work? ###
 [Open an issue](https://gitlab.com/srrg-software/srrg_bench/issues) or contact the maintainer (see package.xml)

@@ -25,9 +25,16 @@
   STREAM_ << #VARIABLE_ << ": " << VARIABLE_ << std::endl
 #define BAR "---------------------------------------------------------------------------------"
 
-//ds descriptor configuration
-#define DESCRIPTOR_SIZE_BYTES 32
+//ds descriptor configuration - default
+#ifndef SRRG_BENCH_DESCRIPTOR_SIZE_BYTES
+  #define SRRG_BENCH_DESCRIPTOR_SIZE_BYTES 32
+#endif
+
+//ds configure size
+#define DESCRIPTOR_SIZE_BYTES SRRG_BENCH_DESCRIPTOR_SIZE_BYTES
 #define DESCRIPTOR_SIZE_BITS DESCRIPTOR_SIZE_BYTES*8
+
+
 
 namespace srrg_bench {
 

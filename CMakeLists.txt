@@ -13,8 +13,11 @@ add_definitions(-Ofast -march=native -Wall -pedantic -std=c++11)
 #ds debug flags
 #add_definitions(-O0 -march=native -Wall -pedantic -std=c++11 -g)
 
+#ds specify target binary descriptor size (default: 32)
+add_definitions(-DSRRG_BENCH_DESCRIPTOR_SIZE_BYTES=32)
+
 #ds locate external dependencies
-find_package(catkin QUIET COMPONENTS srrg_cmake_modules srrg_core_viewers srrg_gl_helpers srrg_hbst obindex2)
+find_package(catkin QUIET COMPONENTS srrg_cmake_modules srrg_core srrg_core_viewers srrg_gl_helpers srrg_hbst obindex2)
 find_package(Eigen3 QUIET)
 find_package(OpenCV QUIET)
 find_package(DBoW2 QUIET)
