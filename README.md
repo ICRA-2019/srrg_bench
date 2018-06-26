@@ -32,7 +32,7 @@ Reference software (required if a comparison is desired): <br>
 - iBoW: https://github.com/emiliofidalgo/obindex2
 
 # Available benchmarks
-- [SRRG HBST](src/srrg_hbst/README.md) (read me)
+- [SRRG HBST](https://gitlab.com/srrg-software/srrg_bench/tree/master/src/srrg_hbst) (read me)
 
 ### It doesn't work? ###
 [Open an issue](https://gitlab.com/srrg-software/srrg_bench/issues) or contact the maintainer (see package.xml)
