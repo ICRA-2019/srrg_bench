@@ -64,13 +64,47 @@ void LoopClosureEvaluator::loadImagesWithPosesFromFileKITTI(const std::string& f
     }
 
     //ds generate file name
-    char buffer_image_number[9];
-    std::sprintf(buffer_image_number, "%08u", image_number);
-    const std::string file_name_image = folder_images_ + "/" + "camera_left.image_raw_" + buffer_image_number + ".pgm";
+    std::string file_name_image("");
+    switch (_image_file_name_mode) {
+      case 0: {
 
-    //ds if image dimensions are not set yet
-    if (_number_of_image_rows == 0) {
-      _initializeImageConfiguration(file_name_image);
+        //ds raw KITTI file names
+        char buffer_image_number[9];
+        std::sprintf(buffer_image_number, "%06u", image_number);
+        file_name_image = folder_images_ + "/" + buffer_image_number + ".png";
+        break;
+      }
+      case 1: {
+
+        //ds generate file name - SRRG version
+        char buffer_image_number[9];
+        std::sprintf(buffer_image_number, "%08u", image_number);
+        file_name_image = folder_images_ + "/" + "camera_left.image_raw_" + buffer_image_number + ".pgm";
+        break;
+      }
+      default: {
+        throw std::runtime_error("invalid file name parsing mode");
+      }
+    }
+
+    //ds check image loading and set dimensions (also checks file format)
+    //ds and automatically sets parsing mode for subsequent images
+    try {
+      if (_number_of_image_rows == 0) {
+        _initializeImageConfiguration(file_name_image);
+      }
+    } catch (const std::runtime_error& /*ex*/) {
+
+      //ds generate file name - SRRG version
+      char buffer_image_number[9];
+      std::sprintf(buffer_image_number, "%08u", image_number);
+      file_name_image = folder_images_ + "/" + "camera_left.image_raw_" + buffer_image_number + ".pgm";
+      if (_number_of_image_rows == 0) {
+        _initializeImageConfiguration(file_name_image);
+      }
+
+      //ds switch parsing mode (exception will not be thrown for the second image)
+      _image_file_name_mode = 1;
     }
 
     //ds store image

@@ -203,6 +203,9 @@ private:
   uint32_t _number_of_image_rows = 0;
   uint32_t _number_of_image_cols = 0;
 
+  //! @brief different image file name probing modes (e.g. KITTI SRRG versus KITTI raw)
+  uint32_t _image_file_name_mode = 0;
+
   //! @brief images linked to poses (potentially interpolated)
   std::vector<ImageWithPose*> _image_poses_ground_truth;
 
