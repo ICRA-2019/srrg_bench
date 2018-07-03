@@ -27,7 +27,7 @@ Supported environments: <br>
 - Ubuntu 18.04 with gcc 7 or higher
 
 Reference software (required if a comparison is desired): <br>
-- DBoW2: https://github.com/dorian3d/DBoW2
+- DBoW2: https://github.com/schdomin/DBoW2 (fork from the official repository, added generic descriptor support)
 - FLANN: https://github.com/mariusmuja/flann (used for Hierarchical Clustering Trees)
 - iBoW: https://github.com/emiliofidalgo/obindex2
 

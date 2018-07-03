@@ -14,9 +14,15 @@ BoWMatcher::BoWMatcher(const uint32_t& minimum_distance_between_closure_images_,
   _bow_features_per_image.clear();
   _durations_seconds_query_and_train.clear();
 
-  //ds allocate vocabulary and database
-  std::cerr << "DBoW2Matcher::DBoW2Matcher|loading vocabulary: " << file_path_vocabulary_ << std::endl;
-  _vocabulary.load(file_path_vocabulary_);
+  //ds allocate vocabulary and database - check if vocabulary is presented as text file (check last 3 characters)
+  if (file_path_vocabulary_.substr(file_path_vocabulary_.length()-3) == "txt") {
+    std::cerr << "DBoW2Matcher::DBoW2Matcher|loading vocabulary: " << file_path_vocabulary_ << " from TEXT file" << std::endl;
+    _vocabulary.loadFromTextFile(file_path_vocabulary_);
+  } else {
+    std::cerr << "DBoW2Matcher::DBoW2Matcher|loading vocabulary: " << file_path_vocabulary_ << " from COMPRESSED file" << std::endl;
+    _vocabulary.load(file_path_vocabulary_);
+  }
+  std::cerr << "DBoW2Matcher::DBoW2Matcher|successfully loaded the vocabulary" << std::endl;
   if (_compute_score_only) {
     _database = new TemplatedDatabase<DBOW2_DESCRIPTOR_CLASS::TDescriptor, DBOW2_DESCRIPTOR_CLASS>(_vocabulary, false);
   } else {
