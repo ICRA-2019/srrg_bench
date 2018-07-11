@@ -209,7 +209,7 @@ void CommandLineParameters::configure(std::ostream& stream_) {
   } else if (parsing_mode == "malaga") {
     evaluator->loadImagesWithPosesFromFileMalaga(file_name_poses_ground_truth, folder_images);
 
-    //ds adjust thresholds for malaga precision (GPS only)
+    //ds raise thresholds to coarse malaga precision (GPS only)
     maximum_difference_position_meters *= 2;
     maximum_difference_angle_radians   *= 2;
   } else if (parsing_mode == "lucia") {

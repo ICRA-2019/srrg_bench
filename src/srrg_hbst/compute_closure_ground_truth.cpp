@@ -101,6 +101,8 @@ int32_t main(int32_t argc_, char** argv_) {
       stream >> c_v;
       file_calibration.close();
     } else if (parameters->parsing_mode == "malaga") {
+
+      //ds camera calibration for rectified images of malaga
       std::ifstream file_calibration(file_name_calibration, std::ifstream::in);
       std::string line_buffer("");
       std::getline(file_calibration, line_buffer);
@@ -110,35 +112,33 @@ int32_t main(int32_t argc_, char** argv_) {
       }
 
       //ds keep reading - we're interested in line 9-12
-      while (!line_buffer.empty()) {
+      while (std::getline(file_calibration, line_buffer)) {
 
         //ds get indices for value parsing
         const std::string::size_type value_begin = line_buffer.find_first_of("=");
-        const std::string::size_type value_end   = line_buffer.find_first_of("//", value_begin);
+        const std::string::size_type value_end   = value_begin+9;
 
         //ds skip processing if no number is present in this format
-        if (value_begin == std::string::npos || value_end == std::string::npos) {
-          std::getline(file_calibration, line_buffer);
+        if (value_begin == std::string::npos || value_end > line_buffer.length()) {
           continue;
         }
 
         //ds check for parameters
         if (line_buffer.substr(0, 2) == "cx") {
-          c_u = std::stod(line_buffer.substr(value_begin+2, value_end-value_begin-4));
+          c_u = std::stod(line_buffer.substr(value_begin+1, value_end-value_begin));
         } else if (line_buffer.substr(0, 2) == "cy") {
-          c_v = std::stod(line_buffer.substr(value_begin+2, value_end-value_begin-4));
+          c_v = std::stod(line_buffer.substr(value_begin+1, value_end-value_begin));
         } else if (line_buffer.substr(0, 2) == "fx") {
-          f_u = std::stod(line_buffer.substr(value_begin+2, value_end-value_begin-4));
+          f_u = std::stod(line_buffer.substr(value_begin+1, value_end-value_begin));
         } else if (line_buffer.substr(0, 2) == "fy") {
-          f_v = std::stod(line_buffer.substr(value_begin+2, value_end-value_begin-4));
+          f_v = std::stod(line_buffer.substr(value_begin+1, value_end-value_begin));
           break;
         }
-        std::getline(file_calibration, line_buffer);
       }
       file_calibration.close();
     } else if (parameters->parsing_mode == "lucia") {
 
-      //ds hardcoded for now
+      //ds hardcoded for now (as there is only one sequence)
       f_u = 1246.56167;
       f_v = 1247.09234;
       c_u = 532.28794;
