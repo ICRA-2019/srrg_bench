@@ -440,6 +440,7 @@ int32_t main(int32_t argc_, char** argv_) {
         std::cerr << "reference corresponding to: " << parameters->evaluator->imagePosesGroundTruth()[result.result_image_retrieval.image_association.train]->file_name
                   << "\nwith pose\n: " << parameters->evaluator->imagePosesGroundTruth()[result.result_image_retrieval.image_association.train]->pose.matrix() << std::endl;
         std::cerr << "terminated (recall: " << recall << " closures: " << total_number_of_valid_closures << ")" << std::endl;
+        std::cerr << BAR << std::endl;
         break;
       }
 
