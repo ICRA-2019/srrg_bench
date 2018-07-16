@@ -304,7 +304,7 @@ int32_t main(int32_t argc_, char** argv_) {
 
     //ds set closure map to display
     viewer->update(parameters->evaluator->imagePosesGroundTruth(),
-                 parameters->evaluator->closureMap(),
+                 parameters->evaluator->closureFeasibilityMap(),
                  parameters->evaluator->validClosures(),
                  parameters->evaluator->invalidClosures());
 

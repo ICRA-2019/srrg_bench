@@ -404,7 +404,7 @@ int32_t main(int32_t argc_, char** argv_) {
 
     //ds buffers
     ClosureMap closure_map_bf;
-    const ClosureMap& closure_map_trajectory(parameters->evaluator->closureMap());
+    const ClosureMap& closure_map_trajectory(parameters->evaluator->closureFeasibilityMap());
     ImageNumber total_number_of_valid_closures = 0;
 
     //ds compute plausible false positives appearing before reaching 100% recall
@@ -432,8 +432,13 @@ int32_t main(int32_t argc_, char** argv_) {
       } else {
 
         //ds terminate as soon as a false positive would be reported by BF
+        std::cerr << BAR << std::endl;
         std::cerr << "obtained false closure: " << result.result_image_retrieval.image_association.query
                                        << " > " << result.result_image_retrieval.image_association.train << std::endl;
+        std::cerr << "query corresponding to: " << parameters->evaluator->imagePosesGroundTruth()[result.result_image_retrieval.image_association.query]->file_name
+                  << "\nwith pose\n: " << parameters->evaluator->imagePosesGroundTruth()[result.result_image_retrieval.image_association.query]->pose.matrix() << std::endl;
+        std::cerr << "reference corresponding to: " << parameters->evaluator->imagePosesGroundTruth()[result.result_image_retrieval.image_association.train]->file_name
+                  << "\nwith pose\n: " << parameters->evaluator->imagePosesGroundTruth()[result.result_image_retrieval.image_association.train]->pose.matrix() << std::endl;
         std::cerr << "terminated (recall: " << recall << " closures: " << total_number_of_valid_closures << ")" << std::endl;
         break;
       }
@@ -491,7 +496,7 @@ int32_t main(int32_t argc_, char** argv_) {
 
     //ds set closure map to display
     viewer->update(parameters->evaluator->imagePosesGroundTruth(),
-                   parameters->evaluator->closureMap(),
+                   parameters->evaluator->closureFeasibilityMap(),
                    parameters->evaluator->validQueryImagesWithPoses(),
                    parameters->evaluator->validTrainImagesWithPoses(),
                    parameters->query_interspace);

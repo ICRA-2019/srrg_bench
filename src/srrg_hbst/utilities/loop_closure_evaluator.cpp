@@ -8,7 +8,7 @@ namespace srrg_bench {
 
 LoopClosureEvaluator::LoopClosureEvaluator() {
   _image_poses_ground_truth.clear();
-  _closure_map_trajectory.clear();
+  _closure_feasability_map.clear();
   _closure_map_bf.clear();
   _valid_query_image_numbers.clear();
   _valid_train_image_numbers.clear();
@@ -21,7 +21,7 @@ LoopClosureEvaluator::~LoopClosureEvaluator() {
     delete image_with_pose;
   }
   _image_poses_ground_truth.clear();
-  _closure_map_trajectory.clear();
+  _closure_feasability_map.clear();
   _closure_map_bf.clear();
   _valid_query_image_numbers.clear();
   _valid_train_image_numbers.clear();
@@ -623,7 +623,7 @@ void LoopClosureEvaluator::computeLoopClosureFeasibilityMap(const uint32_t& imag
 
   //ds compute the total number of queries we can receive
   const uint64_t number_of_database_queries = _image_poses_ground_truth.size()/interspace_image_number_;
-  _closure_map_trajectory.clear();
+  _closure_feasability_map.clear();
   _valid_query_image_numbers.clear();
   _valid_train_image_numbers.clear();
   _total_number_of_valid_closures = 0;
@@ -638,7 +638,7 @@ void LoopClosureEvaluator::computeLoopClosureFeasibilityMap(const uint32_t& imag
       std::set<ImageNumberTrain> closed_training_images;
 
       //ds available closure range (must be above the minimum threshold, to avoid reporting closures when the vehicle was standing still)
-      const ImageNumberQuery image_number_last = std::max(image_number_query-minimum_distance_between_closure_images_, image_number_start_);
+      const ImageNumberQuery image_number_last = std::max(image_number_query-minimum_distance_between_closure_images_+1, image_number_start_);
 
       //ds loop over closure candidates
       for (ImageNumberTrain image_number_train = image_number_start_; image_number_train < image_number_last; ++image_number_train) {
@@ -672,7 +672,7 @@ void LoopClosureEvaluator::computeLoopClosureFeasibilityMap(const uint32_t& imag
 
       //ds if closures were found
       if (closed_training_images.size() > 0) {
-        _closure_map_trajectory.insert(std::make_pair(image_number_query, closed_training_images));
+        _closure_feasability_map.insert(std::make_pair(image_number_query, closed_training_images));
       }
     }
   }
@@ -687,7 +687,7 @@ std::pair<double, double> LoopClosureEvaluator::getPrecisionRecall(ImagePairVect
   }
 
   //ds check if the ground truth is not computed
-  if (_closure_map_trajectory.empty()) {
+  if (_closure_feasability_map.empty()) {
     std::cerr << "LoopClosureEvaluator::getPrecisionRecall|ERROR: ground truth closure feasibility map not computed - call computeLoopClosureFeasabilityMap first" << std::endl;
     throw std::runtime_error("LoopClosureEvaluator::getPrecisionRecall|ERROR: ground truth closure feasibility map not computed - call computeLoopClosureFeasabilityMap first");
   }
@@ -735,10 +735,10 @@ std::pair<double, double> LoopClosureEvaluator::getPrecisionRecall(ImagePairVect
       ++number_of_reported_closures;
 
       //ds if there is at least one reference image available (the image is closable)
-      if (_closure_map_trajectory.find(reported_closure.query) != _closure_map_trajectory.end()) {
+      if (_closure_feasability_map.find(reported_closure.query) != _closure_feasability_map.end()) {
 
         //ds check if the reference image is in the list
-        if (_closure_map_trajectory.at(reported_closure.query).count(reported_closure.train)) {
+        if (_closure_feasability_map.at(reported_closure.query).count(reported_closure.train)) {
           ++number_of_correctly_reported_closures;
           reported_closure.valid = true;
         }
@@ -781,7 +781,7 @@ std::vector<std::pair<double, double>> LoopClosureEvaluator::computePrecisionRec
   _reached_target_display_recall = false;
 
   //ds check if the ground truth is not computed
-  if (_closure_map_trajectory.empty()) {
+  if (_closure_feasability_map.empty()) {
     std::cerr << "LoopClosureEvaluator::computePrecisionRecallCurve|ERROR: ground truth closure feasibility map not computed - call computeLoopClosureFeasabilityMap first" << std::endl;
     throw std::runtime_error("LoopClosureEvaluator::computePrecisionRecallCurve|ERROR: ground truth closure feasibility map not computed - call computeLoopClosureFeasabilityMap first");
   }

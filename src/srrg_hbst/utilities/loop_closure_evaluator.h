@@ -181,7 +181,7 @@ public:
   const uint32_t& numberOfImageCols() const {return _number_of_image_cols;}
   const ImageNumberQuery numberOfImages() const {return _image_poses_ground_truth.size();}
   const std::vector<ImageWithPose*>& imagePosesGroundTruth() const {return _image_poses_ground_truth;}
-  const ClosureMap& closureMap() const {return _closure_map_trajectory;}
+  const ClosureMap& closureFeasibilityMap() const {return _closure_feasability_map;}
   const ImageNumber& totalNumberOfValidClosures() const {return _total_number_of_valid_closures;}
   const std::set<const ImageWithPose*>& validQueryImagesWithPoses() const {return _valid_query_image_numbers;}
   const std::set<const ImageWithPose*>& validTrainImagesWithPoses() const {return _valid_train_image_numbers;}
@@ -210,7 +210,7 @@ private:
   std::vector<ImageWithPose*> _image_poses_ground_truth;
 
   //! @brief closure map: valid query to train
-  ClosureMap _closure_map_trajectory;
+  ClosureMap _closure_feasability_map;
 
   //! @brief closure map: valid query to train (Brute-force matching filtered)
   ClosureMap _closure_map_bf;
