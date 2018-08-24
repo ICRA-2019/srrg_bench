@@ -41,6 +41,15 @@ void BoWMatcher::add(const cv::Mat& train_descriptors_,
                      const ImageNumberTrain& image_number_,
                      const std::vector<cv::KeyPoint>& train_keypoints_) {
 
+  //ds bow index to image numbers mapping
+  _image_numbers.insert(std::make_pair(_bow_descriptors_per_image.size(), image_number_));
+
+  //ds add current image to database
+  TIC(_time_begin);
+  _database->add(_bow_descriptors_per_image[image_number_], _bow_features_per_image[image_number_]);
+  const double duration_seconds = TOC(_time_begin).count();
+  _durations_seconds_query_and_train.back() += duration_seconds;
+  _total_duration_add_seconds += duration_seconds;
 }
 
 void BoWMatcher::train(const cv::Mat& train_descriptors_,
@@ -192,6 +201,7 @@ void BoWMatcher::query(const cv::Mat& query_descriptors_,
   _bow_features_per_image.insert(std::make_pair(image_number_, bow_features));
 
   _durations_seconds_query_and_train.push_back(duration_match.count()+duration_seconds_association_computation);
+  _total_duration_query_seconds += duration_match.count()+duration_seconds_association_computation;
 }
 
 void BoWMatcher::clear() {

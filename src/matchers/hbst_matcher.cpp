@@ -22,7 +22,9 @@ void HBSTMatcher::add(const cv::Mat& train_descriptors_,
 
     TIC(_time_begin);
     _database->add(matchables);
-    _durations_seconds_query_and_train.push_back(TOC(_time_begin).count());
+    const double duration_seconds = TOC(_time_begin).count();
+    _durations_seconds_query_and_train.push_back(duration_seconds);
+    _total_duration_add_seconds += duration_seconds;
   }
 }
 
@@ -30,7 +32,9 @@ void HBSTMatcher::train() {
   if (_database) {
     TIC(_time_begin);
     _database->train(srrg_hbst::SplitEven);
-    _durations_seconds_query_and_train.push_back(TOC(_time_begin).count());
+    const double duration_seconds = TOC(_time_begin).count();
+    _durations_seconds_query_and_train.push_back(duration_seconds);
+    _total_duration_train_seconds += duration_seconds;
   }
 }
 
@@ -55,15 +59,18 @@ void HBSTMatcher::query(const cv::Mat& query_descriptors_,
     //ds match against database
     TIC(_time_begin);
     _database->match(matchables, matches, maximum_distance_hamming_);
-    _durations_seconds_query_and_train.push_back(TOC(_time_begin).count());
+    const double duration_seconds = TOC(_time_begin).count();
+    _durations_seconds_query_and_train.push_back(duration_seconds);
+    _total_duration_query_seconds += duration_seconds;
 
     //ds result evaluation
     for (const Tree::MatchVectorMapElement& match_vector: matches) {
       const ImageNumberTrain& image_number_reference = match_vector.first;
 
-      //ds check if we can report the score for precision/recall evaluation
-      if (image_number_ >= _minimum_distance_between_closure_images                       &&
-          image_number_reference <= image_number_-_minimum_distance_between_closure_images) {
+      //ds if we can report the score for precision/recall evaluation
+      if ((image_number_ >= _minimum_distance_between_closure_images                      &&
+          image_number_reference <= image_number_-_minimum_distance_between_closure_images) ||
+          _minimum_distance_between_closure_images == 0                                     ) {
 
         //ds compute score
         const double score = static_cast<double>(match_vector.second.size())/query_descriptors_.rows;

@@ -61,11 +61,21 @@ public:
   //! @brief number of simultaneous queries train operations
   const uint64_t numberOfQueries() const {return _durations_seconds_query_and_train.size();}
 
+  //! @brief accumulated, total operation time in seconds
+  const double totalDurationAddSeconds() const {return _total_duration_add_seconds;}
+  const double totalDurationTrainSeconds() const {return _total_duration_train_seconds;}
+  const double totalDurationQuerySeconds() const {return _total_duration_query_seconds;}
+
 //ds attributes
 protected:
 
   //! @brief matching and adding durations for each match/add call (continuous, not indexed)
   std::vector<double> _durations_seconds_query_and_train;
+
+  //! @brief accumulated, total operation time in seconds
+  double _total_duration_add_seconds   = 0;
+  double _total_duration_train_seconds = 0;
+  double _total_duration_query_seconds = 0;
 
   //! @brief timing handle
   std::chrono::time_point<std::chrono::system_clock> _time_begin;

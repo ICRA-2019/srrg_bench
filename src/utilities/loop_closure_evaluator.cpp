@@ -1006,6 +1006,36 @@ std::vector<std::pair<double, double>> LoopClosureEvaluator::computePrecisionRec
   return precision_recall_values;
 }
 
+double LoopClosureEvaluator::computeAveragePrecision(const std::vector<ResultImageRetrieval>& ranked_reference_image_list_,
+                                                     const std::multiset<ImageNumberTrain>& valid_reference_image_list_) const {
+  double old_recall    = 0;
+  double old_precision = 1;
+  double ap            = 0;
+
+  size_t number_of_correct_matches  = 0;
+  size_t number_of_reported_matches = 0;
+  for (uint32_t u = 0; u < ranked_reference_image_list_.size(); ++u) {
+    if (valid_reference_image_list_.count(ranked_reference_image_list_[u].image_association.train)) {
+      ++number_of_correct_matches;
+    }
+
+    const double precision = number_of_correct_matches/(number_of_reported_matches + 1.0);
+    const double recall    = number_of_correct_matches/static_cast<double>(valid_reference_image_list_.size());
+
+    ap += (recall-old_recall)*((old_precision + precision)/2.0);
+
+    //ds check if evaluation is complete
+    if (recall == 1) {
+      break;
+    }
+
+    old_recall    = recall;
+    old_precision = precision;
+    ++number_of_reported_matches;
+  }
+  return ap;
+}
+
 void LoopClosureEvaluator::loadClosures(const std::string& file_name_closures_,
                                         const uint32_t& image_number_start_,
                                         const uint32_t& image_number_stop_,

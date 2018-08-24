@@ -36,7 +36,7 @@ int32_t main(int32_t argc_, char** argv_) {
 
   //ds adjust thresholds
   parameters->maximum_descriptor_distance             = 0.1*DESCRIPTOR_SIZE_BITS;
-  parameters->minimum_distance_between_closure_images = 1;
+  parameters->minimum_distance_between_closure_images = 0;
   parameters->maximum_leaf_size                       = parameters->target_number_of_descriptors;
 
   //ds configure and log
@@ -44,8 +44,9 @@ int32_t main(int32_t argc_, char** argv_) {
   parameters->write(std::cerr);
 
   //ds evaluated matcher
-  std::shared_ptr<srrg_bench::BaseMatcher> matcher = 0;
-  std::string method_name = parameters->method_name;
+  std::shared_ptr<srrg_bench::BaseMatcher> matcher            = 0;
+  std::string method_name                                     = parameters->method_name;
+  std::shared_ptr<srrg_bench::LoopClosureEvaluator> evaluator = parameters->evaluator;
 
   //ds instantiate requested type
   if (method_name == "hbst") {
@@ -93,9 +94,9 @@ int32_t main(int32_t argc_, char** argv_) {
 
   //ds create database - compute descriptors for each reference image
   std::cerr << "computing descriptors for reference images: " << std::endl;
-  uint32_t number_of_processed_images    = 0;
-  uint32_t number_of_trained_descriptors = 0;
-  for (const srrg_bench::ImageWithPose* image_reference: parameters->evaluator->imagePosesGroundTruth()) {
+  uint32_t number_of_processed_reference_images = 0;
+  uint32_t number_of_trained_descriptors        = 0;
+  for (const srrg_bench::ImageWithPose* image_reference: evaluator->imagePosesGroundTruth()) {
     const cv::Mat image = cv::imread(image_reference->file_name, CV_LOAD_IMAGE_GRAYSCALE);
 
     //ds detect keypoints and compute descriptors
@@ -104,24 +105,27 @@ int32_t main(int32_t argc_, char** argv_) {
     parameters->computeDescriptors(image, keypoints, descriptors);
 
     //ds add to database
-    matcher->add(descriptors, number_of_processed_images, keypoints);
+    matcher->add(descriptors, number_of_processed_reference_images, keypoints);
 
     //ds store descriptors
-    std::cerr << "processed image: " << image_reference->file_name << " "
-              << number_of_processed_images << "/" << parameters->evaluator->imagePosesGroundTruth().size()
-              << " computed " << parameters->descriptor_type << " descriptors: " << keypoints.size() << std::endl;
+    std::cerr << "processed REFERENCE image: '" << image_reference->file_name
+              << "' " << number_of_processed_reference_images << "/" << evaluator->imagePosesGroundTruth().size()
+              << " (" << image_reference->image_number << ")"
+              << " computed <" << parameters->descriptor_type << "> descriptors: " << keypoints.size() << std::endl;
     number_of_trained_descriptors += keypoints.size();
-    ++number_of_processed_images;
+    ++number_of_processed_reference_images;
   }
 
   //ds train database index
-  std::cerr << "training index for "<< method_name << " with descriptors: " << number_of_trained_descriptors << std::endl;
+  std::cerr << "training index for <"<< method_name << "> with descriptors: " << number_of_trained_descriptors << std::endl;
   matcher->train();
 
   //ds evaluate each query
   std::cerr << "processing query images: " << std::endl;
   uint32_t number_of_processed_query_images = 0;
-  for (const srrg_bench::ImageWithPose* image_query: parameters->evaluator->imagePosesQuery()) {
+  double mean_average_precision = 0;
+  std::chrono::time_point<std::chrono::system_clock> timer;
+  for (const srrg_bench::ImageWithPose* image_query: evaluator->imagePosesQuery()) {
     const cv::Mat image = cv::imread(image_query->file_name, CV_LOAD_IMAGE_GRAYSCALE);
 
     //ds detect keypoints and compute descriptors
@@ -131,23 +135,25 @@ int32_t main(int32_t argc_, char** argv_) {
 
     //ds query database
     std::vector<srrg_bench::ResultImageRetrieval> image_scores(0);
-    matcher->query(descriptors, number_of_processed_images, parameters->maximum_descriptor_distance, image_scores);
+    matcher->query(descriptors, image_query->image_number, parameters->maximum_descriptor_distance, image_scores);
 
-    //ds scores
-    ++number_of_processed_query_images;
-    std::cerr << "processed image: " << image_query->file_name << " "
-              << number_of_processed_query_images << "/" << parameters->evaluator->imagePosesQuery().size()
-              << " computed " << parameters->descriptor_type << " descriptors: " << keypoints.size() << std::endl;
-    for (uint32_t u = 0; u < 10; ++u) {
-      const srrg_bench::ImageWithPose* image_reference = parameters->evaluator->imagePosesGroundTruth()[image_scores[u].image_association.train];
-      std::cerr << image_query->file_name << " > " << image_reference->file_name
-                << " : " << image_scores[u].number_of_matches_relative;
-      if (parameters->evaluator->closureFeasibilityMap().at(image_query->image_number).count(image_reference->image_number)) {
-        std::cerr << " MATCH (" << parameters->evaluator->closureFeasibilityMap().at(image_query->image_number).size() << ")" << std::endl;
-      } else {
-        std::cerr << std::endl;
+    //ds adjust reference image numbers to actual dataset image numbers (since we have duplicates with zubud)
+    if (parameters->parsing_mode == "zubud") {
+      for (srrg_bench::ResultImageRetrieval& image_score: image_scores) {
+        image_score.image_association.train = evaluator->imagePosesGroundTruth()[image_score.image_association.train]->image_number;
       }
     }
+
+    //ds compute average precision
+    const std::multiset<srrg_bench::ImageNumberTrain> valid_reference_image_list(evaluator->closureFeasibilityMap().at(image_query->image_number));
+    const double average_precision = evaluator->computeAveragePrecision(image_scores, valid_reference_image_list);
+    mean_average_precision        += average_precision;
+    ++number_of_processed_query_images;
+    std::cerr << "processed QUERY image: '" << image_query->file_name
+              << "' " << number_of_processed_query_images << "/" << evaluator->imagePosesQuery().size()
+              << " (" << image_query->image_number << ")"
+              << " computed <" << parameters->descriptor_type << "> descriptors: " << keypoints.size()
+              << " | AP: " << average_precision << std::endl;
 
     //ds display
     cv::Mat image_display = image;
@@ -155,9 +161,20 @@ int32_t main(int32_t argc_, char** argv_) {
     for (const cv::KeyPoint& keypoint: keypoints) {
       cv::circle(image_display, keypoint.pt, 2, cv::Scalar(255, 0, 0), -1);
     }
-    cv::imshow("benchmark: current query image | ZuBuD", image_display);
-    cv::waitKey(0);
+    cv::imshow("benchmark: current query image | "+parameters->parsing_mode, image_display);
+    cv::waitKey(1);
   }
+  std::cerr << BAR << std::endl;
 
+  //ds compute mAP
+  mean_average_precision /= number_of_processed_query_images;
+  std::cerr << "summary for <" << parameters->parsing_mode << "><" << parameters->descriptor_type << "><" << method_name << ">" << std::endl;
+  std::cerr << BAR << std::endl;
+  std::cerr << "number of processed reference images: " << number_of_processed_reference_images << std::endl;
+  std::cerr << "    number of processed query images: " << number_of_processed_query_images << std::endl;
+  std::cerr << "        mean average precision (mAP): " << mean_average_precision << std::endl;
+  std::cerr << "        mean add processing time (s): " << matcher->totalDurationAddSeconds()/number_of_processed_reference_images << std::endl;
+  std::cerr << "           train processing time (s): " << matcher->totalDurationTrainSeconds() << std::endl;
+  std::cerr << "      mean query processing time (s): " << matcher->totalDurationQuerySeconds()/number_of_processed_query_images << std::endl;
   return 0;
 }

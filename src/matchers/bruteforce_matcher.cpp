@@ -25,8 +25,6 @@ void BruteforceMatcher::add(const cv::Mat& train_descriptors_,
 void BruteforceMatcher::train(const cv::Mat& train_descriptors_,
                               const ImageNumberTrain& image_number_,
                               const std::vector<cv::KeyPoint>& train_keypoints_) {
-
-  //ds add descriptors
   TIC(_time_begin);
   _train_descriptors.insert(std::make_pair(image_number_, train_descriptors_));
   _durations_seconds_query_and_train.push_back(TOC(_time_begin).count());
@@ -56,7 +54,9 @@ void BruteforceMatcher::query(const cv::Mat& query_descriptors_,
     }
 
     //ds if we can report the score for precision/recall evaluation
-    if (image_number_ >= _minimum_distance_between_closure_images && image_number_train <= image_number_-_minimum_distance_between_closure_images) {
+    if ((image_number_ >= _minimum_distance_between_closure_images                  &&
+        image_number_train <= image_number_-_minimum_distance_between_closure_images) ||
+        _minimum_distance_between_closure_images == 0                                 ) {
 
       //ds compute relative matching score
       const double score = static_cast<double>(number_of_matches)/query_descriptors_.rows;

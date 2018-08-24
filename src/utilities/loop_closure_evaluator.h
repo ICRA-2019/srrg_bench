@@ -171,6 +171,10 @@ public:
                                                                      const double& target_recall_ = 1.0,
                                                                      const std::string& file_name_ = "");
 
+  //ds this method has been adapted from: http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/compute_ap.cpp
+  double computeAveragePrecision(const std::vector<ResultImageRetrieval>& ranked_reference_image_list_,
+                                 const std::multiset<ImageNumberTrain>& valid_reference_image_list_) const;
+
   void loadClosures(const std::string& file_name_closure_map_,
                     const uint32_t& image_number_start_                     = 0,
                     const uint32_t& image_number_stop_                      = 0,
