@@ -83,6 +83,7 @@ add_subdirectory(src/matchers)
 
 #ds thirdparty software (e.g. descriptors)
 add_subdirectory(src/thirdparty/ldahash)
+add_subdirectory(src/thirdparty/binboost)
 
 #ds add benchmark source folders
 add_subdirectory(src/hbst)

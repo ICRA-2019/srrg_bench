@@ -1,0 +1,21 @@
+NOTE THAT THE PROJECTIONS AND THESHOLDS CAN ONLY BE USED WITH THE SIFTPP IMPLEMENSTION OF A.Vedaldi (http://www.vlfeat.org/~vedaldi/code/siftpp.html) WHICH WE INCLUDE HERE.
+
+This software contains:
+1.) the computation of LDAHash (ldahash)
+2.) evaluation of LDAHash and SIFT on lidar ground truth data
+
+compiling:
+-change the make.inc and or Makefile to fit your computer
+-or just type "make"
+-two executables are build: sifthash and eval_descriptor
+
+usage:
+there is a script (runEvaluation.sh) that computes SIFT and SIFT-Hash, does the evaluation on fountain und herzjesu and makes the ROC and precision/recall plots as eps files.
+
+paper:
+LDAHash: Improved matching with smaller descriptors
+Christoph Strecha, Alexander M. Bronstein, Michael M. Bronstein and Pascal Fua
+http://cvlab.epfl.ch/~strecha/demos/ldahash
+
+contact:
+christoph.strecha@epfl.ch
