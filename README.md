@@ -32,7 +32,8 @@ Reference software (required if a comparison is desired): <br>
 - iBoW: https://github.com/emiliofidalgo/obindex2
 
 # Available benchmarks
-- [SRRG HBST](https://gitlab.com/srrg-software/srrg_bench/tree/master/src/srrg_hbst) (read me)
+- [Hamming Binary Search Tree (HBST)](https://gitlab.com/srrg-software/srrg_bench/tree/master/src/hbst)
+- [Binary Descriptor Augmentation (BDA)](https://gitlab.com/srrg-software/srrg_bench/tree/master/src/bda)
 
 ### It doesn't work? ###
 [Open an issue](https://gitlab.com/srrg-software/srrg_bench/issues) or contact the maintainer (see package.xml)
