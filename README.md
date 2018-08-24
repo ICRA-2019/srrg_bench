@@ -11,7 +11,7 @@ Dependencies: <br>
 Affiliated packages (required if benchmarking is desired): <br>
 - [srrg_hbst](https://gitlab.com/srrg-software/srrg_hbst) - HBST: Hamming Binary Search Tree Header-only library <br>
 
-Affiliated datasets: <br>
+Generic SLAM datasets: <br>
 - [KITTI Visual Odometry / SLAM Evaluation 2012](http://www.cvlibs.net/datasets/kitti/eval_odometry.php)
 - [The EuRoC MAV Dataset](https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets)
 - [mit stata center data set](http://projects.csail.mit.edu/stata/downloads.php)
@@ -20,6 +20,13 @@ Affiliated datasets: <br>
 - [UQ St. Lucia Stereo Vehicular Dataset](http://asrl.utias.utoronto.ca/~mdw/uqstluciadataset.html)
 - [Oxford Robotcar Dataset](http://robotcar-dataset.robots.ox.ac.uk/)
 - [Nordlandsbanen](https://nrkbeta.no/2013/01/15/nordlandsbanen-minute-by-minute-season-by-season/)
+
+Pure Image Retrieval (VPR) datasets:
+
+- [ZuBuD](http://www.vision.ee.ethz.ch/en/datasets)
+- [Oxford](http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/)
+- [Paris](http://www.robots.ox.ac.uk/~vgg/data/parisbuildings/)
+- [Holidays](http://lear.inrialpes.fr/~jegou/data.php)
 
 Supported environments: <br>
 - Ubuntu 14.04 with gcc 5 or higher
