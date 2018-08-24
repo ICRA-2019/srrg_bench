@@ -75,11 +75,14 @@ endif()
 #ds define catkin package
 catkin_package(INCLUDE_DIRS src)
 
-#ds utilities: dataset parsers, ground truth computation and parameter parsing
+#ds dataset parsers, ground truth computation and parameter parsing
 add_subdirectory(src/utilities)
 
 #ds all benchmarked descriptor matchers
 add_subdirectory(src/matchers)
+
+#ds thirdparty software (e.g. descriptors)
+add_subdirectory(src/thirdparty/ldahash)
 
 #ds add benchmark source folders
 add_subdirectory(src/hbst)
