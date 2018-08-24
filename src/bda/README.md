@@ -6,7 +6,7 @@ Adjusting the descriptor size (bits)
 
 ---
 Image Retrieval benchmark examples
-- [ZuBuD](http://www.vision.ee.ethz.ch/en/datasets) with [Brute-Force (BF)](https://docs.opencv.org/3.1.0/d3/da1/classcv_1_1BFMatcher.html) matching:
+- [ZuBuD](http://www.vision.ee.ethz.ch/en/datasets) with [Brute-Force (BF)](https://docs.opencv.org/3.1.0/d3/da1/classcv_1_1BFMatcher.html) matching and BRIEF descriptors (default):
 
 	    ./benchmark_map -mode zubud -images-query test/ -images-reference train/ -closures zubud_groundtruth.txt -method bf
 
