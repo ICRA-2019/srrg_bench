@@ -114,6 +114,16 @@ int32_t main(int32_t argc_, char** argv_) {
               << " computed <" << parameters->descriptor_type << "> descriptors: " << keypoints.size() << std::endl;
     number_of_trained_descriptors += keypoints.size();
     ++number_of_processed_reference_images;
+
+    //ds display
+    cv::Mat image_display = image;
+    cv::cvtColor(image_display, image_display, CV_GRAY2RGB);
+    for (const cv::KeyPoint& keypoint: keypoints) {
+      cv::circle(image_display, keypoint.pt, 2, cv::Scalar(255, 0, 0), -1);
+      cv::circle(image_display, keypoint.pt, keypoint.size, cv::Scalar(0, 0, 255), 1);
+    }
+    cv::imshow("benchmark: current REFERENCE image | "+parameters->parsing_mode, image_display);
+    cv::waitKey(1);
   }
 
   //ds train database index
@@ -160,8 +170,9 @@ int32_t main(int32_t argc_, char** argv_) {
     cv::cvtColor(image_display, image_display, CV_GRAY2RGB);
     for (const cv::KeyPoint& keypoint: keypoints) {
       cv::circle(image_display, keypoint.pt, 2, cv::Scalar(255, 0, 0), -1);
+      cv::circle(image_display, keypoint.pt, keypoint.size, cv::Scalar(0, 0, 255), 1);
     }
-    cv::imshow("benchmark: current query image | "+parameters->parsing_mode, image_display);
+    cv::imshow("benchmark: current QUERY image | "+parameters->parsing_mode, image_display);
     cv::waitKey(1);
   }
   std::cerr << BAR << std::endl;
