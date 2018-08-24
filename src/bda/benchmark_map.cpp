@@ -107,13 +107,13 @@ int32_t main(int32_t argc_, char** argv_) {
     //ds add to database
     matcher->add(descriptors, number_of_processed_reference_images, keypoints);
 
-    //ds store descriptors
+    //ds info
+    ++number_of_processed_reference_images;
     std::cerr << "processed REFERENCE image: '" << image_reference->file_name
               << "' " << number_of_processed_reference_images << "/" << evaluator->imagePosesGroundTruth().size()
               << " (" << image_reference->image_number << ")"
               << " computed <" << parameters->descriptor_type << "> descriptors: " << keypoints.size() << std::endl;
     number_of_trained_descriptors += keypoints.size();
-    ++number_of_processed_reference_images;
 
     //ds display
     cv::Mat image_display = image;
@@ -125,6 +125,7 @@ int32_t main(int32_t argc_, char** argv_) {
     cv::imshow("benchmark: current REFERENCE image | "+parameters->parsing_mode, image_display);
     cv::waitKey(1);
   }
+  cv::destroyAllWindows();
 
   //ds train database index
   std::cerr << "training index for <"<< method_name << "> with descriptors: " << number_of_trained_descriptors << std::endl;
@@ -175,6 +176,7 @@ int32_t main(int32_t argc_, char** argv_) {
     cv::imshow("benchmark: current QUERY image | "+parameters->parsing_mode, image_display);
     cv::waitKey(1);
   }
+  cv::destroyAllWindows();
   std::cerr << BAR << std::endl;
 
   //ds compute mAP
