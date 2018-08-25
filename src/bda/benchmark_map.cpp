@@ -1,14 +1,14 @@
 #include <iostream>
-#include "../matchers/bruteforce_matcher.h"
-#include "../matchers/flannlsh_matcher.h"
-#include "../utilities/command_line_parameters.h"
+#include "matchers/bruteforce_matcher.h"
+#include "matchers/flannlsh_matcher.h"
+#include "utilities/command_line_parameters.h"
 
 #ifdef SRRG_BENCH_BUILD_HBST
-#include "../matchers/hbst_matcher.h"
+#include "matchers/hbst_matcher.h"
 #endif
 
 #ifdef SRRG_BENCH_BUILD_DBOW2
-#include "../matchers/bow_matcher.h"
+#include "matchers/bow_matcher.h"
 #endif
 
 
@@ -30,30 +30,31 @@ int32_t main(int32_t argc_, char** argv_) {
   cv::setUseOptimized(true);
 
   //ds grab configuration
-  std::shared_ptr<srrg_bench::CommandLineParameters> parameters = std::make_shared<srrg_bench::CommandLineParameters>();
-  parameters->parse(argc_, argv_);
-  parameters->validate(std::cerr);
+  std::shared_ptr<srrg_bench::CommandLineParameters> baselayer = std::make_shared<srrg_bench::CommandLineParameters>();
+  baselayer->parse(argc_, argv_);
+  baselayer->validate(std::cerr);
 
   //ds adjust thresholds
-  parameters->maximum_descriptor_distance             = 0.1*DESCRIPTOR_SIZE_BITS;
-  parameters->minimum_distance_between_closure_images = 0;
-  parameters->maximum_leaf_size                       = parameters->target_number_of_descriptors;
+  baselayer->maximum_descriptor_distance             = 0.1*(DESCRIPTOR_SIZE_BITS+baselayer->augmentation_weight*baselayer->number_of_augmented_bits);
+  baselayer->minimum_distance_between_closure_images = 0;
+  baselayer->maximum_leaf_size                       = baselayer->target_number_of_descriptors;
+  baselayer->fast_detector_threshold                 = 20;
 
   //ds configure and log
-  parameters->configure(std::cerr);
-  parameters->write(std::cerr);
+  baselayer->configure(std::cerr);
+  baselayer->write(std::cerr);
 
   //ds evaluated matcher
   std::shared_ptr<srrg_bench::BaseMatcher> matcher            = 0;
-  std::string method_name                                     = parameters->method_name;
-  std::shared_ptr<srrg_bench::LoopClosureEvaluator> evaluator = parameters->evaluator;
+  std::string method_name                                     = baselayer->method_name;
+  std::shared_ptr<srrg_bench::LoopClosureEvaluator> evaluator = baselayer->evaluator;
 
   //ds instantiate requested type
   if (method_name == "hbst") {
 #ifdef SRRG_BENCH_BUILD_HBST
-    srrg_bench::Tree::Node::maximum_leaf_size     = parameters->maximum_leaf_size;
-    srrg_bench::Tree::Node::maximum_partitioning  = parameters->maximum_partitioning;
-    matcher = std::make_shared<srrg_bench::HBSTMatcher>(parameters->minimum_distance_between_closure_images, srrg_hbst::SplitEven);
+    srrg_bench::Tree::Node::maximum_leaf_size     = baselayer->maximum_leaf_size;
+    srrg_bench::Tree::Node::maximum_partitioning  = baselayer->maximum_partitioning;
+    matcher = std::make_shared<srrg_bench::HBSTMatcher>(baselayer->minimum_distance_between_closure_images, srrg_hbst::SplitEven);
     method_name += "-"+std::to_string(srrg_bench::Tree::Node::maximum_leaf_size);
 #else
     std::cerr << "ERROR: unknown method name: " << method_name << std::endl;
@@ -61,16 +62,16 @@ int32_t main(int32_t argc_, char** argv_) {
 #endif
   } else if (method_name == "bow") {
 #ifdef SRRG_BENCH_BUILD_DBOW2
-    matcher = std::make_shared<srrg_bench::BoWMatcher>(parameters->minimum_distance_between_closure_images,
-                                           parameters->file_path_vocabulary,
-                                           parameters->use_direct_index,
-                                           parameters->direct_index_levels);
+    matcher = std::make_shared<srrg_bench::BoWMatcher>(baselayer->minimum_distance_between_closure_images,
+                                           baselayer->file_path_vocabulary,
+                                           baselayer->use_direct_index,
+                                           baselayer->direct_index_levels);
 
   //ds adjust descriptor type
   #if DBOW2_DESCRIPTOR_TYPE == 0
-    parameters->descriptor_type = "brief";
+    baselayer->descriptor_type = "brief";
   #elif DBOW2_DESCRIPTOR_TYPE == 1
-    parameters->descriptor_type = "orb";
+    baselayer->descriptor_type = "orb";
   #endif
 
 #else
@@ -78,15 +79,15 @@ int32_t main(int32_t argc_, char** argv_) {
     return EXIT_FAILURE;
 #endif
   } else if (method_name == "flannlsh") {
-    matcher = std::make_shared<srrg_bench::FLANNLSHMatcher>(parameters->minimum_distance_between_closure_images,
-                                                            parameters->table_number,
-                                                            parameters->hash_key_size,
-                                                            parameters->multi_probe_level);
+    matcher = std::make_shared<srrg_bench::FLANNLSHMatcher>(baselayer->minimum_distance_between_closure_images,
+                                                            baselayer->table_number,
+                                                            baselayer->hash_key_size,
+                                                            baselayer->multi_probe_level);
 
     //ds store multi-probe level in name (0 indicates uniform LSH)
-    method_name += ("-"+std::to_string(parameters->multi_probe_level));
+    method_name += ("-"+std::to_string(baselayer->multi_probe_level));
   } else if (method_name == "bf") {
-    matcher = std::make_shared<srrg_bench::BruteforceMatcher>(parameters->minimum_distance_between_closure_images, parameters->distance_norm);
+    matcher = std::make_shared<srrg_bench::BruteforceMatcher>(baselayer->minimum_distance_between_closure_images, baselayer->distance_norm);
   } else {
     std::cerr << "ERROR: unknown method name: " << method_name << std::endl;
     return EXIT_FAILURE;
@@ -102,7 +103,7 @@ int32_t main(int32_t argc_, char** argv_) {
     //ds detect keypoints and compute descriptors
     std::vector<cv::KeyPoint> keypoints;
     cv::Mat descriptors;
-    parameters->computeDescriptors(image, keypoints, descriptors);
+    baselayer->computeDescriptors(image, keypoints, descriptors);
 
     //ds add to database
     matcher->add(descriptors, number_of_processed_reference_images, keypoints);
@@ -112,23 +113,16 @@ int32_t main(int32_t argc_, char** argv_) {
     std::cerr << "processed REFERENCE image: '" << image_reference->file_name
               << "' " << number_of_processed_reference_images << "/" << evaluator->imagePosesGroundTruth().size()
               << " (" << image_reference->image_number << ")"
-              << " computed <" << parameters->descriptor_type << "> descriptors: " << keypoints.size() << std::endl;
+              << " computed <" << baselayer->descriptor_type << "> descriptors: " << descriptors.rows
+              << " (bytes: " << descriptors.cols << ")" << std::endl;
     number_of_trained_descriptors += keypoints.size();
-
-    //ds display
-    cv::Mat image_display = image;
-    cv::cvtColor(image_display, image_display, CV_GRAY2RGB);
-    for (const cv::KeyPoint& keypoint: keypoints) {
-      cv::circle(image_display, keypoint.pt, 2, cv::Scalar(255, 0, 0), -1);
-      cv::circle(image_display, keypoint.pt, keypoint.size, cv::Scalar(0, 0, 255), 1);
-    }
-    cv::imshow("benchmark: current REFERENCE image | "+parameters->parsing_mode, image_display);
-    cv::waitKey(1);
+    baselayer->displayKeypoints(image, keypoints);
   }
   cv::destroyAllWindows();
 
   //ds train database index
-  std::cerr << "training index for <"<< method_name << "> with descriptors: " << number_of_trained_descriptors << std::endl;
+  std::cerr << "training index for <"<< method_name
+            << "> with <" << baselayer->descriptor_type << "> descriptors: " << number_of_trained_descriptors << std::endl;
   matcher->train();
 
   //ds evaluate each query
@@ -142,14 +136,22 @@ int32_t main(int32_t argc_, char** argv_) {
     //ds detect keypoints and compute descriptors
     std::vector<cv::KeyPoint> keypoints;
     cv::Mat descriptors;
-    parameters->computeDescriptors(image, keypoints, descriptors);
+    baselayer->computeDescriptors(image, keypoints, descriptors);
+
+    //ds intermediate info
+    std::cerr << "processing QUERY image: '" << image_query->file_name
+              << "' " << number_of_processed_query_images << "/" << evaluator->imagePosesQuery().size()
+              << " (" << image_query->image_number << ")"
+              << " computed <" << baselayer->descriptor_type << "> descriptors: " << descriptors.rows
+              << " (bytes: " << descriptors.cols << ")";
+    baselayer->displayKeypoints(image, keypoints);
 
     //ds query database
     std::vector<srrg_bench::ResultImageRetrieval> image_scores(0);
-    matcher->query(descriptors, image_query->image_number, parameters->maximum_descriptor_distance, image_scores);
+    matcher->query(descriptors, image_query->image_number, baselayer->maximum_descriptor_distance, image_scores);
 
     //ds adjust reference image numbers to actual dataset image numbers (since we have duplicates with zubud)
-    if (parameters->parsing_mode == "zubud") {
+    if (baselayer->parsing_mode == "zubud") {
       for (srrg_bench::ResultImageRetrieval& image_score: image_scores) {
         image_score.image_association.train = evaluator->imagePosesGroundTruth()[image_score.image_association.train]->image_number;
       }
@@ -160,28 +162,14 @@ int32_t main(int32_t argc_, char** argv_) {
     const double average_precision = evaluator->computeAveragePrecision(image_scores, valid_reference_image_list);
     mean_average_precision        += average_precision;
     ++number_of_processed_query_images;
-    std::cerr << "processed QUERY image: '" << image_query->file_name
-              << "' " << number_of_processed_query_images << "/" << evaluator->imagePosesQuery().size()
-              << " (" << image_query->image_number << ")"
-              << " computed <" << parameters->descriptor_type << "> descriptors: " << keypoints.size()
-              << " | AP: " << average_precision << std::endl;
-
-    //ds display
-    cv::Mat image_display = image;
-    cv::cvtColor(image_display, image_display, CV_GRAY2RGB);
-    for (const cv::KeyPoint& keypoint: keypoints) {
-      cv::circle(image_display, keypoint.pt, 2, cv::Scalar(255, 0, 0), -1);
-      cv::circle(image_display, keypoint.pt, keypoint.size, cv::Scalar(0, 0, 255), 1);
-    }
-    cv::imshow("benchmark: current QUERY image | "+parameters->parsing_mode, image_display);
-    cv::waitKey(1);
+    std::cerr << " | AP: " << average_precision << std::endl;
   }
   cv::destroyAllWindows();
   std::cerr << BAR << std::endl;
 
   //ds compute mAP
   mean_average_precision /= number_of_processed_query_images;
-  std::cerr << "summary for <" << parameters->parsing_mode << "><" << parameters->descriptor_type << "><" << method_name << ">" << std::endl;
+  std::cerr << "summary for <" << baselayer->parsing_mode << "><" << baselayer->descriptor_type << "><" << method_name << ">" << std::endl;
   std::cerr << BAR << std::endl;
   std::cerr << "number of processed reference images: " << number_of_processed_reference_images << std::endl;
   std::cerr << "    number of processed query images: " << number_of_processed_query_images << std::endl;

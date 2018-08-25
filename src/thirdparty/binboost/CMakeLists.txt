@@ -10,7 +10,7 @@ if((NOT EIGEN3_FOUND) OR (NOT OpenCV_FOUND))
   return()
 endif()
 
-#ds build ldahash executables and library
+#ds build BinBoost executables and library
 include_directories("include")
 add_executable(run_binboost src/BoostDesc.cpp src/Utils.cpp src/run_binboost.cpp)
 target_link_libraries(run_binboost ${OpenCV_LIBS})

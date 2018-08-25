@@ -5,6 +5,9 @@
  ***************************************************************************/
 
 #include "ldahash.h"
+#include <bitset>
+
+using namespace std;
 
 /// a.b
 float sseg_dot(const float* a, const float* b, int sz )
@@ -44,31 +47,24 @@ void sseg_matrix_vector_mul(const float* A, int ar, int ac, int ald, const float
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void run_sifthash(const string imname, const int method)
+void run_sifthash(const cv::Mat& image_, const int method, std::vector<cv::KeyPoint>& keypoints_, cv::Mat& descriptors_)
 {
-	cout << "run_sift " << imname << " " << method << " " << flush;
-
-	IplImage* image;
-	if((image = cvLoadImage(imname.c_str(), CV_LOAD_IMAGE_GRAYSCALE)) == 0)
-	{
-		cout << "could not load " << imname << endl;
-		return;
-	}
+  //ds holy backwards compatibility ..
+  IplImage copy   = image_;
+	IplImage* image = &copy;
 
 	const int nrRows    = image->height;
 	const int nrCols    = image->width;
 
 	VL::PgmBuffer buffer;
-	pixel_t* im_pt = new pixel_t [ nrRows*nrCols ];
-	pixel_t* start = im_pt;
+	VL::pixel_t* im_pt = new VL::pixel_t [ nrRows*nrCols ];
+	VL::pixel_t* start = im_pt;
 	
 	const uchar *pGray = (uchar*)image->imageData;
 	
   for (int i = 0; i < nrRows; i++)
     for (int j = 0; j < nrCols; j++)
       *start++ = float(((uchar*)(pGray + i*image->widthStep))[j*image->nChannels]) / 255.0;
-
-	cvReleaseImage(&image);
 
 	buffer.width  = nrCols;
   buffer.height = nrRows;
@@ -80,14 +76,7 @@ void run_sifthash(const string imname, const int method)
   float  threshold      = 4.0/100.0 / levels / 2.0f ;
   float  edgeThreshold  = 10.0f;
   float  magnif         = 3.0;
-  int    nodescr        = 0 ;
-  int    noorient       = 0 ;
-  int    stableorder    = 0 ;
-  int    savegss        = 0 ;
-  int    binary         = 0 ;
-  int    haveKeypoints  = 0 ;
   int    unnormalized   = 0 ;
-  int    fp             = 0 ;
 
 	int         O      = octaves ;    
   int const   S      = levels ;
@@ -112,26 +101,20 @@ void run_sifthash(const string imname, const int method)
   sift.setNormalizeDescriptor( ! unnormalized ) ;
   sift.setMagnification( magnif ) ;
 
-	const int nrDim  = 128;
-
   // -------------------------------------------------------------
 	//            Run detector, compute orientations and descriptors
 	// -------------------------------------------------------------
-
-
-	image = cvLoadImage(imname.c_str(), CV_LOAD_IMAGE_COLOR);
-	CvScalar lineColor    = CV_RGB(0,255,0);
 
 	VL::float_t angles[4];
 	vector<SiftDes> siftDVec;
 	SiftDes         siftD;
 	for( VL::Sift::KeypointsConstIter iter = sift.keypointsBegin(); iter != sift.keypointsEnd(); ++iter) 
-	{  
+	{
+
 	  // detect orientations
 	  int nangles = sift.computeKeypointOrientations(angles, *iter) ;
 	  // compute descriptors
 		
-		cvCircle (image, cvPoint(int(iter->x+0.5),int(iter->y+0.5)), int(iter->sigma*3.0)+1, lineColor);
  	 	for(int a = 0 ; a < nangles ; ++a) 
 		{
 	    siftD.x  = iter->x;
@@ -143,13 +126,14 @@ void run_sifthash(const string imname, const int method)
 			/* compute descriptor */
       sift.computeKeypointDescriptor(siftD.vec, *iter, angles[a]);
 			siftDVec.push_back(siftD);
+
+	    //ds store keypoint in opencv format
+	    keypoints_.push_back(cv::KeyPoint(int(iter->x+0.5),int(iter->y+0.5), int(iter->sigma*3.0)+1, angles[a]));
 	  }
 	}
-	cvSaveImage(string(imname+".key.png").c_str(), image);
-  cvReleaseImage(&image);
 
-	cout << "run sifthash " << flush;
-
+  //ds allocate descriptor matrix
+  descriptors_ = cv::Mat(keypoints_.size(), 16, CV_8UC1);
 	BIN_WORD *singleBitWord = new BIN_WORD[64];
 
   // compute words with particular bit turned on
@@ -168,40 +152,15 @@ void run_sifthash(const string imname, const int method)
   //   Run SIFT-Hash
   // -------------------------------------------------------------    
 
-	string na;
-	ofstream out;
-
-	int n64;
-	int kind;
-	if(method == SIFT)     {na = imname + ".sift.key";      n64=128; kind = 1;}
-	if(method == DIF128)   {na = imname + ".dif128.key";    n64=2;   kind = 2;}
-	if(method == LDA128)   {na = imname + ".lda128.key";    n64=2;   kind = 2;}
-	if(method == DIF64)    {na = imname + ".dif64.key";     n64=1;   kind = 2;} 
-	if(method == LDA64)    {na = imname + ".lda64.key";     n64=1;   kind = 2;}
-	
 	const int nrFeat = siftDVec.size();
-	out.open(na.c_str());
-	out.write((char*)&nrFeat,sizeof(int));
-	out.write((char*)&nrFeat,sizeof(int));
-	out.write((char*)&n64,sizeof(int));
-	out.write((char*)&kind,sizeof(int));
-	out.write((char*)&nrRows,sizeof(int));
-	out.write((char*)&nrCols,sizeof(int));
 
-	float dum;
 	BIN_WORD b;
 	float provec[128];
 	for(int i=0; i < nrFeat; i++)
 	{  
-		out.write((char*)&siftDVec[i].x, sizeof(float));
-		out.write((char*)&siftDVec[i].y, sizeof(float));
-		out.write((char*)&siftDVec[i].s, sizeof(float));
-		out.write((char*)&siftDVec[i].o, sizeof(float));
-		out.write((char*)&dum,   sizeof(float));
 
 		switch (method) {
-			case SIFT : {
-				out.write((char*)&siftDVec[i].vec[0],sizeof(float)*128);
+			case METHOD_SIFT : {
 				break;
 			}			
 			case DIF128 : {
@@ -210,12 +169,29 @@ void run_sifthash(const string imname, const int method)
 				for(int k=0; k < 64; k++){
 					if(provec[k] + tdif128[k] <= 0.0) b |= singleBitWord[k];
 				}
-				out.write((char*)&b,sizeof(BIN_WORD));
+				const std::bitset<64> bitset_head(b);
 				b = 0;
 				for(int k=0; k < 64; k++){
 					if(provec[k+64] + tdif128[k+64] <= 0.0) b |= singleBitWord[k];
 				}
-				out.write((char*)&b,sizeof(BIN_WORD));
+        const std::bitset<64> bitset_tail(b);
+
+				//ds combine bitsets to obtain full descriptor - for each byte (128/8=16)
+				for (uint32_t l = 0; l < 16; ++l) {
+
+				  //ds build uchar bitset
+				  std::bitset<8> data;
+				  for (uint32_t m = 0; m < 8; ++m) {
+				    if (l < 8) {
+				      data[m] = bitset_head[l*8+m];
+				    } else {
+				      data[m] = bitset_tail[l*8+m];
+				    }
+				  }
+
+				  //ds set cv descriptor
+				  descriptors_.row(i).at<uchar>(l) = static_cast<uchar>(data.to_ulong());
+				}
 				break;
 			}
 			case LDA128 : {
@@ -224,12 +200,10 @@ void run_sifthash(const string imname, const int method)
 				for(int k=0; k < 64; k++){
 					if(provec[k] + tlda128[k] <= 0.0) b |= singleBitWord[k];
 				}
-				out.write((char*)&b,sizeof(BIN_WORD));
 				b = 0;
 				for(int k=0; k < 64; k++){
 					if(provec[k+64] + tlda128[k+64] <= 0.0) b |= singleBitWord[k];
 				}
-				out.write((char*)&b,sizeof(BIN_WORD));
 				break;
 			}
 			case DIF64 : {
@@ -238,7 +212,6 @@ void run_sifthash(const string imname, const int method)
 				for(int k=0; k < 64; k++) {
 					if(provec[k] + tdif64[k]  <= 0.0) b |= singleBitWord[k];
 				}
-				out.write((char*)&b,sizeof(BIN_WORD));
 				break;
 			}
 			case LDA64 : {
@@ -247,16 +220,13 @@ void run_sifthash(const string imname, const int method)
 				for(int k=0; k < 64; k++) {
 					if(provec[k] + tlda64[k]  <= 0.0) b |= singleBitWord[k];
 				}
-				out.write((char*)&b,sizeof(BIN_WORD));
 				break;
 			}
-			delault :{
+			default :{
 				cout << "method not known " << endl; exit(0);
 			}
 	  }
 	}
-	out.close();
-	cout << "nrKeypoints " << nrFeat << endl;
 }
 
 void run_sifthash(const string imname, IplImage* mask, const int method)
@@ -273,7 +243,7 @@ void run_sifthash(const string imname, IplImage* mask, const int method)
 	int kind;
 	bool up = false;
 	string na;
-	if(method == SIFT)     {na = imname + ".sift.key";      n64=128; kind = 1;}
+	if(method == METHOD_SIFT)     {na = imname + ".sift.key";      n64=128; kind = 1;}
 	if(method == DIF128)   {na = imname + ".dif128.key";    n64=2;   kind = 2;}
 	if(method == LDA128)   {na = imname + ".lda128.key";    n64=2;   kind = 2;}
 	if(method == DIF64)    {na = imname + ".dif64.key";     n64=1;   kind = 2;} 
@@ -286,8 +256,8 @@ void run_sifthash(const string imname, IplImage* mask, const int method)
 	if(nrCols != mask->width)  {cout << "mask cols doe not agree" << endl; exit(0);} 
 	
 	VL::PgmBuffer buffer;
-	pixel_t* im_pt = new pixel_t [ nrRows*nrCols ];
-	pixel_t* start = im_pt;
+	VL::pixel_t* im_pt = new VL::pixel_t [ nrRows*nrCols ];
+	VL::pixel_t* start = im_pt;
 	
 	const uchar *pGray = (uchar*)image->imageData;
 	
@@ -437,7 +407,7 @@ void run_sifthash(const string imname, IplImage* mask, const int method)
 		out.write((char*)&dum,   sizeof(float));
 
 		switch (method) {
-			case SIFT : {
+			case METHOD_SIFT : {
 				out.write((char*)&siftDVec[i].vec[0],sizeof(float)*128);
 				break;
 			}			
@@ -487,7 +457,7 @@ void run_sifthash(const string imname, IplImage* mask, const int method)
 				out.write((char*)&b,sizeof(BIN_WORD));
 				break;
 			}
-			delault :{
+			default :{
 				cout << "method not known " << endl; exit(0);
 			}
 	  }
@@ -510,7 +480,7 @@ bool readPoints(const string im, const int method, vector< pair<float,float> > &
 	
 	
 	string task;
-	if(method == SIFT)     {task = "sift";}
+	if(method == METHOD_SIFT)     {task = "sift";}
 	if(method == DIF128)   {task = "dif128";}
 	if(method == LDA128)   {task = "lda128";}
 	if(method == DIF64)    {task = "dif64";} 

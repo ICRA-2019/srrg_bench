@@ -2,12 +2,12 @@
 
 namespace srrg_bench {
 
-  BruteforceMatcher::BruteforceMatcher(const uint32_t& minimum_distance_between_closure_images_,
-                                       const int32_t& norm_type_): _matcher(new cv::BFMatcher(norm_type_, true)),
-                                                                   _minimum_distance_between_closure_images(minimum_distance_between_closure_images_) {
+BruteforceMatcher::BruteforceMatcher(const uint32_t& minimum_distance_between_closure_images_,
+                                     const int32_t& norm_type_): _matcher(new cv::BFMatcher(norm_type_, true)),
+                                                                 _minimum_distance_between_closure_images(minimum_distance_between_closure_images_) {
     _durations_seconds_query_and_train.clear();
     _train_descriptors.clear();
-  }
+}
 
 BruteforceMatcher::~BruteforceMatcher() {
   _train_descriptors.clear();
@@ -19,7 +19,9 @@ void BruteforceMatcher::add(const cv::Mat& train_descriptors_,
                             const std::vector<cv::KeyPoint>& train_keypoints_) {
   TIC(_time_begin);
   _train_descriptors.insert(std::make_pair(image_number_, train_descriptors_));
-  _durations_seconds_query_and_train.push_back(TOC(_time_begin).count());
+  const double duration_seconds = TOC(_time_begin).count();
+  _durations_seconds_query_and_train.push_back(duration_seconds);
+  _total_duration_add_seconds += duration_seconds;
 }
 
 void BruteforceMatcher::train(const cv::Mat& train_descriptors_,
@@ -27,7 +29,9 @@ void BruteforceMatcher::train(const cv::Mat& train_descriptors_,
                               const std::vector<cv::KeyPoint>& train_keypoints_) {
   TIC(_time_begin);
   _train_descriptors.insert(std::make_pair(image_number_, train_descriptors_));
-  _durations_seconds_query_and_train.push_back(TOC(_time_begin).count());
+  const double duration_seconds = TOC(_time_begin).count();
+  _durations_seconds_query_and_train.push_back(duration_seconds);
+  _total_duration_train_seconds += duration_seconds;
 }
 
 void BruteforceMatcher::query(const cv::Mat& query_descriptors_,
@@ -69,7 +73,9 @@ void BruteforceMatcher::query(const cv::Mat& query_descriptors_,
     std::sort(closures_.begin(), closures_.end(), [](const ResultImageRetrieval& a_, const ResultImageRetrieval& b_)
         {return a_.number_of_matches_relative > b_.number_of_matches_relative;});
   }
-  _durations_seconds_query_and_train.push_back(TOC(_time_begin).count());
+  const double duration_seconds = TOC(_time_begin).count();
+  _durations_seconds_query_and_train.push_back(duration_seconds);
+  _total_duration_query_seconds += duration_seconds;
 }
 
 void BruteforceMatcher::query(const cv::Mat& query_descriptors_,
@@ -107,6 +113,8 @@ void BruteforceMatcher::query(const cv::Mat& query_descriptors_,
       closures_.push_back(ResultDescriptorMatching(score, ImageNumberAssociation(image_number_, image_number_train), descriptor_associations));
     }
   }
-  _durations_seconds_query_and_train.push_back(TOC(_time_begin).count());
+  const double duration_seconds = TOC(_time_begin).count();
+  _durations_seconds_query_and_train.push_back(duration_seconds);
+  _total_duration_query_seconds += duration_seconds;
 }
 }

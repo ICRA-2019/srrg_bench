@@ -12,20 +12,19 @@
 #include <sys/stat.h>
 #include "opencv/cv.h"
 #include "opencv/highgui.h"
+#include <opencv2/core/version.hpp>
+#include <opencv2/opencv.hpp>
 
 #include "sift.hpp"
 #include "sift-conv.tpp"
 #include "hashpro.h"
 
 #define BIN_WORD unsigned long long
-#define SIFT     0
-#define DIF128   1
-#define LDA128   2
-#define DIF64    3
-#define LDA64    4
-
-using namespace std;
-using namespace VL;
+#define METHOD_SIFT 0
+#define DIF128      1
+#define LDA128      2
+#define DIF64       3
+#define LDA64       4
 
 struct SiftDes
 {
@@ -46,16 +45,16 @@ typedef union F128
 float sseg_dot(const float* a, const float* b, int sz );
 void sseg_matrix_vector_mul(const float* A, int ar, int ac, int ald, const float* b, float* c);
 
-void run_sifthash(const string imname, const int method);
-void run_sifthash(const string imname, IplImage* mask, const int method);
+void run_sifthash(const cv::Mat& image_, const int method, std::vector<cv::KeyPoint>& keypoints_, cv::Mat& descriptors);
+void run_sifthash(const std::string imname, IplImage* mask, const int method);
 
-bool readPoints(const string im, const int method,  vector< pair<float,float> > &points);
+bool readPoints(const std::string im, const int method,  std::vector< std::pair<float,float> > &points);
 
 //matching functions
-void run_hammingmatch(const string &im1, const string &im2, const int method);
-void run_hammingmatch(const string &im1, const vector<string> &im2, const int method);
-void run_hammingmatch(const vector<BIN_WORD> &binVec, const int nrKey, const string &im2, const int method, vector< pair<unsigned, unsigned> >  &matches);
+void run_hammingmatch(const std::string &im1, const std::string &im2, const int method);
+void run_hammingmatch(const std::string &im1, const std::vector<std::string> &im2, const int method);
+void run_hammingmatch(const std::vector<BIN_WORD> &binVec, const int nrKey, const std::string &im2, const int method, std::vector< std::pair<unsigned, unsigned> >  &matches);
 
-void saveMatches(const vector< pair<unsigned, unsigned> > &matches, const char *na);
-bool readMatches(vector< pair<unsigned, unsigned> > &matches, const char *na);
-void showMatches(const string &im1, const string &im2, const int method);
+void saveMatches(const std::vector< std::pair<unsigned, unsigned> > &matches, const char *na);
+bool readMatches(std::vector< std::pair<unsigned, unsigned> > &matches, const char *na);
+void showMatches(const std::string &im1, const std::string &im2, const int method);

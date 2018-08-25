@@ -6,6 +6,7 @@
 
 #include "ldahash.h"
 
+using namespace std;
 
 int main(int argc, char **argv) 
 {
@@ -81,12 +82,28 @@ int main(int argc, char **argv)
       exit(0);	
   }
 
-	for(int i=0; i < fileNameList.size(); i++)
+	for(size_t i=0; i < fileNameList.size(); i++)
 	{
-		if(task == string("dif128")) run_sifthash(fileNameList[i], DIF128); 
-		if(task == string("lda128")) run_sifthash(fileNameList[i], LDA128);
-		if(task == string("dif64"))  run_sifthash(fileNameList[i], DIF64); 
-		if(task == string("lda64"))  run_sifthash(fileNameList[i], LDA64); 
-		if(task == string("sift"))   run_sifthash(fileNameList[i], SIFT); 
+	  //ds buffers
+	  std::vector<cv::KeyPoint> keypoints(0);
+	  cv::Mat descriptors;
+
+	  //ds load image
+    cv::Mat image = cv::imread(fileNameList[i], CV_LOAD_IMAGE_GRAYSCALE);
+
+		if(task == string("dif128")) run_sifthash(image, DIF128, keypoints, descriptors);
+		if(task == string("lda128")) run_sifthash(image, LDA128, keypoints, descriptors);
+		if(task == string("dif64"))  run_sifthash(image, DIF64, keypoints, descriptors);
+		if(task == string("lda64"))  run_sifthash(image, LDA64, keypoints, descriptors);
+		if(task == string("sift"))   run_sifthash(image, METHOD_SIFT, keypoints, descriptors);
+
+		std::cerr << "computed descriptors: " << keypoints.size() << std::endl;
+    cv::Mat image_display = image;
+    cv::cvtColor(image_display, image_display, CV_GRAY2RGB);
+		for (const cv::KeyPoint& keypoint: keypoints) {
+		  cv::circle(image_display, keypoint.pt, keypoint.size, cv::Scalar(0, 255, 0), 1);
+		}
+		cv::imshow("LDAHash", image_display);
+		cv::waitKey(0);
   }
 }

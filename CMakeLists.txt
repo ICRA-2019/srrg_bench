@@ -71,6 +71,7 @@ if(srrg_core_viewers_FOUND AND QGLVIEWER_FOUND)
   set(SRRG_BENCH_BUILD_VIEWERS true)
   add_definitions(-DSRRG_BENCH_BUILD_VIEWERS)
 endif()
+include_directories(src)
 
 #ds define catkin package
 catkin_package(INCLUDE_DIRS src)
@@ -82,8 +83,12 @@ add_subdirectory(src/utilities)
 add_subdirectory(src/matchers)
 
 #ds thirdparty software (e.g. descriptors)
+message("srrg_bench|building LDAHash descriptor")
 add_subdirectory(src/thirdparty/ldahash)
+message("srrg_bench|building BinBoost descriptor")
 add_subdirectory(src/thirdparty/binboost)
+message("srrg_bench|building BOLD descriptor")
+add_subdirectory(src/thirdparty/bold)
 
 #ds add benchmark source folders
 add_subdirectory(src/hbst)

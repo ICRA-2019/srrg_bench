@@ -1,0 +1,70 @@
+* BOLD - Binary Online Learned Descriptor
+
+[[./imgs/poster.png]]
+
+** Introduction
+
+Sample implementation of the method described in
+
+#+begin_src 
+@InProceedings{Balntas_2015_CVPR,
+author = {Balntas, Vassileios and Tang, Lilian and Mikolajczyk, Krystian},
+title = {BOLD - Binary Online Learned Descriptor For Efficient Image Matching},
+journal = {The IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+month = {June},
+year = {2015}
+}
+#+end_src
+
+Download the paper from [[http://www.iis.ee.ic.ac.uk/~vbalnt/bold/BOLD-Binary-Online-Learned-Descriptor.pdf][http://www.iis.ee.ic.ac.uk/~vbalnt/bold/BOLD-Binary-Online-Learned-Descriptor.pdf]]
+
+#+BEGIN_QUOTE
+Steffen Urban has an alternative [[https://github.com/urbste/mdBRIEF][implementation]] of BOLD, with more =openCV= friendly test definitions. 
+
+#+END_QUOTE
+
+** Compilation 
+
+In order to run the example described in =main.cpp= you need to download the sample datasets from [[http://www.iis.ee.ic.ac.uk/~vbalnt/bold/dataset-ubc-bold.tar.gz][http://www.iis.ee.ic.ac.uk/~vbalnt/bold/dataset-ubc-bold.tar.gz]]
+and extract the file inside the main git folder.
+
+To compile the code type 
+#+begin_src shell
+cmake .
+make
+#+end_src
+
+and run =./bold= to run a simple patches experiment on the =notredame=
+dataset from from the
+[[http://www.cs.ubc.ca/~mbrown/patchdata/patchdata.html][UBC Patches Dataset]]
+
+The program will run print a series of evaluation results for the patch pairs
+from the dataset above eg.
+
+#+begin_src bash
+0 296 136
+1 125 31
+1 237 77
+.
+.
+.
+1 147 39
+0 292 136
+1 125 26
+#+end_src
+
+The first column contains the patch pair label (0 negative, 1
+positive), the second row contains the unmasked distance between the
+two patches of the pair, and the third the masked distance using the
+methodology described in our paper. 
+
+Notice that the new masked distance in the case of positive patches is
+(in terms of ratio) much smaller than the original compared to the
+negative patches. This confirms the findings that the masked distance
+is more discriminative.
+
+
+** Note
+Currently the BOLD code works with =32x32= patches. In order to
+generalize it, convert the indexes of the patch tests in the
+=bold.descr= file. 

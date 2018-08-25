@@ -1,6 +1,9 @@
 #include "loop_closure_evaluator.h"
 #include <memory>
 
+//ds custom descriptor types
+#include "thirdparty/bold/bold.hpp"
+
 namespace srrg_bench {
 
 class CommandLineParameters {
@@ -8,9 +11,8 @@ class CommandLineParameters {
   //ds object life
   public:
 
-    //ds no dynamic memory
     CommandLineParameters() {}
-    ~CommandLineParameters() {}
+    ~CommandLineParameters();
 
   //ds parsing
   public:
@@ -35,10 +37,16 @@ class CommandLineParameters {
     void configure(std::ostream& stream_);
 
     //! descriptor computation
-    void computeDescriptors(const cv::Mat& image_, std::vector<cv::KeyPoint>& keypoints_, cv::Mat& descriptors_) const;
+    void computeDescriptors(const cv::Mat& image_, std::vector<cv::KeyPoint>& keypoints_, cv::Mat& descriptors_);
 
     //! capped descriptor computation
-    void computeDescriptors(const cv::Mat& image_, std::vector<cv::KeyPoint>& keypoints_, cv::Mat& descriptors_, const uint32_t& target_number_of_descriptors_) const;
+    void computeDescriptors(const cv::Mat& image_, std::vector<cv::KeyPoint>& keypoints_, cv::Mat& descriptors_, const uint32_t& target_number_of_descriptors_);
+
+    //! @brief constructs structures required for image region based descriptor augmentation
+    void configurePositionAugmentation(const std::string& image_resolution_key_);
+
+    //! visualization only
+    void displayKeypoints(const cv::Mat& image_, const std::vector<cv::KeyPoint>& keypoints_) const;
 
   //ds TODO encapsulate
   public:
@@ -100,6 +108,22 @@ class CommandLineParameters {
     //ds nordland specific (multi video loading)
     cv::VideoCapture video_player_query;
     cv::VideoCapture video_player_reference;
+
+    //ds custom descriptors
+    std::shared_ptr<BOLD> bold_descriptor_handler;
+
+    //! @brief augmentation properties
+    uint32_t number_of_augmentation_bins_horizontal         = 0;
+    uint32_t number_of_augmentation_bins_vertical           = 0;
+    uint32_t number_of_augmented_bits                       = 0;
+    uint32_t number_of_image_rows                           = 0;
+    uint32_t number_of_image_cols                           = 0;
+    uint32_t augmentation_weight                            = 0;
+
+    //! @brief position augmentation mapping: [image_resolution_key]>[keypoint_row][keypoint_col]>[augmentation]
+    //! @brief where image_resolution_key could be "240x320" (rows x cols)
+    //! @brief a new image_resolution_key entry is generated for every new image encountered
+    std::map<std::string, std::string**> mappings_image_coordinates_to_augmentation;
 
     //ds GUI
     double display_scale = 1.0;

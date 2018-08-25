@@ -6,6 +6,8 @@
 
 #include "ldahash.h"
 
+using namespace std;
+
 void run_hammingmatch(const vector<BIN_WORD> &binVec, const int nrKeypoints1, const string &im2, const int method, vector< pair<unsigned, unsigned> >  &matches)
 {
 	int nrKeypoints2;
@@ -20,7 +22,7 @@ void run_hammingmatch(const vector<BIN_WORD> &binVec, const int nrKeypoints1, co
 	ifstream in;
 	
 	string task;
-	if(method == SIFT)     {task = "sift";}
+	if(method == METHOD_SIFT)     {task = "sift";}
 	if(method == DIF128)   {task = "dif128";}
 	if(method == LDA128)   {task = "lda128";}
 	if(method == DIF64)    {task = "dif64";} 
@@ -97,7 +99,7 @@ void run_hammingmatch(const string &im1, const string &im2, const int method)
 	ifstream in;
 	
 	string task;
-	if(method == SIFT)     {task = "sift";}
+	if(method == METHOD_SIFT)     {task = "sift";}
 	if(method == DIF128)   {task = "dif128";}
 	if(method == LDA128)   {task = "lda128";}
 	if(method == DIF64)    {task = "dif64";} 
@@ -153,7 +155,7 @@ void run_hammingmatch(const string &im1, const vector<string> &im2, const int me
 	ifstream in;
 	
 	string task;
-	if(method == SIFT)     {task = "sift";}
+	if(method == METHOD_SIFT)     {task = "sift";}
 	if(method == DIF128)   {task = "dif128";}
 	if(method == LDA128)   {task = "lda128";}
 	if(method == DIF64)    {task = "dif64";} 
@@ -234,7 +236,7 @@ bool readMatches(vector< pair<unsigned, unsigned> > &matches, const char *na)
 void showMatches(const string &im1, const string &im2, const int method)
 {
 	string task;
-	if(method == SIFT)     {task = "sift";}
+	if(method == METHOD_SIFT)     {task = "sift";}
 	if(method == DIF128)   {task = "dif128";}
 	if(method == LDA128)   {task = "lda128";}
 	if(method == DIF64)    {task = "dif64";} 
