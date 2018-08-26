@@ -654,6 +654,76 @@ void LoopClosureEvaluator::loadImagesFromDirectoryZubud(const std::string& direc
   std::cerr << "LoopClosureEvaluator::loadImagesFromDirectoryZubud|loaded reference images: " << _image_poses_ground_truth.size() << std::endl;
 }
 
+void LoopClosureEvaluator::loadImagesFromDirectoryHolidays(const std::string& directory_images_,
+                                                           const std::string& file_name_ground_truth_mapping_) {
+  _image_poses_ground_truth.clear();
+  _image_poses_query.clear();
+  _valid_query_image_numbers.clear();
+  _valid_train_image_numbers.clear();
+  _total_number_of_valid_closures = 0;
+
+  //ds load query and reference image set
+  std::vector<std::string> image_paths_query(0);
+  std::vector<std::string> image_paths_reference(0);
+
+  //ds parse ground truth mapping file (simultaneously generating the closure ground truth)
+  std::ifstream file_ground_truth(file_name_ground_truth_mapping_);
+  std::string buffer;
+  while (std::getline(file_ground_truth, buffer)) {
+
+    //ds extract query image name
+    size_t index_stop = buffer.find(".jpg");
+    const std::string image_name_query        = buffer.substr(0, index_stop);
+    const ImageNumberQuery image_number_query = std::stoi(image_name_query);
+
+    //ds add image to query pool
+    ImageWithPose* image_query = new ImageWithPose(directory_images_+"/"+image_name_query+".jpg",
+                                                   image_number_query,
+                                                   Eigen::Isometry3d::Identity());
+    image_query->file_name     = image_name_query;
+    image_query->file_type     = "jpg";
+    _image_poses_query.push_back(image_query);
+    _valid_query_image_numbers.insert(image_query);
+
+    //ds extract all possible reference image names
+    std::multiset<ImageNumberTrain> reference_images;
+    size_t index_line_end = buffer.length()-1;
+    size_t index_previous = index_stop+7;
+    while (index_stop != std::string::npos && index_stop < index_line_end-3) {
+      index_stop = buffer.find(".jpg", index_previous);
+
+      //ds last image
+      std::string image_name_reference = "";
+      if (index_stop == std::string::npos) {
+        image_name_reference = buffer.substr(index_previous, index_line_end-index_previous);
+      } else {
+        image_name_reference = buffer.substr(index_previous, index_stop-index_previous);
+      }
+      index_previous = index_stop+7;
+      const ImageNumberQuery image_number_reference = std::stoi(image_name_reference);
+
+      //ds add image to reference pool
+      ImageWithPose* image_reference = new ImageWithPose(directory_images_+"/"+image_name_reference+".jpg",
+                                                         image_number_reference,
+                                                         Eigen::Isometry3d::Identity());
+      image_query->file_name     = image_name_reference;
+      image_query->file_type     = "jpg";
+      _image_poses_ground_truth.push_back(image_reference);
+      _valid_train_image_numbers.insert(image_reference);
+      reference_images.insert(image_number_reference);
+    }
+
+    //ds set ground truth map
+    _closure_feasability_map.insert(std::make_pair(image_number_query, reference_images));
+    _total_number_of_valid_closures += reference_images.size();
+  }
+  file_ground_truth.close();
+
+  std::cerr << "LoopClosureEvaluator::loadImagesFromDirectoryHolidays|loaded query images: " << _image_poses_query.size() << std::endl;
+  std::cerr << "LoopClosureEvaluator::loadImagesFromDirectoryHolidays|loaded reference images: " << _image_poses_ground_truth.size() << std::endl;
+  std::cerr << "LoopClosureEvaluator::loadImagesFromDirectoryHolidays|computed feasible total number of closures: " << _total_number_of_valid_closures << std::endl;
+}
+
 void LoopClosureEvaluator::loadImagesFromDirectoryOxford(const std::string& directory_query_,
                                                          const std::string& directory_reference_,
                                                          const std::string& parsing_mode_) {

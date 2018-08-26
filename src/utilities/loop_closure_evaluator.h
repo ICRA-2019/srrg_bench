@@ -160,6 +160,9 @@ public:
 
   void loadImagesFromDirectoryZubud(const std::string& directory_query_, const std::string& directory_reference_);
 
+  void loadImagesFromDirectoryHolidays(const std::string& directory_images_,
+                                       const std::string& file_name_ground_truth_mapping_);
+
   void loadImagesFromDirectoryOxford(const std::string& directory_query_, const std::string& directory_reference_, const std::string& parsing_mode_ = "");
 
   void computeLoopClosureFeasibilityMap(const uint32_t& image_number_start_                      = 0,

@@ -6,25 +6,30 @@ Adjusting the descriptor size (bits)
 
 ---
 Image Retrieval benchmark examples
-- [ZuBuD](http://www.vision.ee.ethz.ch/en/datasets) with [Brute-Force (BF)](https://docs.opencv.org/3.1.0/d3/da1/classcv_1_1BFMatcher.html) matching and BRIEF descriptors (default):
+- [ZuBuD](http://www.vision.ee.ethz.ch/en/datasets) with [Brute-Force (BF)](https://docs.opencv.org/3.1.0/d3/da1/classcv_1_1BFMatcher.html) matching and BRIEF descriptors (default)
+without augmentation:
 
-	    ./benchmark_map -mode zubud -images-query test/ -images-reference train/ -closures zubud_groundtruth.txt -method bf -position-augmentation 9 9 1
+	    ./benchmark_map -mode zubud -images-query test/ -images-reference train/ -closures zubud_groundtruth.txt -method bf
 
-- [Oxford](http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/) with [FLANN-LSH](https://docs.opencv.org/3.1.0/d5/d6f/tutorial_feature_flann_matcher.html) matching and ORB descriptors:
+- [Oxford](http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/) with [FLANN-LSH](https://docs.opencv.org/3.1.0/d5/d6f/tutorial_feature_flann_matcher.html) matching and ORB descriptors
+with a 5x5 PA at weight 1:
 
-	    ./benchmark_map -mode oxford -images-query oxford/ -images-reference oxford/ -method flannlsh -descriptor orb -position-augmentation 9 9 2
+	    ./benchmark_map -mode oxford -images-query oxford/ -images-reference oxford/ -method flannlsh -descriptor orb -position-augmentation 5 5 1
 
-- [Paris](http://www.robots.ox.ac.uk/~vgg/data/parisbuildings/) with [Bag-of-Features (BOF)](https://github.com/dorian3d/DBoW2) matching and BRISK descriptors:
+- [Paris](http://www.robots.ox.ac.uk/~vgg/data/parisbuildings/) with [Bag-of-Features (BOF)](https://github.com/dorian3d/DBoW2) matching and BRISK descriptors
+with a 5x5 PA at weight 2:
 
-	    ./benchmark_map -mode paris -images-query paris/ -images-reference paris/ -method bof -descriptor brisk -position-augmentation 5 5 1
+	    ./benchmark_map -mode paris -images-query paris/ -images-reference paris/ -method bof -descriptor brisk -position-augmentation 5 5 2
 
-- [Holidays](http://lear.inrialpes.fr/~jegou/data.php) with [HBST](https://gitlab.com/srrg-software/srrg_hbst) matching and A-KAZE descriptors:
+- [Holidays](http://lear.inrialpes.fr/~jegou/data.php) with [HBST](https://gitlab.com/srrg-software/srrg_hbst) matching and A-KAZE descriptors
+with a 9x9 PA at weight 4:
 
-	    ./benchmark_map -mode holidays -images-query test/ -images-reference train/ -method hbst -descriptor akaze -position-augmentation 5 5 1
+	    ./benchmark_map -mode holidays -images-query jpg/ -closures perfect_result.dat -method hbst -descriptor akaze -position-augmentation 9 9 4
 
-- [KITTI](http://www.cvlibs.net/datasets/kitti/eval_odometry.php) with [HBST](https://gitlab.com/srrg-software/srrg_hbst) matching and FREAK descriptors:
+- [KITTI](http://www.cvlibs.net/datasets/kitti/eval_odometry.php) with [HBST](https://gitlab.com/srrg-software/srrg_hbst) matching and FREAK descriptors
+without augmentation:
 
-	    ./benchmark_map -mode kitti -images image_0 -poses 00.txt -method hbst -descriptor freak -position-augmentation 5 5 1
+	    ./benchmark_map -mode kitti -images image_0 -poses 00.txt -method hbst -descriptor freak
 
 ### It doesn't work? ###
 [Open an issue](https://gitlab.com/srrg-software/srrg_bench/issues) or contact the maintainer (see package.xml)

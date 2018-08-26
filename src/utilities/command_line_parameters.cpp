@@ -130,7 +130,11 @@ void CommandLineParameters::validate(std::ostream& stream_) {
     stream_ << "ERROR: no images specified (use -images <folder_images>)" << std::endl;
     throw std::runtime_error("");
   }
-  if (file_name_poses_ground_truth.empty() && parsing_mode != "zubud" && parsing_mode != "oxford" && parsing_mode != "paris") {
+  if (file_name_poses_ground_truth.empty() &&
+      parsing_mode != "zubud"              &&
+      parsing_mode != "oxford"             &&
+      parsing_mode != "paris"              &&
+      parsing_mode != "holidays"           ) {
     stream_ << "ERROR: no poses specified (use -poses <poses_gt>)" << std::endl;
     throw std::runtime_error("");
   }
@@ -142,7 +146,8 @@ void CommandLineParameters::validate(std::ostream& stream_) {
       file_name_closures_ground_truth.find("SIFT") == std::string::npos          &&
       parsing_mode != "zubud"                                                    &&
       parsing_mode != "oxford"                                                   &&
-      parsing_mode != "paris"                                                    ) {
+      parsing_mode != "paris"                                                    &&
+      parsing_mode != "holidays"                                                 ) {
     stream_ << "ERROR: invalid descriptor type in closures ground truth: " << file_name_closures_ground_truth << std::endl;
     throw std::runtime_error("");
   }
@@ -258,7 +263,7 @@ void CommandLineParameters::write(std::ostream& stream_) {
     WRITE_VARIABLE(stream_, file_name_poses_ground_truth_cross);
     WRITE_VARIABLE(stream_, folder_images_cross);
     stream_ << BAR << std::endl;
-  } else if (parsing_mode == "zubud") {
+  } else if (parsing_mode == "zubud" || parsing_mode == "paris") {
     WRITE_VARIABLE(stream_, folder_images_cross);
     stream_ << BAR << std::endl;
   }
@@ -313,6 +318,8 @@ void CommandLineParameters::configure(std::ostream& stream_) {
     evaluator->loadImagesFromDirectoryZubud(folder_images, folder_images_cross);
   } else if (parsing_mode == "paris") {
     evaluator->loadImagesFromDirectoryOxford(folder_images, folder_images_cross, "paris");
+  } else if (parsing_mode == "holidays") {
+    evaluator->loadImagesFromDirectoryHolidays(folder_images, file_name_closures_ground_truth);
   } else {
     stream_ << "ERROR: unknown selected parsing mode: '" << parsing_mode << "'" << std::endl;
     throw std::runtime_error("");
@@ -327,10 +334,10 @@ void CommandLineParameters::configure(std::ostream& stream_) {
   number_of_images_to_process = static_cast<double>(image_number_stop-image_number_start)/query_interspace;
 
   //ds compute all feasible closures for the given interspace - check if no closure ground truth file is provided
-  if (file_name_closures_ground_truth.empty()) {
+  if (file_name_closures_ground_truth.empty() || parsing_mode == "holidays") {
 
     //ds nothing to do for oxford and paris
-    if ((parsing_mode == "oxford" || parsing_mode == "paris") && file_name_poses_ground_truth.empty()) {
+    if (parsing_mode == "oxford" || parsing_mode == "paris" || parsing_mode == "holidays") {
 
       //ds do nothing
 

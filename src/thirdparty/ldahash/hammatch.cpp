@@ -189,7 +189,7 @@ void run_hammingmatch(const string &im1, const vector<string> &im2, const int me
 	in.close();
 
 	vector< pair<unsigned, unsigned> >  matches;
-	for(int i=0; i < im2.size(); i++)
+	for(uint32_t i=0; i < im2.size(); i++)
 	{
 		run_hammingmatch(binVec, nrKeypoints1, im2[i], method, matches);
 	

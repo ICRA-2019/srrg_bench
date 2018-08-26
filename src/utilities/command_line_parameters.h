@@ -121,7 +121,7 @@ class CommandLineParameters {
     bool use_random_splitting   = false;
     bool use_uneven_splitting   = false;
     uint32_t number_of_samples  = 1;
-    uint32_t maximum_depth      = 5;
+    uint32_t maximum_depth      = DESCRIPTOR_SIZE_BITS;
 
     //ds BoW specific
     std::string file_path_vocabulary = "";

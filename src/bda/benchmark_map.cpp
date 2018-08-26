@@ -99,8 +99,12 @@ int32_t main(int32_t argc_, char** argv_) {
     cv::Mat descriptors;
     baselayer->computeDescriptors(image, keypoints, descriptors, baselayer->target_number_of_descriptors);
 
-    //ds add to database
-    matcher->add(descriptors, number_of_processed_reference_images, keypoints);
+    //ds add to database - for zubud we have to renumber the images since there are duplicates (objects)
+    if (baselayer->parsing_mode == "zubud") {
+      matcher->add(descriptors, number_of_processed_reference_images, keypoints);
+    } else {
+      matcher->add(descriptors, image_reference->image_number, keypoints);
+    }
 
     //ds train incremental methods immediately
     if (baselayer->method_name == "hbst" || baselayer->method_name == "ibow") {
@@ -109,8 +113,8 @@ int32_t main(int32_t argc_, char** argv_) {
 
     //ds info
     ++number_of_processed_reference_images;
-    std::cerr << "processed REFERENCE image: '" << image_reference->file_path
-              << "' " << number_of_processed_reference_images << "/" << evaluator->imagePosesGroundTruth().size()
+    std::cerr << "processed REFERENCE image: '" << image_reference->file_path << "' (" << image.rows << "x" << image.cols << ")"
+              << " " << number_of_processed_reference_images << "/" << evaluator->imagePosesGroundTruth().size()
               << " (" << image_reference->image_number << ")"
               << " computed <" << baselayer->descriptor_type << "> descriptors: " << descriptors.rows
               << " (bytes: " << descriptors.cols << ")" << std::endl;
