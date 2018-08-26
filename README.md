@@ -35,9 +35,9 @@ Integrated descriptor types:
 - [BRISK-512 (OpenCV)](https://ieeexplore.ieee.org/document/6126542/)
 - [FREAK-512 (OpenCV)](https://ieeexplore.ieee.org/abstract/document/6247715/)
 - [A-KAZE-486 (OpenCV)](https://github.com/pablofdezalc/akaze)
-- [BinBoost](https://cvlab.epfl.ch/research/detect/binboost)
-- [BOLD](https://github.com/vbalnt/bold)
-- [LDAHash](https://cvlab.epfl.ch/research/detect/ldahash)
+- [BinBoost-64](https://cvlab.epfl.ch/research/detect/binboost)
+- [BOLD-512](https://github.com/vbalnt/bold)
+- [LDAHash-128](https://cvlab.epfl.ch/research/detect/ldahash)
 
 Supported environments: <br>
 - Ubuntu 14.04 with gcc 5 or higher
