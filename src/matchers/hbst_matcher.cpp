@@ -17,7 +17,7 @@ void HBSTMatcher::add(const cv::Mat& train_descriptors_,
                       const std::vector<cv::KeyPoint>& train_keypoints_) {
   if (_database) {
 
-    //ds obtain matchables (not timed being raw data, same for bow)
+    //ds obtain matchables (not timed being raw data)
     const Tree::MatchableVector matchables(_database->getMatchablesWithIndex(train_descriptors_, image_number_));
 
     TIC(_time_begin);

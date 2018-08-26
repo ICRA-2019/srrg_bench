@@ -290,7 +290,7 @@ void CommandLineParameters::configure(std::ostream& stream_) {
     } else if (!file_name_poses_ground_truth.empty()) {
       evaluator->loadImagesWithPosesFromFileOxford(file_name_poses_ground_truth, folder_images);
     } else {
-      evaluator->loadImagesFromDirectoryOxford(folder_images, folder_images_cross);
+      evaluator->loadImagesFromDirectoryOxford(folder_images, folder_images_cross, "oxford");
     }
   } else if (parsing_mode == "nordland") {
 
@@ -564,9 +564,13 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
     return;
   }
 
-  //ds rebuild descriptor matrix and keypoints vector
-  keypoints_.resize(target_number_of_descriptors_);
-  descriptors_ = descriptors_(cv::Rect(0, 0, descriptors_.cols, target_number_of_descriptors_));
+  //ds rebuild descriptor matrix and keypoints vector unless for specific descriptors
+  if (descriptor_type != "ldahash"  &&
+      descriptor_type != "binboost" &&
+      descriptor_type != "bold"     ) {
+    keypoints_.resize(target_number_of_descriptors_);
+    descriptors_ = descriptors_(cv::Rect(0, 0, descriptors_.cols, target_number_of_descriptors_));
+  }
 }
 
 void CommandLineParameters::configurePositionAugmentation(const std::string& image_resolution_key_) {

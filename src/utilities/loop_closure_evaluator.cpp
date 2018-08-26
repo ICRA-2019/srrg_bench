@@ -622,6 +622,10 @@ void LoopClosureEvaluator::loadImagesFromDirectoryZubud(const std::string& direc
   _loadImagePathsFromDirectory(directory_query_, "JPG", image_paths_query);
   _loadImagePathsFromDirectory(directory_reference_, "png", image_paths_reference);
 
+  //ds sort paths
+  std::sort(image_paths_query.begin(), image_paths_query.end());
+  std::sort(image_paths_reference.begin(), image_paths_reference.end());
+
   //ds store query images in query vector
   for (const std::string& image_path: image_paths_query) {
     const size_t index_start = image_path.find("qimg")+4;
@@ -687,6 +691,10 @@ void LoopClosureEvaluator::loadImagesFromDirectoryOxford(const std::string& dire
   } else {
     _loadImagePathsFromDirectory(directory_reference_, "jpg", image_paths_reference);
   }
+
+  //ds sort paths
+  std::sort(file_names_query.begin(), file_names_query.end());
+  std::sort(image_paths_reference.begin(), image_paths_reference.end());
 
   //ds blacklist of corrupted images for paris dataset (hardcoded to avoid a flying file)
   std::set<std::string> image_names_to_skip;

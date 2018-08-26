@@ -5,14 +5,14 @@
 namespace srrg_bench {
 
 //! @class matcher implementing the OpenCV brute-force matching algorithm
-class iBoWMatcher: public BaseMatcher {
+class IBoWMatcher: public BaseMatcher {
 
 //ds object life
 public:
 
   //! @brief constructor
   //! @param[in] minimum_distance_between_closure_images_ minimum image number distance between closures
-  iBoWMatcher(const uint32_t& minimum_distance_between_closure_images_,
+  IBoWMatcher(const uint32_t& minimum_distance_between_closure_images_,
               const unsigned k_ = 16,
               const unsigned s_ = 150,
               const unsigned t_ = 4,
@@ -22,10 +22,10 @@ public:
               const uint32_t& number_of_leaf_checks_ = 64);
 
   //! @brief default destructor
-  ~iBoWMatcher();
+  ~IBoWMatcher();
 
   //! @brief prohibit default construction
-  iBoWMatcher() = delete;
+  IBoWMatcher() = delete;
 
 //ds required interface
 public:
@@ -38,7 +38,7 @@ public:
                    const std::vector<cv::KeyPoint>& train_keypoints_);
 
   //! @brief default database index training function
-  virtual void train() {};
+  virtual void train();
 
   //! @brief database train function
   //! @param[in] train_descriptors_ collection of descriptors to be integrated into the database - no effect for HBST as we train directly while matching

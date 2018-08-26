@@ -34,8 +34,8 @@ public:
   //! @param[in] compute_score_only_
   BoWMatcher(const uint32_t& minimum_distance_between_closure_images_,
              const std::string& file_path_vocabulary_,
-             const bool& use_direct_index_,
-             const uint32_t& number_of_direct_index_levels_,
+             const bool& use_direct_index_ = false,
+             const uint32_t& number_of_direct_index_levels_ = 2,
              const bool& compute_score_only_ = false);
 
   //! @brief default destructor

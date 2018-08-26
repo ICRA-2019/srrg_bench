@@ -1,7 +1,7 @@
 #pragma once
 #include <chrono>
 #include <ctime>
-#include "../utilities/loop_closure_evaluator.h"
+#include "utilities/loop_closure_evaluator.h"
 
 namespace srrg_bench {
 

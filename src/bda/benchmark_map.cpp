@@ -1,4 +1,5 @@
 #include <regex>
+#include <omp.h>
 #include "matchers/bruteforce_matcher.h"
 #include "matchers/flannlsh_matcher.h"
 #include "utilities/command_line_parameters.h"
@@ -7,7 +8,6 @@
 #ifdef SRRG_BENCH_BUILD_HBST
 #include "matchers/hbst_matcher.h"
 #endif
-
 #ifdef SRRG_BENCH_BUILD_DBOW2
 #include "matchers/bow_matcher.h"
 #endif
@@ -29,6 +29,10 @@ int32_t main(int32_t argc_, char** argv_) {
   //ds disable multithreading of opencv
   cv::setNumThreads(0);
   cv::setUseOptimized(true);
+
+  //ds disable multithreading of openmp (some methods include it)
+  //omp_set_dynamic(0);
+  //omp_set_num_threads(4);
 
   //ds grab configuration
   std::shared_ptr<srrg_bench::CommandLineParameters> baselayer = std::make_shared<srrg_bench::CommandLineParameters>();
@@ -61,20 +65,9 @@ int32_t main(int32_t argc_, char** argv_) {
     std::cerr << "ERROR: unknown method name: " << method_name << std::endl;
     return EXIT_FAILURE;
 #endif
-  } else if (method_name == "bow") {
+  } else if (method_name == "bof") {
 #ifdef SRRG_BENCH_BUILD_DBOW2
-    matcher = std::make_shared<srrg_bench::BoWMatcher>(baselayer->minimum_distance_between_closure_images,
-                                           baselayer->file_path_vocabulary,
-                                           baselayer->use_direct_index,
-                                           baselayer->direct_index_levels);
-
-  //ds adjust descriptor type
-  #if DBOW2_DESCRIPTOR_TYPE == 0
-    baselayer->descriptor_type = "brief";
-  #elif DBOW2_DESCRIPTOR_TYPE == 1
-    baselayer->descriptor_type = "orb";
-  #endif
-
+    matcher = std::make_shared<srrg_bench::BoWMatcher>(baselayer->minimum_distance_between_closure_images, baselayer->file_path_vocabulary);
 #else
     std::cerr << "ERROR: unknown method name: " << method_name << std::endl;
     return EXIT_FAILURE;
@@ -104,18 +97,15 @@ int32_t main(int32_t argc_, char** argv_) {
     //ds detect keypoints and compute descriptors
     std::vector<cv::KeyPoint> keypoints;
     cv::Mat descriptors;
-    if (baselayer->parsing_mode == "oxford" || baselayer->parsing_mode == "paris") {
-
-      //ds compute a capped number of descriptors
-      baselayer->computeDescriptors(image, keypoints, descriptors, baselayer->target_number_of_descriptors);
-    } else {
-
-      //ds compute as many descriptors as possible
-      baselayer->computeDescriptors(image, keypoints, descriptors);
-    }
+    baselayer->computeDescriptors(image, keypoints, descriptors, baselayer->target_number_of_descriptors);
 
     //ds add to database
     matcher->add(descriptors, number_of_processed_reference_images, keypoints);
+
+    //ds train incremental methods immediately
+    if (baselayer->method_name == "hbst" || baselayer->method_name == "ibow") {
+      matcher->train();
+    }
 
     //ds info
     ++number_of_processed_reference_images;
@@ -145,15 +135,7 @@ int32_t main(int32_t argc_, char** argv_) {
     //ds detect keypoints and compute descriptors
     std::vector<cv::KeyPoint> keypoints;
     cv::Mat descriptors;
-    if (baselayer->parsing_mode == "oxford" || baselayer->parsing_mode == "paris") {
-
-      //ds compute a capped number of descriptors
-      baselayer->computeDescriptors(image, keypoints, descriptors, baselayer->target_number_of_descriptors);
-    } else {
-
-      //ds compute as many descriptors as possible
-      baselayer->computeDescriptors(image, keypoints, descriptors);
-    }
+    baselayer->computeDescriptors(image, keypoints, descriptors, baselayer->target_number_of_descriptors);
 
     //ds intermediate info
     std::cerr << "processing QUERY image: '" << image_query->file_path
@@ -221,8 +203,8 @@ int32_t main(int32_t argc_, char** argv_) {
   std::cerr << "number of processed reference images: " << number_of_processed_reference_images << std::endl;
   std::cerr << "    number of processed query images: " << number_of_processed_query_images << std::endl;
   std::cerr << "        mean average precision (mAP): " << mean_average_precision << std::endl;
-  std::cerr << "        mean add processing time (s): " << matcher->totalDurationAddSeconds()/number_of_processed_reference_images << std::endl;
-  std::cerr << "           train processing time (s): " << matcher->totalDurationTrainSeconds() << std::endl;
-  std::cerr << "      mean query processing time (s): " << matcher->totalDurationQuerySeconds()/number_of_processed_query_images << std::endl;
+  std::cerr << "      mean add() processing time (s): " << matcher->totalDurationAddSeconds()/number_of_processed_reference_images << std::endl;
+  std::cerr << "         train() processing time (s): " << matcher->totalDurationTrainSeconds() << std::endl;
+  std::cerr << "    mean query() processing time (s): " << matcher->totalDurationQuerySeconds()/number_of_processed_query_images << std::endl;
   return 0;
 }
