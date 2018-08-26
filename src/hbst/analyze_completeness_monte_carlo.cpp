@@ -184,7 +184,7 @@ void loadMatchables(MatchableVector& matchables_total_,
     cv::Mat descriptors;
 
     //ds load image
-    cv::Mat image = cv::imread(image_with_pose->file_name, CV_LOAD_IMAGE_GRAYSCALE);
+    cv::Mat image = cv::imread(image_with_pose->file_path, CV_LOAD_IMAGE_GRAYSCALE);
 
     //ds detect keypoints
     parameters_->feature_detector->detect(image, keypoints);

@@ -1,7 +1,8 @@
-#include <iostream>
+#include <regex>
 #include "matchers/bruteforce_matcher.h"
 #include "matchers/flannlsh_matcher.h"
 #include "utilities/command_line_parameters.h"
+#include "thirdparty/oxford/compute_ap.h"
 
 #ifdef SRRG_BENCH_BUILD_HBST
 #include "matchers/hbst_matcher.h"
@@ -16,7 +17,7 @@
 int32_t main(int32_t argc_, char** argv_) {
 
   //ds validate number of parameters
-  if (argc_ < 11) {
+  if (argc_ < 9) {
     std::cerr << "./benchmark_map -mode zubud"
                  "-images-reference <directory_train_images> "
                  "-images-query <directory_test_images> "
@@ -98,19 +99,27 @@ int32_t main(int32_t argc_, char** argv_) {
   uint32_t number_of_processed_reference_images = 0;
   uint32_t number_of_trained_descriptors        = 0;
   for (const srrg_bench::ImageWithPose* image_reference: evaluator->imagePosesGroundTruth()) {
-    const cv::Mat image = cv::imread(image_reference->file_name, CV_LOAD_IMAGE_GRAYSCALE);
+    const cv::Mat image = baselayer->readImage(image_reference->file_path);
 
     //ds detect keypoints and compute descriptors
     std::vector<cv::KeyPoint> keypoints;
     cv::Mat descriptors;
-    baselayer->computeDescriptors(image, keypoints, descriptors);
+    if (baselayer->parsing_mode == "oxford" || baselayer->parsing_mode == "paris") {
+
+      //ds compute a capped number of descriptors
+      baselayer->computeDescriptors(image, keypoints, descriptors, baselayer->target_number_of_descriptors);
+    } else {
+
+      //ds compute as many descriptors as possible
+      baselayer->computeDescriptors(image, keypoints, descriptors);
+    }
 
     //ds add to database
     matcher->add(descriptors, number_of_processed_reference_images, keypoints);
 
     //ds info
     ++number_of_processed_reference_images;
-    std::cerr << "processed REFERENCE image: '" << image_reference->file_name
+    std::cerr << "processed REFERENCE image: '" << image_reference->file_path
               << "' " << number_of_processed_reference_images << "/" << evaluator->imagePosesGroundTruth().size()
               << " (" << image_reference->image_number << ")"
               << " computed <" << baselayer->descriptor_type << "> descriptors: " << descriptors.rows
@@ -131,15 +140,23 @@ int32_t main(int32_t argc_, char** argv_) {
   double mean_average_precision = 0;
   std::chrono::time_point<std::chrono::system_clock> timer;
   for (const srrg_bench::ImageWithPose* image_query: evaluator->imagePosesQuery()) {
-    const cv::Mat image = cv::imread(image_query->file_name, CV_LOAD_IMAGE_GRAYSCALE);
+    const cv::Mat image = baselayer->readImage(image_query->file_path);
 
     //ds detect keypoints and compute descriptors
     std::vector<cv::KeyPoint> keypoints;
     cv::Mat descriptors;
-    baselayer->computeDescriptors(image, keypoints, descriptors);
+    if (baselayer->parsing_mode == "oxford" || baselayer->parsing_mode == "paris") {
+
+      //ds compute a capped number of descriptors
+      baselayer->computeDescriptors(image, keypoints, descriptors, baselayer->target_number_of_descriptors);
+    } else {
+
+      //ds compute as many descriptors as possible
+      baselayer->computeDescriptors(image, keypoints, descriptors);
+    }
 
     //ds intermediate info
-    std::cerr << "processing QUERY image: '" << image_query->file_name
+    std::cerr << "processing QUERY image: '" << image_query->file_path
               << "' " << number_of_processed_query_images << "/" << evaluator->imagePosesQuery().size()
               << " (" << image_query->image_number << ")"
               << " computed <" << baselayer->descriptor_type << "> descriptors: " << descriptors.rows
@@ -157,10 +174,40 @@ int32_t main(int32_t argc_, char** argv_) {
       }
     }
 
-    //ds compute average precision
-    const std::multiset<srrg_bench::ImageNumberTrain> valid_reference_image_list(evaluator->closureFeasibilityMap().at(image_query->image_number));
-    const double average_precision = evaluator->computeAveragePrecision(image_scores, valid_reference_image_list);
-    mean_average_precision        += average_precision;
+    //ds average precision to compute
+    double average_precision = 0;
+
+    //ds use oxford tool to compute average precision
+    if (baselayer->parsing_mode == "oxford" || baselayer->parsing_mode == "paris") {
+
+      //ds retrieve required files
+      const std::string file_path_good  = std::regex_replace(image_query->file_path_origin, std::regex("query"), "good");
+      const std::string file_path_ok    = std::regex_replace(image_query->file_path_origin, std::regex("query"), "ok");
+      const std::string file_path_junk  = std::regex_replace(image_query->file_path_origin, std::regex("query"), "junk");
+
+      //ds fill ranked list (reference image names in decreasing score order)
+      std::vector<std::string> ranked_list(image_scores.size());
+      for (uint32_t u = 0; u < ranked_list.size(); ++u) {
+        ranked_list[u] = evaluator->imagePosesGroundTruth()[image_scores[u].image_association.train]->file_name;
+      }
+
+      //ds load evaluation data
+      const std::set<std::string> good_set = OxfordAveragePrecisionUtility::vector_to_set(OxfordAveragePrecisionUtility::load_list(file_path_good));
+      const std::set<std::string> ok_set   = OxfordAveragePrecisionUtility::vector_to_set(OxfordAveragePrecisionUtility::load_list(file_path_ok));
+      const std::set<std::string> junk_set = OxfordAveragePrecisionUtility::vector_to_set(OxfordAveragePrecisionUtility::load_list(file_path_junk));
+      std::set<std::string> possible_set;
+      possible_set.insert(good_set.begin(), good_set.end());
+      possible_set.insert(ok_set.begin(), ok_set.end());
+
+      //ds compute average precision for this query
+      average_precision = OxfordAveragePrecisionUtility::compute_ap(possible_set, junk_set, ranked_list);
+    } else {
+
+      //ds compute average precision - classical
+      const std::multiset<srrg_bench::ImageNumberTrain> valid_reference_image_list(evaluator->closureFeasibilityMap().at(image_query->image_number));
+      average_precision = evaluator->computeAveragePrecision(image_scores, valid_reference_image_list);
+    }
+    mean_average_precision += average_precision;
     ++number_of_processed_query_images;
     std::cerr << " | AP: " << average_precision << std::endl;
   }

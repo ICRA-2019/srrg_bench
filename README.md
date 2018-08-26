@@ -28,6 +28,17 @@ Pure Image Retrieval (VPR) datasets:
 - [Paris](http://www.robots.ox.ac.uk/~vgg/data/parisbuildings/)
 - [Holidays](http://lear.inrialpes.fr/~jegou/data.php)
 
+Integrated descriptor types:
+
+- [BRIEF-128/256/512 (OpenCV)](https://cvlab.epfl.ch/research/detect/brief)
+- [ORB-256 (OpenCV)](https://ieeexplore.ieee.org/document/6126544/)
+- [BRISK-512 (OpenCV)](https://ieeexplore.ieee.org/document/6126542/)
+- [FREAK-512 (OpenCV)](https://ieeexplore.ieee.org/abstract/document/6247715/)
+- [A-KAZE-486 (OpenCV)](https://github.com/pablofdezalc/akaze)
+- [BinBoost](https://cvlab.epfl.ch/research/detect/binboost)
+- [BOLD](https://github.com/vbalnt/bold)
+- [LDAHash](https://cvlab.epfl.ch/research/detect/ldahash)
+
 Supported environments: <br>
 - Ubuntu 14.04 with gcc 5 or higher
 - Ubuntu 16.04 with gcc 5 or higher

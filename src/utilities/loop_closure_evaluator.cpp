@@ -20,6 +20,10 @@ LoopClosureEvaluator::~LoopClosureEvaluator() {
   for (const ImageWithPose* image_with_pose: _image_poses_ground_truth) {
     delete image_with_pose;
   }
+  for (const ImageWithPose* image_with_pose: _image_poses_query) {
+    delete image_with_pose;
+  }
+  _image_poses_query.clear();
   _image_poses_ground_truth.clear();
   _closure_feasability_map.clear();
   _closure_map_bf.clear();
@@ -644,6 +648,133 @@ void LoopClosureEvaluator::loadImagesFromDirectoryZubud(const std::string& direc
 
   std::cerr << "LoopClosureEvaluator::loadImagesFromDirectoryZubud|loaded query images: " << _image_poses_query.size() << std::endl;
   std::cerr << "LoopClosureEvaluator::loadImagesFromDirectoryZubud|loaded reference images: " << _image_poses_ground_truth.size() << std::endl;
+}
+
+void LoopClosureEvaluator::loadImagesFromDirectoryOxford(const std::string& directory_query_,
+                                                         const std::string& directory_reference_,
+                                                         const std::string& parsing_mode_) {
+  _image_poses_ground_truth.clear();
+  _image_poses_query.clear();
+
+  //ds load query and reference image set
+  std::vector<std::string> file_names_query(0);
+  std::vector<std::string> image_paths_reference(0);
+  _loadImagePathsFromDirectory(directory_query_, "query.txt", file_names_query);
+
+  //ds for paris we first have to scan for the directories
+  std::vector<std::string> image_directories_reference(0);
+  if (parsing_mode_ == "paris") {
+    DIR* handle_directory   = 0;
+    struct dirent* iterator = 0;
+    if ((handle_directory = opendir(directory_reference_.c_str()))) {
+      while ((iterator = readdir(handle_directory))) {
+
+        //ds buffer file name
+        const std::string directory_name = iterator->d_name;
+
+        //ds check if we have a directory (that is not a hidden linux file)
+        if (iterator->d_type == DT_DIR && directory_name[0] != '.') {
+          image_directories_reference.push_back(directory_reference_+"/"+directory_name+"/");
+        }
+      }
+      closedir(handle_directory);
+    }
+
+    //ds for each of the directories we have to load images
+    for (const std::string& directory_name: image_directories_reference) {
+      _loadImagePathsFromDirectory(directory_name, "jpg", image_paths_reference);
+    }
+  } else {
+    _loadImagePathsFromDirectory(directory_reference_, "jpg", image_paths_reference);
+  }
+
+  //ds blacklist of corrupted images for paris dataset (hardcoded to avoid a flying file)
+  std::set<std::string> image_names_to_skip;
+  if (parsing_mode_ == "paris") {
+    image_names_to_skip.insert("paris_louvre_000136");
+    image_names_to_skip.insert("paris_louvre_000146");
+    image_names_to_skip.insert("paris_moulinrouge_000422");
+    image_names_to_skip.insert("paris_museedorsay_001059");
+    image_names_to_skip.insert("paris_notredame_000188");
+    image_names_to_skip.insert("paris_pantheon_000284");
+    image_names_to_skip.insert("paris_pantheon_000960");
+    image_names_to_skip.insert("paris_pantheon_000974");
+    image_names_to_skip.insert("paris_pompidou_000195");
+    image_names_to_skip.insert("paris_pompidou_000196");
+    image_names_to_skip.insert("paris_pompidou_000201");
+    image_names_to_skip.insert("paris_pompidou_000467");
+    image_names_to_skip.insert("paris_pompidou_000640");
+    image_names_to_skip.insert("paris_sacrecoeur_000299");
+    image_names_to_skip.insert("paris_sacrecoeur_000330");
+    image_names_to_skip.insert("paris_sacrecoeur_000353");
+    image_names_to_skip.insert("paris_triomphe_000662");
+    image_names_to_skip.insert("paris_triomphe_000833");
+    image_names_to_skip.insert("paris_triomphe_000863");
+    image_names_to_skip.insert("paris_triomphe_000867");
+  }
+
+  //ds parse query image names from query txt files
+  std::set<std::string> image_names_query;
+  std::map<std::string, std::string> image_names_to_file_paths;
+  for (const std::string& file_path_query: file_names_query) {
+    std::ifstream file(file_path_query);
+    std::string buffer;
+    std::getline(file, buffer);
+    const size_t index_stop = buffer.find_first_of(' ');
+
+    //ds retrieve image name
+    std::string image_name = "";
+    if (parsing_mode_ == "oxford") {
+      image_name = buffer.substr(5, index_stop-5);
+    } else {
+      image_name = buffer.substr(0, index_stop);
+    }
+
+    //ds if not filtered
+    if (image_names_to_skip.count(image_name) == 0) {
+      image_names_query.insert(image_name);
+      image_names_to_file_paths.insert(std::make_pair(image_name, file_path_query));
+    }
+    file.close();
+  }
+
+  //ds store reference images in ground truth
+  ImageNumber image_number             = 0;
+  ImageNumber number_of_skipped_images = 0;
+  for (const std::string& image_path: image_paths_reference) {
+
+    //ds parse image name
+    const size_t index_start = image_path.find_last_of("/")+1;
+    const size_t index_stop  = image_path.find(".jpg", index_start);
+    const std::string image_name = image_path.substr(index_start, index_stop-index_start);
+
+    //ds if not filtered
+    if (image_names_to_skip.count(image_name) == 0) {
+
+      //ds allocate image object with empty pose
+      ImageWithPose* image = new ImageWithPose(image_path,
+                                               image_number,
+                                               Eigen::Isometry3d::Identity());
+      image->file_name = image_name;
+      image->file_type = "jpg";
+
+      //ds add image to references
+      _image_poses_ground_truth.push_back(image);
+
+      //ds if the image name matches a query image name - add it to query set
+      if (image_names_query.count(image_name) == 1) {
+        image->file_path_origin = image_names_to_file_paths.at(image_name);
+        _image_poses_query.push_back(image);
+      }
+      ++image_number;
+    } else {
+      ++number_of_skipped_images;
+    }
+  }
+
+  std::cerr << "LoopClosureEvaluator::loadImagesFromDirectoryOxford|loaded query images: " << _image_poses_query.size() << std::endl;
+  std::cerr << "LoopClosureEvaluator::loadImagesFromDirectoryOxford|loaded reference images: " << _image_poses_ground_truth.size() << std::endl;
+  std::cerr << "LoopClosureEvaluator::loadImagesFromDirectoryOxford|skipped images: " << number_of_skipped_images << std::endl;
 }
 
 void LoopClosureEvaluator::computeLoopClosureFeasibilityMap(const uint32_t& image_number_start_,
@@ -1407,7 +1538,7 @@ void LoopClosureEvaluator::_loadImagePathsFromDirectory(const std::string& direc
   DIR* handle_directory   = 0;
   struct dirent* iterator = 0;
   if ((handle_directory = opendir(directory_.c_str()))) {
-    while ((iterator = readdir (handle_directory))) {
+    while ((iterator = readdir(handle_directory))) {
 
       //ds buffer file name
       const std::string file_name = iterator->d_name;

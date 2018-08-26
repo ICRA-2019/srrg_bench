@@ -12,15 +12,15 @@ Image Retrieval benchmark examples
 
 - [Oxford](http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/) with [FLANN-LSH](https://docs.opencv.org/3.1.0/d5/d6f/tutorial_feature_flann_matcher.html) matching and ORB descriptors:
 
-	    ./benchmark_map -mode oxford -images-query test/ -images-reference train/ -closures zubud_groundtruth.txt -method flannlsh -descriptor orb -position-augmentation 9 9 2
+	    ./benchmark_map -mode oxford -images-query oxford/ -images-reference oxford/ -method flannlsh -descriptor orb -position-augmentation 9 9 2
 
 - [Paris](http://www.robots.ox.ac.uk/~vgg/data/parisbuildings/) with [Bag-of-Features (BOF)](https://github.com/dorian3d/DBoW2) matching and BRISK descriptors:
 
-	    ./benchmark_map -mode oxford -images-query test/ -images-reference train/ -closures zubud_groundtruth.txt -method bof -descriptor brisk -position-augmentation 5 5 1
+	    ./benchmark_map -mode paris -images-query paris/ -images-reference paris/ -method bof -descriptor brisk -position-augmentation 5 5 1
 
 - [Holidays](http://lear.inrialpes.fr/~jegou/data.php) with [HBST](https://gitlab.com/srrg-software/srrg_hbst) matching and A-KAZE descriptors:
 
-	    ./benchmark_map -mode oxford -images-query test/ -images-reference train/ -closures zubud_groundtruth.txt -method hbst -descriptor akaze -position-augmentation 5 5 1
+	    ./benchmark_map -mode holidays -images-query test/ -images-reference train/ -method hbst -descriptor akaze -position-augmentation 5 5 1
 
 - [KITTI](http://www.cvlibs.net/datasets/kitti/eval_odometry.php) with [HBST](https://gitlab.com/srrg-software/srrg_hbst) matching and FREAK descriptors:
 

@@ -172,7 +172,7 @@ int32_t main(int32_t argc_, char** argv_) {
       if (image_number_query%parameters->query_interspace == 0) {
 
         //ds load image from disk
-        const std::string file_name_image = parameters->evaluator->imagePosesGroundTruth()[image_number_query]->file_name;
+        const std::string file_name_image = parameters->evaluator->imagePosesGroundTruth()[image_number_query]->file_path;
         cv::Mat image = cv::imread(file_name_image, CV_LOAD_IMAGE_GRAYSCALE);
 
         //ds apply bayer decoding if necessary

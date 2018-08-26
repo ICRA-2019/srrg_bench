@@ -98,7 +98,7 @@ int32_t main(int32_t argc_, char** argv_) {
     }
 
     //ds load current image from disk
-    image_query = cv::imread(parameters->evaluator->imagePosesGroundTruth()[image_number_query]->file_name, CV_LOAD_IMAGE_GRAYSCALE);
+    image_query = cv::imread(parameters->evaluator->imagePosesGroundTruth()[image_number_query]->file_path, CV_LOAD_IMAGE_GRAYSCALE);
 
     //ds current pose
     Eigen::Isometry3d current_pose(parameters->evaluator->imagePosesGroundTruth()[image_number_query]->pose);
@@ -185,7 +185,7 @@ int32_t main(int32_t argc_, char** argv_) {
 
       //ds update query display
       viewer_tree->setMatches(matches[image_number_reference]);
-      image_reference_best = cv::imread(parameters->evaluator->imagePosesGroundTruth()[image_number_reference]->file_name, CV_LOAD_IMAGE_GRAYSCALE);
+      image_reference_best = cv::imread(parameters->evaluator->imagePosesGroundTruth()[image_number_reference]->file_path, CV_LOAD_IMAGE_GRAYSCALE);
       if (parameters->parsing_mode == "lucia" || parameters->parsing_mode == "oxford") {
         cv::cvtColor(image_reference_best, image_reference_best, CV_BayerGR2GRAY);
       }

@@ -7,10 +7,9 @@ namespace srrg_bench {
 
 CommandLineParameters::~CommandLineParameters() {
 
-
-  //ds clear augmentation mappings TODO structify for proper deletion
-  for (const std::pair<std::string, std::string**>& mapping: mappings_image_coordinates_to_augmentation) {
-
+  //ds clear augmentation mappings
+  for (const std::pair<std::string, BinaryStringGrid*>& mapping: mappings_image_coordinates_to_augmentation) {
+    delete mapping.second;
   }
 }
 
@@ -131,17 +130,19 @@ void CommandLineParameters::validate(std::ostream& stream_) {
     stream_ << "ERROR: no images specified (use -images <folder_images>)" << std::endl;
     throw std::runtime_error("");
   }
-  if (file_name_poses_ground_truth.empty() && parsing_mode != "zubud") {
+  if (file_name_poses_ground_truth.empty() && parsing_mode != "zubud" && parsing_mode != "oxford" && parsing_mode != "paris") {
     stream_ << "ERROR: no poses specified (use -poses <poses_gt>)" << std::endl;
     throw std::runtime_error("");
   }
-  if (file_name_closures_ground_truth == "") {
+  if (file_name_closures_ground_truth == "" && (parsing_mode != "oxford" || parsing_mode != "paris")) {
     stream_ << "WARNING: no closures ground truth specified (use -closures <closures_gt>) - computing full feasibility map" << std::endl;
   }
   if (file_name_closures_ground_truth != ""                                      &&
       file_name_closures_ground_truth.find(descriptor_type) == std::string::npos &&
       file_name_closures_ground_truth.find("SIFT") == std::string::npos          &&
-      parsing_mode != "zubud"                                                    ) {
+      parsing_mode != "zubud"                                                    &&
+      parsing_mode != "oxford"                                                   &&
+      parsing_mode != "paris"                                                    ) {
     stream_ << "ERROR: invalid descriptor type in closures ground truth: " << file_name_closures_ground_truth << std::endl;
     throw std::runtime_error("");
   }
@@ -173,6 +174,16 @@ void CommandLineParameters::validate(std::ostream& stream_) {
       throw std::runtime_error("");
     }
   }
+  if (parsing_mode == "paris") {
+
+    //ds check if files are missing
+    if (folder_images.empty() || folder_images_cross.empty()) {
+      stream_ << "ERROR: insufficient data provided" << std::endl;
+      throw std::runtime_error("");
+    }
+  }
+
+  //ds if position augmentation is desired
   if (number_of_augmentation_bins_horizontal > 0 && number_of_augmentation_bins_vertical > 0) {
     number_of_augmented_bits = number_of_augmentation_bins_horizontal+number_of_augmentation_bins_vertical-2;
 
@@ -276,8 +287,10 @@ void CommandLineParameters::configure(std::ostream& stream_) {
                                                    folder_images,
                                                    file_name_poses_ground_truth_cross,
                                                    folder_images_cross);
-    } else {
+    } else if (!file_name_poses_ground_truth.empty()) {
       evaluator->loadImagesWithPosesFromFileOxford(file_name_poses_ground_truth, folder_images);
+    } else {
+      evaluator->loadImagesFromDirectoryOxford(folder_images, folder_images_cross);
     }
   } else if (parsing_mode == "nordland") {
 
@@ -298,6 +311,8 @@ void CommandLineParameters::configure(std::ostream& stream_) {
                                                    folder_images_cross);
   } else if (parsing_mode == "zubud") {
     evaluator->loadImagesFromDirectoryZubud(folder_images, folder_images_cross);
+  } else if (parsing_mode == "paris") {
+    evaluator->loadImagesFromDirectoryOxford(folder_images, folder_images_cross, "paris");
   } else {
     stream_ << "ERROR: unknown selected parsing mode: '" << parsing_mode << "'" << std::endl;
     throw std::runtime_error("");
@@ -312,15 +327,23 @@ void CommandLineParameters::configure(std::ostream& stream_) {
   number_of_images_to_process = static_cast<double>(image_number_stop-image_number_start)/query_interspace;
 
   //ds compute all feasible closures for the given interspace - check if no closure ground truth file is provided
-  if (file_name_closures_ground_truth == "") {
+  if (file_name_closures_ground_truth.empty()) {
 
-    //ds compute feasibility
-    evaluator->computeLoopClosureFeasibilityMap(image_number_start,
-                                                image_number_stop,
-                                                query_interspace,
-                                                maximum_difference_position_meters,
-                                                maximum_difference_angle_radians,
-                                                minimum_distance_between_closure_images);
+    //ds nothing to do for oxford and paris
+    if ((parsing_mode == "oxford" || parsing_mode == "paris") && file_name_poses_ground_truth.empty()) {
+
+      //ds do nothing
+
+    } else {
+
+      //ds compute feasibility
+      evaluator->computeLoopClosureFeasibilityMap(image_number_start,
+                                                  image_number_stop,
+                                                  query_interspace,
+                                                  maximum_difference_position_meters,
+                                                  maximum_difference_angle_radians,
+                                                  minimum_distance_between_closure_images);
+    }
   } else if (parsing_mode == "zubud") {
 
     //ds compute closures from mapping
@@ -403,9 +426,9 @@ void CommandLineParameters::configure(std::ostream& stream_) {
   }
 }
 
-void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vector<cv::KeyPoint>& keypoints_, cv::Mat& descriptors_) {
+void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vector<cv::KeyPoint>& keypoints_, cv::Mat& descriptors_, const bool sort_keypoints_by_response_) {
 
-  //ds check for custom descriptors
+  //ds check for custom descriptors TODO sorting
   if (descriptor_type == "bold") {
 
     //ds detect keypoints
@@ -449,12 +472,17 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
     }
   } else if (descriptor_type == "ldahash") {
 
-    //ds call modified ldahash detection and computation method
+    //ds call modified ldahash detection and computation method TODO sorting
     run_sifthash(image_, DIF128, keypoints_, descriptors_);
   } else {
 
     //ds detect keypoints
     feature_detector->detect(image_, keypoints_);
+
+    //ds sort keypoints descendingly by response value (for culling after descriptor computation)
+    if (sort_keypoints_by_response_) {
+      std::sort(keypoints_.begin(), keypoints_.end(), [](const cv::KeyPoint& a_, const cv::KeyPoint& b_){return a_.response > b_.response;});
+    }
 
     //ds compute descriptors
     descriptor_extractor->compute(image_, keypoints_, descriptors_);
@@ -488,7 +516,7 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
     cv::Mat descriptors_augmented = cv::Mat(descriptors_.rows, descriptors_.cols+number_of_augmented_bytes, descriptors_.type());
 
     //ds obtain mapping (must work at this point)
-    std::string** mapping = mappings_image_coordinates_to_augmentation.at(key);
+    BinaryStringGrid* mapping = mappings_image_coordinates_to_augmentation.at(key);
 
     //ds augment each descriptor
     for (int32_t i = 0; i < descriptors_augmented.rows; ++i) {
@@ -508,7 +536,7 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
           //ds obtain the mapping for the descriptor
           const uint32_t& row = keypoints_[i].pt.y;
           const uint32_t& col = keypoints_[i].pt.x;
-          const std::string& augmentation = mapping[row][col];
+          const std::string& augmentation = mapping->at(row,col);
 
           //ds build uchar bitset and set augmentation to descriptor
           const std::bitset<8> data(augmentation.substr(augmentation_bit_index, 8));
@@ -526,27 +554,14 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
 
 void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vector<cv::KeyPoint>& keypoints_, cv::Mat& descriptors_, const uint32_t& target_number_of_descriptors_) {
 
-  //ds check for custom descriptors - redirect to uncapped
-  if (descriptor_type == "bold") {
-    return computeDescriptors(image_, keypoints_, descriptors_);
-  } else if (descriptor_type == "ldahash") {
-    return computeDescriptors(image_, keypoints_, descriptors_);
-  }
-
-  //ds detect keypoints
-  feature_detector->detect(image_, keypoints_);
-
-  //ds sort keypoints descendingly by response value (for culling after descriptor computation)
-  std::sort(keypoints_.begin(), keypoints_.end(), [](const cv::KeyPoint& a_, const cv::KeyPoint& b_){return a_.response > b_.response;});
-
-  //ds compute descriptors
-  descriptor_extractor->compute(image_, keypoints_, descriptors_);
+  //ds compute descriptors after sorting detected keypoints
+  computeDescriptors(image_, keypoints_, descriptors_, true);
 
   //ds check insufficient descriptor number
   if (keypoints_.size() < target_number_of_descriptors_) {
-    std::cerr << "\nERROR: insufficient number of descriptors computed: " << keypoints_.size()
+    std::cerr << "\nWARNING: insufficient number of descriptors computed: " << keypoints_.size()
               << " < " << target_number_of_descriptors_ << ", adjust keypoint detector threshold" << std::endl;
-    throw std::runtime_error("adjust keypoint detector threshold");
+    return;
   }
 
   //ds rebuild descriptor matrix and keypoints vector
@@ -555,21 +570,15 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
 }
 
 void CommandLineParameters::configurePositionAugmentation(const std::string& image_resolution_key_) {
-  if (number_of_augmentation_bins_horizontal == 0 || number_of_augmentation_bins_vertical == 0) {
+  if (number_of_augmentation_bins_horizontal == 0 || number_of_augmentation_bins_vertical == 0 || number_of_augmented_bits == 0) {
+    return;
+  }
+  if (number_of_image_rows == 0 || number_of_image_cols == 0) {
     return;
   }
 
   //ds we compute a binary string mapping for each pixel [r,c] of the image for fast access
-  std::string** mapping = new std::string*[number_of_image_rows];
-  for (uint32_t row = 0; row < number_of_image_rows; ++row) {
-    mapping[row] = new std::string[number_of_image_cols];
-    for (uint32_t col = 0; col < number_of_image_cols; ++col) {
-      mapping[row][col] = "";
-      for (uint32_t u = 0; u < number_of_augmented_bits; ++u) {
-        mapping[row][col] += "0";
-      }
-    }
-  }
+  BinaryStringGrid* mapping = new BinaryStringGrid(number_of_image_rows, number_of_image_cols, number_of_augmented_bits);
 
   //ds compute average bin widths in pixels
   const uint32_t bin_width_row_pixels = std::ceil(static_cast<double>(number_of_image_rows)/number_of_augmentation_bins_vertical);
@@ -596,12 +605,12 @@ void CommandLineParameters::configurePositionAugmentation(const std::string& ima
 
       //ds compute binary string for rows (we prefix them to the cols)
       for (uint32_t bit_index_to_set = 0; bit_index_to_set < bin_index_row; ++bit_index_to_set) {
-        mapping[row][col][bit_index_to_set] = '1';
+        mapping->at(row,col)[bit_index_to_set] = '1';
       }
 
       //ds compute binary string for cols
       for (uint32_t bit_index_to_set = 0; bit_index_to_set < bin_index_col; ++bit_index_to_set) {
-        mapping[row][col][bit_index_to_set+augmented_bits_in_cols] = '1';
+        mapping->at(row,col)[bit_index_to_set+augmented_bits_in_cols] = '1';
       }
     }
   }
@@ -610,7 +619,7 @@ void CommandLineParameters::configurePositionAugmentation(const std::string& ima
             << " with key: " << image_resolution_key_ << std::endl;
   for (uint32_t row = 0; row < number_of_augmentation_bins_vertical; ++row) {
     for (uint32_t col = 0; col < number_of_augmentation_bins_horizontal; ++col) {
-      std::cerr << mapping[row*bin_width_row_pixels+1][col*bin_width_col_pixels+1] << " ";
+      std::cerr << mapping->at(row*bin_width_row_pixels+1,col*bin_width_col_pixels+1) << " ";
     }
     std::cerr << std::endl;
   }
@@ -619,6 +628,18 @@ void CommandLineParameters::configurePositionAugmentation(const std::string& ima
   mappings_image_coordinates_to_augmentation.insert(std::make_pair(image_resolution_key_, mapping));
 }
 
+cv::Mat CommandLineParameters::readImage(const std::string& image_file_path_) const {
+  cv::Mat image = cv::imread(image_file_path_, CV_LOAD_IMAGE_GRAYSCALE);
+
+  //ds floor images dimensions by 10% to have not infinite different dimensions
+  if (parsing_mode == "oxford" || parsing_mode == "paris") {
+    const int32_t rows_cropped = (image.rows/10)*10;
+    const int32_t cols_cropped = (image.cols/10)*10;
+    image = image(cv::Rect((image.cols-cols_cropped)/2.0, (image.rows-rows_cropped)/2.0, cols_cropped, rows_cropped));
+  }
+
+  return image;
+}
 
 void CommandLineParameters::displayKeypoints(const cv::Mat& image_,
                                              const std::vector<cv::KeyPoint>& keypoints_) const {

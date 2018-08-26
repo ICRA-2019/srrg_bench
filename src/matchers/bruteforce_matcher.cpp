@@ -44,16 +44,20 @@ void BruteforceMatcher::query(const cv::Mat& query_descriptors_,
   for (std::pair<ImageNumber, cv::Mat> train_descriptors_per_image: _train_descriptors) {
     const ImageNumber& image_number_train = train_descriptors_per_image.first;
     const cv::Mat& train_descriptors      = train_descriptors_per_image.second;
+    uint64_t number_of_matches            = 0;
 
-    //ds compute individual matches
-    std::vector<cv::DMatch> matches;
-    _matcher->match(query_descriptors_, train_descriptors, matches);
+    //ds if matching is possible
+    if (train_descriptors.rows > 0 && query_descriptors_.rows > 0) {
 
-    //ds threshold against maximum distance (cross checking is enabled so we get best-to-best descriptor associations)
-    uint64_t number_of_matches = 0;
-    for (const cv::DMatch& match: matches) {
-      if (match.distance < maximum_distance_hamming_) {
-        ++number_of_matches;
+      //ds compute individual matches
+      std::vector<cv::DMatch> matches;
+      _matcher->match(query_descriptors_, train_descriptors, matches);
+
+      //ds threshold against maximum distance (cross checking is enabled so we get best-to-best descriptor associations)
+      for (const cv::DMatch& match: matches) {
+        if (match.distance < maximum_distance_hamming_) {
+          ++number_of_matches;
+        }
       }
     }
 

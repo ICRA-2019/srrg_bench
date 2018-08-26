@@ -6,6 +6,39 @@
 
 namespace srrg_bench {
 
+//! struct used to store position augmentation information
+struct BinaryStringGrid {
+  BinaryStringGrid(const uint32_t& rows_, const uint32_t& cols_, const uint32_t& string_length_): rows(rows_), cols(cols_)  {
+    data = new std::string*[rows_];
+    for (uint32_t row = 0; row < rows_; ++row) {
+      data[row] = new std::string[cols_];
+      for (uint32_t col = 0; col < cols_; ++col) {
+        data[row][col] = "";
+        for (uint32_t u = 0; u < string_length_; ++u) {
+          data[row][col] += "0";
+        }
+      }
+    }
+  }
+  ~BinaryStringGrid() {
+    if(data != 0) {
+      for (uint32_t row = 0; row < rows; ++row) {
+        delete data[row];
+      }
+      delete[] data;
+    }
+  }
+
+  //ds readability
+  std::string at(const uint32_t& row_, const uint32_t& col_) const {return data[row_][col_];}
+  std::string& at(const uint32_t& row_, const uint32_t& col_) {return data[row_][col_];}
+
+  //ds attributes
+  uint32_t rows      = 0;
+  uint32_t cols      = 0;
+  std::string** data = 0;
+};
+
 class CommandLineParameters {
 
   //ds object life
@@ -37,13 +70,16 @@ class CommandLineParameters {
     void configure(std::ostream& stream_);
 
     //! descriptor computation
-    void computeDescriptors(const cv::Mat& image_, std::vector<cv::KeyPoint>& keypoints_, cv::Mat& descriptors_);
+    void computeDescriptors(const cv::Mat& image_, std::vector<cv::KeyPoint>& keypoints_, cv::Mat& descriptors_, const bool sort_keypoints_by_response_ = false);
 
     //! capped descriptor computation
     void computeDescriptors(const cv::Mat& image_, std::vector<cv::KeyPoint>& keypoints_, cv::Mat& descriptors_, const uint32_t& target_number_of_descriptors_);
 
     //! @brief constructs structures required for image region based descriptor augmentation
     void configurePositionAugmentation(const std::string& image_resolution_key_);
+
+    //! @brief load image from disk and prepare it accordingly
+    cv::Mat readImage(const std::string& image_file_path_) const;
 
     //! visualization only
     void displayKeypoints(const cv::Mat& image_, const std::vector<cv::KeyPoint>& keypoints_) const;
@@ -123,7 +159,7 @@ class CommandLineParameters {
     //! @brief position augmentation mapping: [image_resolution_key]>[keypoint_row][keypoint_col]>[augmentation]
     //! @brief where image_resolution_key could be "240x320" (rows x cols)
     //! @brief a new image_resolution_key entry is generated for every new image encountered
-    std::map<std::string, std::string**> mappings_image_coordinates_to_augmentation;
+    std::map<std::string, BinaryStringGrid*> mappings_image_coordinates_to_augmentation;
 
     //ds GUI
     double display_scale = 1.0;

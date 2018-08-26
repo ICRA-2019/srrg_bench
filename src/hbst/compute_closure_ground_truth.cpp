@@ -230,7 +230,7 @@ int32_t main(int32_t argc_, char** argv_) {
         } else {
 
           //ds load image from disk
-          image = cv::imread(parameters->evaluator->imagePosesGroundTruth()[image_number_query]->file_name, CV_LOAD_IMAGE_GRAYSCALE);
+          image = cv::imread(parameters->evaluator->imagePosesGroundTruth()[image_number_query]->file_path, CV_LOAD_IMAGE_GRAYSCALE);
         }
 
         //ds apply bayer decoding if necessary
@@ -435,9 +435,9 @@ int32_t main(int32_t argc_, char** argv_) {
         std::cerr << BAR << std::endl;
         std::cerr << "obtained false closure: " << result.result_image_retrieval.image_association.query
                                        << " > " << result.result_image_retrieval.image_association.train << std::endl;
-        std::cerr << "query corresponding to: " << parameters->evaluator->imagePosesGroundTruth()[result.result_image_retrieval.image_association.query]->file_name
+        std::cerr << "query corresponding to: " << parameters->evaluator->imagePosesGroundTruth()[result.result_image_retrieval.image_association.query]->file_path
                   << "\nwith pose\n: " << parameters->evaluator->imagePosesGroundTruth()[result.result_image_retrieval.image_association.query]->pose.matrix() << std::endl;
-        std::cerr << "reference corresponding to: " << parameters->evaluator->imagePosesGroundTruth()[result.result_image_retrieval.image_association.train]->file_name
+        std::cerr << "reference corresponding to: " << parameters->evaluator->imagePosesGroundTruth()[result.result_image_retrieval.image_association.train]->file_path
                   << "\nwith pose\n: " << parameters->evaluator->imagePosesGroundTruth()[result.result_image_retrieval.image_association.train]->pose.matrix() << std::endl;
         std::cerr << "terminated (recall: " << recall << " closures: " << total_number_of_valid_closures << ")" << std::endl;
         std::cerr << BAR << std::endl;

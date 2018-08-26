@@ -113,12 +113,17 @@ typedef std::vector<ImageFileWithTimestamp> ImageFileWithTimestampVector;
 //! @struct image/pose construct
 struct ImageWithPose {
 public: EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  ImageWithPose(const std::string& file_name_, const ImageNumber& image_number_, const Eigen::Isometry3d& pose_): file_name(file_name_),
+  ImageWithPose(const std::string& file_path_, const ImageNumber& image_number_, const Eigen::Isometry3d& pose_): file_path(file_path_),
                                                                                                                   image_number(image_number_),
                                                                                                                   pose(pose_) {}
-  std::string file_name;
+  std::string file_path;
   ImageNumber image_number;
   Eigen::Isometry3d pose;
+
+  //ds optional
+  std::string file_name;
+  std::string file_type;
+  std::string file_path_origin;
 };
 
 typedef std::map<ImageNumberQuery, std::multiset<ImageNumberTrain>> ClosureMap;
@@ -154,6 +159,8 @@ public:
                                            const std::string& images_folder_reference_);
 
   void loadImagesFromDirectoryZubud(const std::string& directory_query_, const std::string& directory_reference_);
+
+  void loadImagesFromDirectoryOxford(const std::string& directory_query_, const std::string& directory_reference_, const std::string& parsing_mode_ = "");
 
   void computeLoopClosureFeasibilityMap(const uint32_t& image_number_start_                      = 0,
                                         const uint32_t& image_number_stop_                       = 0,
