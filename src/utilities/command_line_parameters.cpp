@@ -557,17 +557,18 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
   //ds compute descriptors after sorting detected keypoints
   computeDescriptors(image_, keypoints_, descriptors_, true);
 
-  //ds check insufficient descriptor number
-  if (keypoints_.size() < target_number_of_descriptors_) {
-    std::cerr << "\nWARNING: insufficient number of descriptors computed: " << keypoints_.size()
-              << " < " << target_number_of_descriptors_ << ", adjust keypoint detector threshold" << std::endl;
-    return;
-  }
-
   //ds rebuild descriptor matrix and keypoints vector unless for specific descriptors
   if (descriptor_type != "ldahash"  &&
       descriptor_type != "binboost" &&
       descriptor_type != "bold"     ) {
+
+    //ds check insufficient descriptor number
+    if (keypoints_.size() < target_number_of_descriptors_) {
+      std::cerr << "\nWARNING: insufficient number of descriptors computed: " << keypoints_.size()
+                << " < " << target_number_of_descriptors_ << ", adjust keypoint detector threshold" << std::endl;
+      return;
+    }
+
     keypoints_.resize(target_number_of_descriptors_);
     descriptors_ = descriptors_(cv::Rect(0, 0, descriptors_.cols, target_number_of_descriptors_));
   }
