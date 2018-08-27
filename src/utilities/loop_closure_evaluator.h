@@ -235,6 +235,9 @@ private:
   //! @brief separate query images
   std::vector<ImageWithPose*> _image_poses_query;
 
+  //! @brief parsing mode (dataset)
+  std::string parsing_mode = "";
+
   //! @brief closure map: valid query to train
   ClosureMap _closure_feasability_map;
 

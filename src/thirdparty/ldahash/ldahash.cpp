@@ -278,14 +278,7 @@ void run_sifthash(const string imname, IplImage* mask, const int method)
   float  threshold      = 4.0/100.0 / levels / 2.0f ;
   float  edgeThreshold  = 10.0f;
   float  magnif         = 3.0;
-  int    nodescr        = 0 ;
-  int    noorient       = 0 ;
-  int    stableorder    = 0 ;
-  int    savegss        = 0 ;
-  int    binary         = 0 ;
-  int    haveKeypoints  = 0 ;
   int    unnormalized   = 0 ;
-  int    fp             = 0 ;
 
 	int         O      = octaves ;    
   int const   S      = levels ;
@@ -310,7 +303,6 @@ void run_sifthash(const string imname, IplImage* mask, const int method)
   sift.setNormalizeDescriptor( ! unnormalized ) ;
   sift.setMagnification( magnif ) ;
 
-	const int nrDim  = 128;
 
   // -------------------------------------------------------------
 	//            Run detector, compute orientations and descriptors

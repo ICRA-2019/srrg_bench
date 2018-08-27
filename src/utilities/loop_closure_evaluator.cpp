@@ -17,11 +17,17 @@ LoopClosureEvaluator::LoopClosureEvaluator() {
 }
 
 LoopClosureEvaluator::~LoopClosureEvaluator() {
+
+  //ds always free ground truth images
   for (const ImageWithPose* image_with_pose: _image_poses_ground_truth) {
     delete image_with_pose;
   }
-  for (const ImageWithPose* image_with_pose: _image_poses_query) {
-    delete image_with_pose;
+
+  //ds unless the query images are not contained in the ground truth images
+  if (parsing_mode != "oxford" && parsing_mode != "paris") {
+    for (const ImageWithPose* image_with_pose: _image_poses_query) {
+      delete image_with_pose;
+    }
   }
   _image_poses_query.clear();
   _image_poses_ground_truth.clear();
@@ -129,6 +135,7 @@ void LoopClosureEvaluator::loadImagesWithPosesFromFileKITTI(const std::string& f
     _trajectory_length_meters += previous_to_current.translation().norm();
   }
   std::cerr << "LoopClosureEvaluator::loadPosesFromFileKITTI|total trajectory length (m): " << _trajectory_length_meters << std::endl;
+  parsing_mode = "kitti";
 }
 
 void LoopClosureEvaluator::loadImagesWithPosesFromFileMalaga(const std::string& file_name_poses_ground_truth_, const std::string& images_folder_) {
@@ -343,6 +350,7 @@ void LoopClosureEvaluator::loadImagesWithPosesFromFileMalaga(const std::string& 
 
   std::cerr << "LoopClosureEvaluator::loadPosesFromFileMalaga|images: " << _image_poses_ground_truth.size()
             << " ratio per GPS pose: " << static_cast<double>(_image_poses_ground_truth.size())/poses_gps.size() << std::endl;
+  parsing_mode = "malaga";
 }
 
 void LoopClosureEvaluator::loadImagesWithPosesFromFileLucia(const std::string& file_name_poses_ground_truth_,
@@ -513,6 +521,7 @@ void LoopClosureEvaluator::loadImagesWithPosesFromFileLucia(const std::string& f
   file_images.close();
   std::cerr << "LoopClosureEvaluator::loadImagesWithPosesFromFileLucia|images: " << _image_poses_ground_truth.size()
             << " ratio per GPS pose: " << static_cast<double>(_image_poses_ground_truth.size())/poses_gps.size() << std::endl;
+  parsing_mode = "lucia";
 }
 
 void LoopClosureEvaluator::loadImagesWithPosesFromFileOxford(const std::string& file_name_poses_ground_truth_0_,
@@ -575,6 +584,7 @@ void LoopClosureEvaluator::loadImagesWithPosesFromFileOxford(const std::string& 
 
   std::cerr << "LoopClosureEvaluator::loadImagesWithPosesFromFileOxford|images: " << _image_poses_ground_truth.size()
             << " ratio per odometry pose: " << static_cast<double>(_image_poses_ground_truth.size())/poses.size() << std::endl;
+  parsing_mode = "oxford";
 }
 
 void LoopClosureEvaluator::loadImagesWithPosesFromFileNordland(const std::string& file_name_poses_ground_truth_query_,
@@ -610,6 +620,7 @@ void LoopClosureEvaluator::loadImagesWithPosesFromFileNordland(const std::string
   std::cerr << "LoopClosureEvaluator::loadImagesWithPosesFromFileNordland|images: " << _image_poses_ground_truth.size()
             << " ratio per odometry pose: " << static_cast<double>(_image_poses_ground_truth.size())/poses_reference.size() << std::endl;
   std::cerr << "LoopClosureEvaluator::loadImagesWithPosesFromFileNordland|total trajectory length (m): " << _trajectory_length_meters << std::endl;
+  parsing_mode = "nordland";
 }
 
 void LoopClosureEvaluator::loadImagesFromDirectoryZubud(const std::string& directory_query_, const std::string& directory_reference_) {
@@ -652,6 +663,7 @@ void LoopClosureEvaluator::loadImagesFromDirectoryZubud(const std::string& direc
 
   std::cerr << "LoopClosureEvaluator::loadImagesFromDirectoryZubud|loaded query images: " << _image_poses_query.size() << std::endl;
   std::cerr << "LoopClosureEvaluator::loadImagesFromDirectoryZubud|loaded reference images: " << _image_poses_ground_truth.size() << std::endl;
+  parsing_mode = "zubud";
 }
 
 void LoopClosureEvaluator::loadImagesFromDirectoryHolidays(const std::string& directory_images_,
@@ -722,6 +734,7 @@ void LoopClosureEvaluator::loadImagesFromDirectoryHolidays(const std::string& di
   std::cerr << "LoopClosureEvaluator::loadImagesFromDirectoryHolidays|loaded query images: " << _image_poses_query.size() << std::endl;
   std::cerr << "LoopClosureEvaluator::loadImagesFromDirectoryHolidays|loaded reference images: " << _image_poses_ground_truth.size() << std::endl;
   std::cerr << "LoopClosureEvaluator::loadImagesFromDirectoryHolidays|computed feasible total number of closures: " << _total_number_of_valid_closures << std::endl;
+  parsing_mode = "holidays";
 }
 
 void LoopClosureEvaluator::loadImagesFromDirectoryOxford(const std::string& directory_query_,
@@ -856,6 +869,7 @@ void LoopClosureEvaluator::loadImagesFromDirectoryOxford(const std::string& dire
   std::cerr << "LoopClosureEvaluator::loadImagesFromDirectoryOxford|loaded query images: " << _image_poses_query.size() << std::endl;
   std::cerr << "LoopClosureEvaluator::loadImagesFromDirectoryOxford|loaded reference images: " << _image_poses_ground_truth.size() << std::endl;
   std::cerr << "LoopClosureEvaluator::loadImagesFromDirectoryOxford|skipped images: " << number_of_skipped_images << std::endl;
+  parsing_mode = parsing_mode_;
 }
 
 void LoopClosureEvaluator::computeLoopClosureFeasibilityMap(const uint32_t& image_number_start_,

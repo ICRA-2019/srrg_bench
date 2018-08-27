@@ -23,7 +23,7 @@ struct BinaryStringGrid {
   ~BinaryStringGrid() {
     if(data != 0) {
       for (uint32_t row = 0; row < rows; ++row) {
-        delete data[row];
+        delete[] data[row];
       }
       delete[] data;
     }

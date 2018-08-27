@@ -98,6 +98,9 @@ void CommandLineParameters::parse(const int32_t& argc_, char** argv_) {
     } else if (!std::strcmp(argv_[c], "-hash-key-length") || !std::strcmp(argv_[c], "-hkl")) {
       c++; if (c == argc_) {break;}
       hash_key_size = std::stoi(argv_[c]);
+    } else if (!std::strcmp(argv_[c], "-table-number") || !std::strcmp(argv_[c], "-tl")) {
+      c++; if (c == argc_) {break;}
+      table_number = std::stoi(argv_[c]);
     } else if (!std::strcmp(argv_[c], "-depth")) {
       c++; if (c == argc_) {break;}
       maximum_depth = std::stoi(argv_[c]);
@@ -682,7 +685,7 @@ void CommandLineParameters::displayKeypoints(const cv::Mat& image_,
         }
       }
     }
-    cv::imshow("benchmark: current image | "+parsing_mode, image_display);
+    cv::imshow("benchmark | "+parsing_mode+" | "+descriptor_type+"-"+std::to_string(DESCRIPTOR_SIZE_BITS+augmentation_weight*number_of_augmented_bits), image_display);
     cv::waitKey(1);
   }
 }
