@@ -740,7 +740,8 @@ void LoopClosureEvaluator::loadImagesFromDirectoryOxford(const std::string& dire
   if (parsing_mode_ == "paris") {
     DIR* handle_directory   = 0;
     struct dirent* iterator = 0;
-    if ((handle_directory = opendir(directory_reference_.c_str()))) {
+    const std::string subdirectory = directory_reference_+"/paris/";
+    if ((handle_directory = opendir(subdirectory.c_str()))) {
       while ((iterator = readdir(handle_directory))) {
 
         //ds buffer file name
@@ -748,10 +749,12 @@ void LoopClosureEvaluator::loadImagesFromDirectoryOxford(const std::string& dire
 
         //ds check if we have a directory (that is not a hidden linux file)
         if (iterator->d_type == DT_DIR && directory_name[0] != '.') {
-          image_directories_reference.push_back(directory_reference_+"/"+directory_name+"/");
+          image_directories_reference.push_back(subdirectory+"/"+directory_name+"/");
         }
       }
       closedir(handle_directory);
+    } else {
+      throw std::runtime_error("unable to open reference image directory: '"+subdirectory+"'");
     }
 
     //ds for each of the directories we have to load images
@@ -1628,7 +1631,7 @@ void LoopClosureEvaluator::_loadImagePathsFromDirectory(const std::string& direc
     }
     closedir(handle_directory);
   } else {
-    throw std::runtime_error("invalid image directory");
+    throw std::runtime_error("unable to open reference image directory: '"+directory_+"'");
   }
 }
 }

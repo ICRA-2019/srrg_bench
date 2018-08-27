@@ -201,6 +201,7 @@ int32_t main(int32_t argc_, char** argv_) {
     const uint32_t length_progress_bar   = 20;
     uint64_t number_of_descriptors_total = 0;
     std::vector<uint64_t> number_of_descriptors_accumulated(0);
+    uint64_t number_of_skipped_images    = 0;
     while (image_number_query < parameters->image_number_stop) {
 
       //ds for video processing
@@ -254,6 +255,7 @@ int32_t main(int32_t argc_, char** argv_) {
           std::cerr << "\nWARNING: insufficient number of descriptors computed: " << keypoints.size()
                     << " < " << parameters->target_number_of_descriptors << ", adjust detector threshold (skipping this image: " << image_number_query << ")" << std::endl;
           ++image_number_query;
+          ++number_of_skipped_images;
           continue;
         }
 
@@ -347,7 +349,7 @@ int32_t main(int32_t argc_, char** argv_) {
       }
 
       //ds progress feedback: compute printing configuration
-      const double progress           = static_cast<double>(matcher->numberOfQueries())/parameters->number_of_images_to_process;
+      const double progress           = static_cast<double>(matcher->numberOfQueries()+number_of_skipped_images)/parameters->number_of_images_to_process;
       const uint32_t length_completed = progress*length_progress_bar;
 
       //ds draw completed bar
