@@ -123,6 +123,10 @@ void CommandLineParameters::parse(const int32_t& argc_, char** argv_) {
       number_of_augmentation_bins_vertical = std::stoi(argv_[c]);
       c++; if (c == argc_) {break;}
       augmentation_weight = std::stoi(argv_[c]);
+    } else if (!std::strcmp(argv_[c], "-semantic-augmentation")) {
+      semantic_augmentation = true;
+      c++; if (c == argc_) {break;}
+      augmentation_weight = std::stoi(argv_[c]);
     }
     c++;
   }
@@ -589,7 +593,8 @@ void CommandLineParameters::configurePositionAugmentation(const std::string& ima
       number_of_augmentation_bins_horizontal == 0 ||
       number_of_augmentation_bins_vertical == 0   ||
       number_of_augmented_bits == 0               ||
-      augmentation_weight == 0                    ) {
+      augmentation_weight == 0                    ||
+      semantic_augmentation                       ) {
     return;
   }
 

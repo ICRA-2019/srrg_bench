@@ -149,12 +149,13 @@ class CommandLineParameters {
     std::shared_ptr<BOLD> bold_descriptor_handler;
 
     //! @brief augmentation properties
-    uint32_t number_of_augmentation_bins_horizontal         = 0;
-    uint32_t number_of_augmentation_bins_vertical           = 0;
-    uint32_t number_of_augmented_bits                       = 0;
-    uint32_t number_of_image_rows                           = 0;
-    uint32_t number_of_image_cols                           = 0;
-    uint32_t augmentation_weight                            = 0;
+    uint32_t number_of_augmentation_bins_horizontal = 0;
+    uint32_t number_of_augmentation_bins_vertical   = 0;
+    uint32_t number_of_augmented_bits               = 0;
+    uint32_t number_of_image_rows                   = 0;
+    uint32_t number_of_image_cols                   = 0;
+    uint32_t augmentation_weight                    = 0;
+    bool semantic_augmentation                      = false;
 
     //! @brief position augmentation mapping: [image_resolution_key]>[keypoint_row][keypoint_col]>[augmentation]
     //! @brief where image_resolution_key could be "240x320" (rows x cols)
