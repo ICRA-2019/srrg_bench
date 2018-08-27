@@ -112,5 +112,9 @@ void FLANNLSHMatcher::query(const cv::Mat& query_descriptors_,
       }
     }
   }
+
+  //ds sort results in descending score
+  std::sort(closures_.begin(), closures_.end(), [](const ResultImageRetrieval& a_, const ResultImageRetrieval& b_)
+      {return a_.number_of_matches_relative > b_.number_of_matches_relative;});
 }
 }

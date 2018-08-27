@@ -140,6 +140,7 @@ int32_t main(int32_t argc_, char** argv_) {
     std::vector<cv::KeyPoint> keypoints;
     cv::Mat descriptors;
     baselayer->computeDescriptors(image, keypoints, descriptors, baselayer->target_number_of_descriptors);
+    ++number_of_processed_query_images;
 
     //ds intermediate info
     std::cerr << "processing QUERY image: '" << image_query->file_path
@@ -184,6 +185,7 @@ int32_t main(int32_t argc_, char** argv_) {
       std::set<std::string> possible_set;
       possible_set.insert(good_set.begin(), good_set.end());
       possible_set.insert(ok_set.begin(), ok_set.end());
+      std::cerr << " reference images: " << possible_set.size();
 
       //ds compute average precision for this query
       average_precision = OxfordAveragePrecisionUtility::compute_ap(possible_set, junk_set, ranked_list);
@@ -191,10 +193,10 @@ int32_t main(int32_t argc_, char** argv_) {
 
       //ds compute average precision - classical
       const std::multiset<srrg_bench::ImageNumberTrain> valid_reference_image_list(evaluator->closureFeasibilityMap().at(image_query->image_number));
+      std::cerr << " reference images: " << valid_reference_image_list.size();
       average_precision = evaluator->computeAveragePrecision(image_scores, valid_reference_image_list);
     }
     mean_average_precision += average_precision;
-    ++number_of_processed_query_images;
     std::cerr << " | AP: " << average_precision << std::endl;
   }
   cv::destroyAllWindows();

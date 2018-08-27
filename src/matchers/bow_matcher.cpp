@@ -202,6 +202,10 @@ void BoWMatcher::query(const cv::Mat& query_descriptors_,
 
   _durations_seconds_query_and_train.push_back(duration_match.count()+duration_seconds_association_computation);
   _total_duration_query_seconds += duration_match.count()+duration_seconds_association_computation;
+
+  //ds sort results in descending score
+  std::sort(closures_.begin(), closures_.end(), [](const ResultImageRetrieval& a_, const ResultImageRetrieval& b_)
+      {return a_.number_of_matches_relative > b_.number_of_matches_relative;});
 }
 
 void BoWMatcher::clear() {

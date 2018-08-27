@@ -72,14 +72,14 @@ void BruteforceMatcher::query(const cv::Mat& query_descriptors_,
       //ds add the closure
       closures_.push_back(ResultImageRetrieval(score, ImageNumberAssociation(image_number_, image_number_train)));
     }
-
-    //ds sort results in descending score
-    std::sort(closures_.begin(), closures_.end(), [](const ResultImageRetrieval& a_, const ResultImageRetrieval& b_)
-        {return a_.number_of_matches_relative > b_.number_of_matches_relative;});
   }
   const double duration_seconds = TOC(_time_begin).count();
   _durations_seconds_query_and_train.push_back(duration_seconds);
   _total_duration_query_seconds += duration_seconds;
+
+  //ds sort results in descending score
+  std::sort(closures_.begin(), closures_.end(), [](const ResultImageRetrieval& a_, const ResultImageRetrieval& b_)
+      {return a_.number_of_matches_relative > b_.number_of_matches_relative;});
 }
 
 void BruteforceMatcher::query(const cv::Mat& query_descriptors_,

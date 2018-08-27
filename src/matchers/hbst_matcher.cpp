@@ -79,11 +79,11 @@ void HBSTMatcher::query(const cv::Mat& query_descriptors_,
         closures_.push_back(ResultImageRetrieval(score, ImageNumberAssociation(image_number_, image_number_reference)));
       }
     }
-
-    //ds sort results in descending score
-    std::sort(closures_.begin(), closures_.end(), [](const ResultImageRetrieval& a_, const ResultImageRetrieval& b_)
-        {return a_.number_of_matches_relative > b_.number_of_matches_relative;});
   }
+
+  //ds sort results in descending score
+  std::sort(closures_.begin(), closures_.end(), [](const ResultImageRetrieval& a_, const ResultImageRetrieval& b_)
+      {return a_.number_of_matches_relative > b_.number_of_matches_relative;});
 }
 
 void HBSTMatcher::clear() {
