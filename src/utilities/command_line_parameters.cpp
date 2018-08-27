@@ -98,7 +98,7 @@ void CommandLineParameters::parse(const int32_t& argc_, char** argv_) {
     } else if (!std::strcmp(argv_[c], "-hash-key-length") || !std::strcmp(argv_[c], "-hkl")) {
       c++; if (c == argc_) {break;}
       hash_key_size = std::stoi(argv_[c]);
-    } else if (!std::strcmp(argv_[c], "-table-number") || !std::strcmp(argv_[c], "-tl")) {
+    } else if (!std::strcmp(argv_[c], "-table-number") || !std::strcmp(argv_[c], "-tn")) {
       c++; if (c == argc_) {break;}
       table_number = std::stoi(argv_[c]);
     } else if (!std::strcmp(argv_[c], "-depth")) {
@@ -499,7 +499,7 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
   }
 
   //ds check if augmentation is desired
-  if (number_of_augmentation_bins_horizontal > 0 && number_of_augmentation_bins_vertical > 0) {
+  if (number_of_augmented_bits > 0 && augmentation_weight > 0) {
 
     //ds image resolution key (to obtain fixed mapping)
     const std::string key = std::to_string(image_.rows)+"x"+std::to_string(image_.cols);
@@ -559,7 +559,6 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
     //ds overwrite output descriptors
     descriptors_ = descriptors_augmented;
   }
-
 }
 
 void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vector<cv::KeyPoint>& keypoints_, cv::Mat& descriptors_, const uint32_t& target_number_of_descriptors_) {
@@ -585,10 +584,12 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
 }
 
 void CommandLineParameters::configurePositionAugmentation(const std::string& image_resolution_key_) {
-  if (number_of_augmentation_bins_horizontal == 0 || number_of_augmentation_bins_vertical == 0 || number_of_augmented_bits == 0) {
-    return;
-  }
-  if (number_of_image_rows == 0 || number_of_image_cols == 0) {
+  if (number_of_image_rows == 0                   ||
+      number_of_image_cols == 0                   ||
+      number_of_augmentation_bins_horizontal == 0 ||
+      number_of_augmentation_bins_vertical == 0   ||
+      number_of_augmented_bits == 0               ||
+      augmentation_weight == 0                    ) {
     return;
   }
 

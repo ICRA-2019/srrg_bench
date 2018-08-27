@@ -67,6 +67,9 @@ protected:
   //! @brief bookkeeping: number of descriptors in images, match check list to block N query to 1 train descriptor matchings
   std::map<ImageNumberTrain, std::set<int32_t>> _train_descriptor_details;
 
+  //! @brief bookkeeping: trained descriptors
+  std::map<ImageNumber, cv::Mat> _train_descriptors;
+
   //! @brief minimum image number distance between closures
   uint32_t _minimum_distance_between_closure_images;
 };
