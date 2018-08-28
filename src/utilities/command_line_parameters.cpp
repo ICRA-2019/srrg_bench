@@ -505,6 +505,12 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
   //ds check if augmentation is desired
   if (number_of_augmented_bits > 0 && augmentation_weight > 0) {
 
+    //ds check augmentation bits
+    if (number_of_augmented_bits%8 != 0) {
+      throw std::runtime_error("choose bytewise augmentation (multiples of 8)");
+    }
+    const uint32_t number_of_augmented_bytes = augmentation_weight*number_of_augmented_bits/8;
+
     //ds image resolution key (to obtain fixed mapping)
     const std::string key = std::to_string(image_.rows)+"x"+std::to_string(image_.cols);
 
@@ -519,12 +525,6 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
         configurePositionAugmentation(key);
       }
     }
-
-    //ds check augmentation bits
-    if (number_of_augmented_bits%8 != 0) {
-      throw std::runtime_error("choose bytewise augmentation (multiples of 8)");
-    }
-    const uint32_t number_of_augmented_bytes = augmentation_weight*number_of_augmented_bits/8;
 
     //ds reserve augmentented descriptor matrix
     cv::Mat descriptors_augmented = cv::Mat(descriptors_.rows, descriptors_.cols+number_of_augmented_bytes, descriptors_.type());
@@ -595,11 +595,11 @@ void CommandLineParameters::configurePositionAugmentation(const std::string& ima
       number_of_augmented_bits == 0               ||
       augmentation_weight == 0                    ||
       semantic_augmentation                       ) {
-    return;
+    throw std::runtime_error("configurePositionAugmentation|ERROR: invalid call, check image dimensions and augmentation configuration");
   }
 
   //ds we compute a binary string mapping for each pixel [r,c] of the image for fast access
-  BinaryStringGrid* mapping = new BinaryStringGrid(number_of_image_rows, number_of_image_cols, number_of_augmented_bits);
+  BinaryStringGrid* mapping = new BinaryStringGrid(number_of_image_rows, number_of_image_cols, number_of_augmentation_bins_vertical, number_of_augmentation_bins_horizontal);
 
   //ds compute average bin widths in pixels
   const uint32_t bin_width_row_pixels = std::ceil(static_cast<double>(number_of_image_rows)/number_of_augmentation_bins_vertical);
@@ -637,7 +637,7 @@ void CommandLineParameters::configurePositionAugmentation(const std::string& ima
   }
 
   std::cerr << "configurePositionAugmentation|created mapping: " << number_of_augmentation_bins_horizontal << "x" << number_of_augmentation_bins_vertical
-            << " with key: " << image_resolution_key_ << std::endl;
+            << " with key: " << image_resolution_key_ << " (total keys: " << mappings_image_coordinates_to_augmentation.size() << ")" << std::endl;
   for (uint32_t row = 0; row < number_of_augmentation_bins_vertical; ++row) {
     for (uint32_t col = 0; col < number_of_augmentation_bins_horizontal; ++col) {
       std::cerr << mapping->at(row*bin_width_row_pixels+1,col*bin_width_col_pixels+1) << " ";
@@ -652,8 +652,8 @@ void CommandLineParameters::configurePositionAugmentation(const std::string& ima
 cv::Mat CommandLineParameters::readImage(const std::string& image_file_path_) const {
   cv::Mat image = cv::imread(image_file_path_, CV_LOAD_IMAGE_GRAYSCALE);
 
-  //ds floor images dimensions by 10% to have not infinite different dimensions
-  if (parsing_mode == "oxford" || parsing_mode == "paris") {
+  //ds floor images dimensions by 10% to reduce some entropy
+  if (parsing_mode == "oxford") {
     const int32_t rows_cropped = (image.rows/10)*10;
     const int32_t cols_cropped = (image.cols/10)*10;
     image = image(cv::Rect((image.cols-cols_cropped)/2.0, (image.rows-rows_cropped)/2.0, cols_cropped, rows_cropped));

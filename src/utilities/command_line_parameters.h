@@ -8,35 +8,61 @@ namespace srrg_bench {
 
 //! struct used to store position augmentation information
 struct BinaryStringGrid {
-  BinaryStringGrid(const uint32_t& rows_, const uint32_t& cols_, const uint32_t& string_length_): rows(rows_), cols(cols_)  {
-    data = new std::string*[rows_];
-    for (uint32_t row = 0; row < rows_; ++row) {
-      data[row] = new std::string[cols_];
-      for (uint32_t col = 0; col < cols_; ++col) {
-        data[row][col] = "";
-        for (uint32_t u = 0; u < string_length_; ++u) {
-          data[row][col] += "0";
+  BinaryStringGrid(const int32_t& image_rows_,
+                   const int32_t& image_cols_,
+                   const int32_t& number_of_augmentation_bins_vertical_,
+                   const int32_t& number_of_augmentation_bins_horizontal_): image_rows(image_rows_),
+                                                                            image_cols(image_cols_) {
+    if (image_rows_ > 0                            &&
+        image_cols_ > 0                            &&
+        number_of_augmentation_bins_vertical_ > 0  &&
+        number_of_augmentation_bins_horizontal_ > 0) {
+
+      //ds total string length
+      const uint32_t string_length = number_of_augmentation_bins_vertical_+number_of_augmentation_bins_horizontal_-2;
+
+      //ds accessor mapping
+      image_rows_per_bin = static_cast<double>(image_rows_)/number_of_augmentation_bins_vertical_;
+      image_cols_per_bin = static_cast<double>(image_cols_)/number_of_augmentation_bins_horizontal_;
+
+      //ds allocate data for bins
+      data = new std::string*[number_of_augmentation_bins_vertical_];
+      for (uint32_t row = 0; row < static_cast<uint32_t>(number_of_augmentation_bins_vertical_); ++row) {
+        data[row] = new std::string[number_of_augmentation_bins_horizontal_];
+        for (uint32_t col = 0; col < static_cast<uint32_t>(number_of_augmentation_bins_horizontal_); ++col) {
+          data[row][col] = "";
+          for (uint32_t u = 0; u < string_length; ++u) {
+            data[row][col] += "0";
+          }
         }
       }
     }
   }
   ~BinaryStringGrid() {
     if(data != 0) {
-      for (uint32_t row = 0; row < rows; ++row) {
+      for (uint32_t row = 0; row < static_cast<uint32_t>(image_rows); ++row) {
         delete[] data[row];
       }
       delete[] data;
     }
   }
 
-  //ds readability
-  std::string at(const uint32_t& row_, const uint32_t& col_) const {return data[row_][col_];}
-  std::string& at(const uint32_t& row_, const uint32_t& col_) {return data[row_][col_];}
+  //ds mapped accessor
+  std::string at(const uint32_t& image_row_, const uint32_t& image_col_) const {
+    return data[static_cast<uint32_t>(std::floor(image_row_/image_rows_per_bin))]
+               [static_cast<uint32_t>(std::floor(image_col_/image_cols_per_bin))];
+  }
+  std::string& at(const uint32_t& image_row_, const uint32_t& image_col_) {
+    return data[static_cast<uint32_t>(std::floor(image_row_/image_rows_per_bin))]
+               [static_cast<uint32_t>(std::floor(image_col_/image_cols_per_bin))];
+  }
 
   //ds attributes
-  uint32_t rows      = 0;
-  uint32_t cols      = 0;
-  std::string** data = 0;
+  int32_t image_rows        = 0;
+  int32_t image_cols        = 0;
+  double image_rows_per_bin = 0;
+  double image_cols_per_bin = 0;
+  std::string** data        = 0;
 };
 
 class CommandLineParameters {

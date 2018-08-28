@@ -90,9 +90,16 @@ int32_t main(int32_t argc_, char** argv_) {
   //ds create database - compute descriptors for each reference image
   std::cerr << "computing descriptors for reference images: " << std::endl;
   uint32_t number_of_processed_reference_images = 0;
-  uint32_t number_of_trained_descriptors        = 0;
+  uint32_t number_of_added_descriptors        = 0;
   for (const srrg_bench::ImageWithPose* image_reference: evaluator->imagePosesGroundTruth()) {
     const cv::Mat image = baselayer->readImage(image_reference->file_path);
+
+    //ds processing check
+    if (image.rows <= 0 || image.cols <= 0) {
+      std::cerr << "WARNING: skipping invalid REFERENCE image: " << image_reference->file_path << "' (" << image.rows << "x" << image.cols << ")" << std::endl;
+      ++number_of_processed_reference_images;
+      continue;
+    }
 
     //ds detect keypoints and compute descriptors
     std::vector<cv::KeyPoint> keypoints;
@@ -113,19 +120,19 @@ int32_t main(int32_t argc_, char** argv_) {
 
     //ds info
     ++number_of_processed_reference_images;
+    number_of_added_descriptors += keypoints.size();
     std::cerr << "processed REFERENCE image: '" << image_reference->file_path << "' (" << image.rows << "x" << image.cols << ")"
               << " " << number_of_processed_reference_images << "/" << evaluator->imagePosesGroundTruth().size()
               << " (" << image_reference->image_number << ")"
               << " computed <" << baselayer->descriptor_type << "> descriptors: " << descriptors.rows
-              << " (bytes: " << descriptors.cols << ")" << std::endl;
-    number_of_trained_descriptors += keypoints.size();
+              << " (total: " << number_of_added_descriptors << " x bytes: " << descriptors.cols << ")" << std::endl;
     baselayer->displayKeypoints(image, keypoints);
   }
   cv::destroyAllWindows();
 
   //ds train database index
   std::cerr << "training index for <"<< method_name
-            << "> with <" << baselayer->descriptor_type << "> descriptors: " << number_of_trained_descriptors << std::endl;
+            << "> with <" << baselayer->descriptor_type << "> descriptors: " << number_of_added_descriptors << std::endl;
   matcher->train();
 
   //ds evaluate each query
@@ -135,6 +142,13 @@ int32_t main(int32_t argc_, char** argv_) {
   std::chrono::time_point<std::chrono::system_clock> timer;
   for (const srrg_bench::ImageWithPose* image_query: evaluator->imagePosesQuery()) {
     const cv::Mat image = baselayer->readImage(image_query->file_path);
+
+    //ds processing check
+    if (image.rows <= 0 || image.cols <= 0) {
+      std::cerr << "WARNING: skipping invalid QUERY image: " << image_query->file_path << "' (" << image.rows << "x" << image.cols << ")" << std::endl;
+      ++number_of_processed_reference_images;
+      continue;
+    }
 
     //ds detect keypoints and compute descriptors
     std::vector<cv::KeyPoint> keypoints;
