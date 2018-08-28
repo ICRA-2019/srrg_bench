@@ -602,8 +602,8 @@ void CommandLineParameters::configurePositionAugmentation(const std::string& ima
   BinaryStringGrid* mapping = new BinaryStringGrid(number_of_image_rows, number_of_image_cols, number_of_augmentation_bins_vertical, number_of_augmentation_bins_horizontal);
 
   //ds compute average bin widths in pixels
-  const uint32_t bin_width_row_pixels = std::ceil(static_cast<double>(number_of_image_rows)/number_of_augmentation_bins_vertical);
-  const uint32_t bin_width_col_pixels = std::ceil(static_cast<double>(number_of_image_cols)/number_of_augmentation_bins_horizontal);
+  const double bin_width_row_pixels     = static_cast<double>(number_of_image_rows)/number_of_augmentation_bins_vertical;
+  const double bin_width_col_pixels     = static_cast<double>(number_of_image_cols)/number_of_augmentation_bins_horizontal;
   const uint32_t augmented_bits_in_cols = number_of_augmentation_bins_horizontal-1;
 
   //ds build augmentation map
@@ -638,11 +638,13 @@ void CommandLineParameters::configurePositionAugmentation(const std::string& ima
 
   std::cerr << "configurePositionAugmentation|created mapping: " << number_of_augmentation_bins_horizontal << "x" << number_of_augmentation_bins_vertical
             << " with key: " << image_resolution_key_ << " (total keys: " << mappings_image_coordinates_to_augmentation.size() << ")" << std::endl;
-  for (uint32_t row = 0; row < number_of_augmentation_bins_vertical; ++row) {
-    for (uint32_t col = 0; col < number_of_augmentation_bins_horizontal; ++col) {
-      std::cerr << mapping->at(row*bin_width_row_pixels+1,col*bin_width_col_pixels+1) << " ";
+  if (number_of_augmented_bits < 20) {
+    for (uint32_t row = 0; row < number_of_augmentation_bins_vertical; ++row) {
+      for (uint32_t col = 0; col < number_of_augmentation_bins_horizontal; ++col) {
+        std::cerr << mapping->at(row*bin_width_row_pixels+1,col*bin_width_col_pixels+1) << " ";
+      }
+      std::cerr << std::endl;
     }
-    std::cerr << std::endl;
   }
 
   //ds set mapping to key

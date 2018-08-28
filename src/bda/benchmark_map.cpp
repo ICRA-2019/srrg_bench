@@ -42,7 +42,7 @@ int32_t main(int32_t argc_, char** argv_) {
   //ds adjust thresholds
   baselayer->maximum_descriptor_distance             = 0.1*(DESCRIPTOR_SIZE_BITS+baselayer->augmentation_weight*baselayer->number_of_augmented_bits);
   baselayer->minimum_distance_between_closure_images = 0;
-  baselayer->maximum_leaf_size                       = baselayer->target_number_of_descriptors;
+  baselayer->maximum_leaf_size                       = 0.1*baselayer->target_number_of_descriptors;
   baselayer->fast_detector_threshold                 = 20;
 
   //ds configure and log
