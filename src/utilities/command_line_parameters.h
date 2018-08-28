@@ -12,7 +12,8 @@ struct BinaryStringGrid {
                    const int32_t& image_cols_,
                    const int32_t& number_of_augmentation_bins_vertical_,
                    const int32_t& number_of_augmentation_bins_horizontal_): image_rows(image_rows_),
-                                                                            image_cols(image_cols_) {
+                                                                            image_cols(image_cols_),
+                                                                            number_of_augmentation_bins_vertical(number_of_augmentation_bins_vertical_) {
     if (image_rows_ > 0                            &&
         image_cols_ > 0                            &&
         number_of_augmentation_bins_vertical_ > 0  &&
@@ -40,7 +41,7 @@ struct BinaryStringGrid {
   }
   ~BinaryStringGrid() {
     if(data != 0) {
-      for (uint32_t row = 0; row < static_cast<uint32_t>(image_rows); ++row) {
+      for (uint32_t row = 0; row < static_cast<uint32_t>(number_of_augmentation_bins_vertical); ++row) {
         delete[] data[row];
       }
       delete[] data;
@@ -57,11 +58,14 @@ struct BinaryStringGrid {
                [static_cast<uint32_t>(std::floor(image_col_/image_cols_per_bin))];
   }
 
+private:
+
   //ds attributes
   int32_t image_rows        = 0;
   int32_t image_cols        = 0;
   double image_rows_per_bin = 0;
   double image_cols_per_bin = 0;
+  int32_t number_of_augmentation_bins_vertical = 0;
   std::string** data        = 0;
 };
 
