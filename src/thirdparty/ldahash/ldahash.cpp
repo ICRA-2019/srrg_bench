@@ -229,8 +229,8 @@ void run_sifthash(const cv::Mat& image_, const int method, std::vector<cv::KeyPo
 	}
 
 	//ds free buffers FFS
-	delete buffer.data;
-	delete singleBitWord;
+	delete[] buffer.data;
+	delete[] singleBitWord;
 }
 
 void run_sifthash(const string imname, IplImage* mask, const int method)
@@ -462,8 +462,8 @@ void run_sifthash(const string imname, IplImage* mask, const int method)
 	cout << "nrKeypoints " << nrFeat << endl;
 
   //ds free buffers FFS
-  delete buffer.data;
-  delete singleBitWord;
+  delete[] buffer.data;
+  delete[] singleBitWord;
 }
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 bool readPoints(const string im, const int method, vector< pair<float,float> > &points)
