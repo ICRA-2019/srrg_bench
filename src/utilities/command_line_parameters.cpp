@@ -571,8 +571,7 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
   computeDescriptors(image_, keypoints_, descriptors_, true);
 
   //ds rebuild descriptor matrix and keypoints vector unless for specific descriptors
-  if (descriptor_type != "ldahash"  &&
-      descriptor_type != "binboost" &&
+  if (descriptor_type != "binboost" &&
       descriptor_type != "bold"     ) {
 
     //ds check insufficient descriptor number
