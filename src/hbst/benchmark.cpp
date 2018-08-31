@@ -96,7 +96,7 @@ int32_t main(int32_t argc_, char** argv_) {
 #endif
   } else if (method_name == "ibow") {
 #ifdef SRRG_BENCH_BUILD_IBOW
-    matcher = std::make_shared<IBoWMatcher>(parameters->minimum_distance_between_closure_images);
+    matcher = std::make_shared<IBoWMatcher>(parameters->minimum_distance_between_closure_images, parameters->maximum_descriptor_distance);
     if (parameters->compute_score_only) {
       method_name += "-so";
     }

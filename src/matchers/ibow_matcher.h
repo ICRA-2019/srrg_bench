@@ -13,6 +13,7 @@ public:
   //! @brief constructor
   //! @param[in] minimum_distance_between_closure_images_ minimum image number distance between closures
   IBoWMatcher(const uint32_t& minimum_distance_between_closure_images_,
+              const uint32_t& maximum_descriptor_distance_,
               const unsigned k_ = 16,
               const unsigned s_ = 150,
               const unsigned t_ = 4,
@@ -59,6 +60,9 @@ public:
 
 //ds attributes
 protected:
+
+  //! @brief maximum matching distance (required during training)
+  uint32_t _maximum_descriptor_distance;
 
   //! @brief image database
   obindex2::ImageIndex _index;

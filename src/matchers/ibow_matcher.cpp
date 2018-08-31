@@ -3,13 +3,15 @@
 namespace srrg_bench {
 
 IBoWMatcher::IBoWMatcher(const uint32_t& minimum_distance_between_closure_images_,
+                         const uint32_t& maximum_descriptor_distance_,
                          const unsigned k,
                          const unsigned s,
                          const unsigned t,
                          const obindex2::MergePolicy merge_policy,
                          const bool purge_descriptors,
                          const unsigned min_feat_apps,
-                         const uint32_t& number_of_leaf_checks_): _index(obindex2::ImageIndex(k, s, t, merge_policy, purge_descriptors, min_feat_apps)),
+                         const uint32_t& number_of_leaf_checks_): _maximum_descriptor_distance(maximum_descriptor_distance_),
+                                                                  _index(obindex2::ImageIndex(k, s, t, merge_policy, purge_descriptors, min_feat_apps)),
                                                                   _minimum_distance_between_closure_images(minimum_distance_between_closure_images_),
                                                                   _number_of_leaf_checks(number_of_leaf_checks_) {
   _durations_seconds_query_and_train.clear();
@@ -28,12 +30,12 @@ void IBoWMatcher::add(const cv::Mat& train_descriptors_,
 
     //ds match against current database
     std::vector<std::vector<cv::DMatch>> matches_per_descriptor;
-    _index.searchDescriptors(train_descriptors_, &matches_per_descriptor, 2, _number_of_leaf_checks);
+    _index.searchDescriptors(train_descriptors_, &matches_per_descriptor, 1, _number_of_leaf_checks);
 
     //ds refine matching result with 2-NN distance ratio check
     std::vector<cv::DMatch> matches;
     for (uint32_t u = 0; u < matches_per_descriptor.size(); u++) {
-      if (matches_per_descriptor[u][0].distance < matches_per_descriptor[u][1].distance * 0.8) {
+      if (matches_per_descriptor[u][0].distance < _maximum_descriptor_distance) {
         matches.push_back(matches_per_descriptor[u][0]);
       }
     }

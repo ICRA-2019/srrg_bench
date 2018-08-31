@@ -8,8 +8,8 @@
 #ifdef SRRG_BENCH_BUILD_HBST
 #include "matchers/hbst_matcher.h"
 #endif
-#ifdef SRRG_BENCH_BUILD_DBOW2
-#include "matchers/bow_matcher.h"
+#ifdef SRRG_BENCH_BUILD_IBOW
+#include "matchers/ibow_matcher.h"
 #endif
 
 
@@ -66,8 +66,8 @@ int32_t main(int32_t argc_, char** argv_) {
     return EXIT_FAILURE;
 #endif
   } else if (method_name == "bof") {
-#ifdef SRRG_BENCH_BUILD_DBOW2
-    matcher = std::make_shared<srrg_bench::BoWMatcher>(baselayer->minimum_distance_between_closure_images, baselayer->file_path_vocabulary);
+#ifdef SRRG_BENCH_BUILD_IBOW
+    matcher = std::make_shared<srrg_bench::IBoWMatcher>(baselayer->minimum_distance_between_closure_images, baselayer->maximum_descriptor_distance);
 #else
     std::cerr << "ERROR: unknown method name: " << method_name << std::endl;
     return EXIT_FAILURE;
