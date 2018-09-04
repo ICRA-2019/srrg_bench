@@ -14,10 +14,10 @@ add_definitions(-Ofast -march=native -Wall -pedantic -std=c++11)
 #add_definitions(-O0 -march=native -Wall -pedantic -std=c++11 -g)
 
 #ds specify target binary descriptor BIT size
-add_definitions(-DDESCRIPTOR_SIZE_BITS=256)
+add_definitions(-DDESCRIPTOR_SIZE_BITS=486)
 
 #ds augmentation configuration
-add_definitions(-DAUGMENTATION_WEIGHT=0)
+add_definitions(-DAUGMENTATION_WEIGHT=1)
 add_definitions(-DAUGMENTATION_SIZE_BITS=16)
 
 #ds locate external dependencies

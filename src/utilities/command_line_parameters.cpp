@@ -404,22 +404,37 @@ void CommandLineParameters::configure(std::ostream& stream_) {
   }
 #elif CV_MAJOR_VERSION == 3
   if (descriptor_type == "brief") {
+    if (DESCRIPTOR_SIZE_BITS != 128 && DESCRIPTOR_SIZE_BITS != 256 && DESCRIPTOR_SIZE_BITS != 512) {
+      throw std::runtime_error("ERROR: invalid DESCRIPTOR_SIZE_BITS '" + std::to_string(DESCRIPTOR_SIZE_BITS) + "' for descriptor '" + descriptor_type + "'");
+    }
     feature_detector     = cv::FastFeatureDetector::create(fast_detector_threshold);
     descriptor_extractor = cv::xfeatures2d::BriefDescriptorExtractor::create(DESCRIPTOR_SIZE_BYTES); //128, 256, 512 bits
     distance_norm        = cv::NORM_HAMMING;
   } else if (descriptor_type == "orb") {
+    if (DESCRIPTOR_SIZE_BITS != 256) {
+      throw std::runtime_error("ERROR: invalid DESCRIPTOR_SIZE_BITS '" + std::to_string(DESCRIPTOR_SIZE_BITS) + "' for descriptor '" + descriptor_type + "'");
+    }
     feature_detector     = cv::ORB::create(1.25*target_number_of_descriptors);
     descriptor_extractor = cv::ORB::create(); //256 bits
     distance_norm        = cv::NORM_HAMMING;
   } else if (descriptor_type == "brisk") {
+    if (DESCRIPTOR_SIZE_BITS != 512) {
+      throw std::runtime_error("ERROR: invalid DESCRIPTOR_SIZE_BITS '" + std::to_string(DESCRIPTOR_SIZE_BITS) + "' for descriptor '" + descriptor_type + "'");
+    }
     feature_detector     = cv::BRISK::create(2*fast_detector_threshold);
     descriptor_extractor = cv::BRISK::create(); //512 bits
     distance_norm        = cv::NORM_HAMMING;
   } else if (descriptor_type == "freak") {
+    if (DESCRIPTOR_SIZE_BITS != 512) {
+      throw std::runtime_error("ERROR: invalid DESCRIPTOR_SIZE_BITS '" + std::to_string(DESCRIPTOR_SIZE_BITS) + "' for descriptor '" + descriptor_type + "'");
+    }
     feature_detector     = cv::FastFeatureDetector::create(fast_detector_threshold);
     descriptor_extractor = cv::xfeatures2d::FREAK::create(); //512 bits
     distance_norm        = cv::NORM_HAMMING;
   } else if (descriptor_type == "akaze") {
+    if (DESCRIPTOR_SIZE_BITS != 486) {
+      throw std::runtime_error("ERROR: invalid DESCRIPTOR_SIZE_BITS '" + std::to_string(DESCRIPTOR_SIZE_BITS) + "' for descriptor '" + descriptor_type + "'");
+    }
     feature_detector     = cv::AKAZE::create(cv::AKAZE::DESCRIPTOR_MLDB, 0, 3, fast_detector_threshold/1e5); //486 bits
     descriptor_extractor = cv::AKAZE::create(); //486 bits
     distance_norm        = cv::NORM_HAMMING;
@@ -428,10 +443,15 @@ void CommandLineParameters::configure(std::ostream& stream_) {
     descriptor_extractor = cv::xfeatures2d::SIFT::create(target_number_of_descriptors); //ds 128 floats (4096 bits)
     distance_norm        = cv::NORM_L2;
   } else if (descriptor_type == "bold") {
+    if (DESCRIPTOR_SIZE_BITS != 512) {
+      throw std::runtime_error("ERROR: invalid DESCRIPTOR_SIZE_BITS '" + std::to_string(DESCRIPTOR_SIZE_BITS) + "' for descriptor '" + descriptor_type + "'");
+    }
     feature_detector        = cv::xfeatures2d::HarrisLaplaceFeatureDetector::create();
     bold_descriptor_handler = std::make_shared<BOLD>(); //ds 512 bits
   } else if (descriptor_type == "ldahash") {
-    //ds nothing needed //ds 128 bits
+    if (DESCRIPTOR_SIZE_BITS != 128) {
+      throw std::runtime_error("ERROR: invalid DESCRIPTOR_SIZE_BITS '" + std::to_string(DESCRIPTOR_SIZE_BITS) + "' for descriptor '" + descriptor_type + "'");
+    }
   }
     else {
     stream_ << "ERROR: unknown descriptor type: " << descriptor_type << std::endl;
