@@ -14,7 +14,6 @@ IBoWMatcher::IBoWMatcher(const uint32_t& minimum_distance_between_closure_images
                                                                   _index(obindex2::ImageIndex(k, s, t, merge_policy, purge_descriptors, min_feat_apps)),
                                                                   _minimum_distance_between_closure_images(minimum_distance_between_closure_images_),
                                                                   _number_of_leaf_checks(number_of_leaf_checks_) {
-  _durations_seconds_query_and_train.clear();
 }
 
   IBoWMatcher::~IBoWMatcher() {

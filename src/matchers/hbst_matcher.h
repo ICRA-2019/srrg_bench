@@ -4,7 +4,10 @@
 
 namespace srrg_bench {
 
-typedef srrg_hbst::BinaryTree256 Tree; //no augmentation
+//ds configuration
+typedef srrg_hbst::BinaryMatchable<AUGMENTED_DESCRIPTOR_SIZE_BITS> Matchable;
+typedef srrg_hbst::BinaryNode<Matchable> Node;
+typedef srrg_hbst::BinaryTree<Node> Tree;
 
 //! @class matcher implementing the HBST matching algorithm
 class HBSTMatcher: public BaseMatcher {

@@ -67,7 +67,6 @@ void CommandLineParameters::parse(const int32_t& argc_, char** argv_) {
       minimum_distance_between_closure_images = std::stoi(argv_[c]);
     } else if (!std::strcmp(argv_[c], "-descriptor")) {
       c++; if (c == argc_) {break;}
-      if (method_name.compare("bow") == 0) {std::cerr << "WARNING: -descriptor is parameter ignored (bow)" << std::endl;}
       descriptor_type = argv_[c];
     } else if (!std::strcmp(argv_[c], "-voc")) {
       c++; if (c == argc_) {break;}
@@ -116,14 +115,14 @@ void CommandLineParameters::parse(const int32_t& argc_, char** argv_) {
     } else if (!std::strcmp(argv_[c], "-images-reference")) {
       c++; if (c == argc_) {break;}
       folder_images_cross = argv_[c];
-    } else if (!std::strcmp(argv_[c], "-position-augmentation")) {
+    } else if (!std::strcmp(argv_[c], "-position-augmentation") || !std::strcmp(argv_[c], "-pa")) {
       c++; if (c == argc_) {break;}
       number_of_augmentation_bins_horizontal = std::stoi(argv_[c]);
       c++; if (c == argc_) {break;}
       number_of_augmentation_bins_vertical = std::stoi(argv_[c]);
       c++; if (c == argc_) {break;}
       augmentation_weight = std::stoi(argv_[c]);
-    } else if (!std::strcmp(argv_[c], "-semantic-augmentation")) {
+    } else if (!std::strcmp(argv_[c], "-semantic-augmentation") || !std::strcmp(argv_[c], "-sa")) {
       semantic_augmentation = true;
       c++; if (c == argc_) {break;}
       augmentation_weight = std::stoi(argv_[c]);
@@ -134,16 +133,14 @@ void CommandLineParameters::parse(const int32_t& argc_, char** argv_) {
 
 void CommandLineParameters::validate(std::ostream& stream_) {
   if (folder_images.empty()) {
-    stream_ << "ERROR: no images specified (use -images <folder_images>)" << std::endl;
-    throw std::runtime_error("");
+    throw std::runtime_error("ERROR: no images specified (use -images <folder_images>)");
   }
   if (file_name_poses_ground_truth.empty() &&
       parsing_mode != "zubud"              &&
       parsing_mode != "oxford"             &&
       parsing_mode != "paris"              &&
       parsing_mode != "holidays"           ) {
-    stream_ << "ERROR: no poses specified (use -poses <poses_gt>)" << std::endl;
-    throw std::runtime_error("");
+    throw std::runtime_error("ERROR: no poses specified (use -poses <poses_gt>)");
   }
   if (file_name_closures_ground_truth == "" && (parsing_mode != "oxford" || parsing_mode != "paris")) {
     stream_ << "WARNING: no closures ground truth specified (use -closures <closures_gt>) - computing full feasibility map" << std::endl;
@@ -155,44 +152,42 @@ void CommandLineParameters::validate(std::ostream& stream_) {
       parsing_mode != "oxford"                                                   &&
       parsing_mode != "paris"                                                    &&
       parsing_mode != "holidays"                                                 ) {
-    stream_ << "ERROR: invalid descriptor type in closures ground truth: " << file_name_closures_ground_truth << std::endl;
-    throw std::runtime_error("");
+    throw std::runtime_error("ERROR: invalid descriptor type in closures ground truth: " + file_name_closures_ground_truth);
   }
   if (parsing_mode == "lucia" && file_name_image_timestamps.length() == 0) {
-    stream_ << "ERROR: no image UQ St Lucia timestamps file specified (use -timestamps <image_timestamps>)" << std::endl;
-    throw std::runtime_error("");
+    throw std::runtime_error("ERROR: no image UQ St Lucia timestamps file specified (use -timestamps <image_timestamps>)");
   }
-  if (method_name == "bow" && file_path_vocabulary.empty()) {
-    stream_ << "ERROR: no vocabulary provided (use -voc <file_descriptor_vocabulary>)" << std::endl;
-    throw std::runtime_error("");
+  if ((method_name == "bow" || method_name == "bof") && file_path_vocabulary.empty()) {
+    stream_ << "WARNING: no vocabulary provided (use -voc <file_descriptor_vocabulary>)" << std::endl;
   }
   if (parsing_mode == "nordland") {
 
     //ds check if files are missing
     if (folder_images.empty() || folder_images_cross.empty()) {
-      stream_ << "ERROR: no video streams provided (use -cross -images <video_query> <video_reference>)" << std::endl;
-      throw std::runtime_error("");
+      throw std::runtime_error("ERROR: no video streams provided (use -cross -images <video_query> <video_reference>)");
     }
     if (file_name_poses_ground_truth.empty() || file_name_poses_ground_truth_cross.empty()) {
-      stream_ << "ERROR: no GPS ground truth provided (use -poses <gps_query.csv> <gps_reference.csv>)" << std::endl;
-      throw std::runtime_error("");
+      throw std::runtime_error("ERROR: no GPS ground truth provided (use -poses <gps_query.csv> <gps_reference.csv>)");
     }
   }
   if (parsing_mode == "zubud") {
 
     //ds check if files are missing
     if (folder_images.empty() || folder_images_cross.empty() || file_name_closures_ground_truth.empty()) {
-      stream_ << "ERROR: insufficient data provided" << std::endl;
-      throw std::runtime_error("");
+      throw std::runtime_error("ERROR: insufficient data provided");
     }
   }
   if (parsing_mode == "paris") {
 
     //ds check if files are missing
     if (folder_images.empty() || folder_images_cross.empty()) {
-      stream_ << "ERROR: insufficient data provided" << std::endl;
-      throw std::runtime_error("");
+      throw std::runtime_error("ERROR: insufficient data provided");
     }
+  }
+
+  //ds check against build
+  if (augmentation_weight != AUGMENTATION_WEIGHT) {
+    throw std::runtime_error("ERROR: invalid build, define AUGMENTATION_WEIGHT=" + std::to_string(augmentation_weight) + " in ./CMakeLists.txt");
   }
 
   //ds if position augmentation is desired
@@ -201,8 +196,12 @@ void CommandLineParameters::validate(std::ostream& stream_) {
 
     //ds check augmentation bits
     if (number_of_augmented_bits%8 != 0) {
-      stream_ << "ERROR: choose bytewise augmentation (multiples of 8)" << std::endl;
-      throw std::runtime_error("");
+      throw std::runtime_error("ERROR: choose bytewise augmentation (multiples of 8)");
+    }
+
+    //ds check against build
+    if (number_of_augmented_bits != AUGMENTATION_SIZE_BITS) {
+      throw std::runtime_error("ERROR: invalid build, define AUGMENTATION_SIZE_BITS=" + std::to_string(number_of_augmented_bits/8) + " in ./CMakeLists.txt");
     }
   }
 }
@@ -224,8 +223,14 @@ void CommandLineParameters::write(std::ostream& stream_) {
   WRITE_VARIABLE(stream_, load_cross_datasets);
   stream_ << BAR << std::endl;
   WRITE_VARIABLE(stream_, descriptor_type);
-  WRITE_VARIABLE(stream_, DESCRIPTOR_SIZE_BYTES);
   WRITE_VARIABLE(stream_, DESCRIPTOR_SIZE_BITS);
+  WRITE_VARIABLE(stream_, DESCRIPTOR_SIZE_BYTES);
+  WRITE_VARIABLE(stream_, AUGMENTATION_WEIGHT);
+  WRITE_VARIABLE(stream_, AUGMENTATION_SIZE_BITS);
+  WRITE_VARIABLE(stream_, AUGMENTED_DESCRIPTOR_SIZE_BITS);
+  WRITE_VARIABLE(stream_, AUGMENTED_DESCRIPTOR_SIZE_BYTES);
+  WRITE_VARIABLE(stream_, AUGMENTED_DESCRIPTOR_SIZE_BITS_IN_BYTES);
+  WRITE_VARIABLE(stream_, AUGMENTED_DESCRIPTOR_SIZE_BITS_EXTRA);
   WRITE_VARIABLE(stream_, maximum_descriptor_distance);
   WRITE_VARIABLE(stream_, fast_detector_threshold);
   WRITE_VARIABLE(stream_, use_gui);
@@ -247,7 +252,7 @@ void CommandLineParameters::write(std::ostream& stream_) {
     WRITE_VARIABLE(stream_, use_uneven_splitting);
     WRITE_VARIABLE(stream_, maximum_depth);
     stream_ << BAR << std::endl;
-  } else if (method_name == "bow") {
+  } else if (method_name == "bow" || method_name == "bof") {
     WRITE_VARIABLE(stream_, file_path_vocabulary);
     WRITE_VARIABLE(stream_, use_direct_index);
     WRITE_VARIABLE(stream_, direct_index_levels);

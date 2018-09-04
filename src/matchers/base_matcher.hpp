@@ -17,8 +17,11 @@ class BaseMatcher {
 //ds object life
 public:
 
+  //! @brief default constructor
+  BaseMatcher() {_durations_seconds_query_and_train.clear();}
+
   //! @brief default destructor
-  virtual ~BaseMatcher() {};
+  virtual ~BaseMatcher() {}
 
 //ds required interface
 public:

@@ -3,7 +3,6 @@
 namespace srrg_bench {
 
 FLANNHCMatcher::FLANNHCMatcher(const uint32_t& minimum_distance_between_closure_images_): _minimum_distance_between_closure_images(minimum_distance_between_closure_images_) {
-  _durations_seconds_query_and_train.clear();
   _indices.clear();
   _added_descriptors.clear();
 }

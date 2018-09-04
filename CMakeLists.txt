@@ -13,8 +13,12 @@ add_definitions(-Ofast -march=native -Wall -pedantic -std=c++11)
 #ds debug flags
 #add_definitions(-O0 -march=native -Wall -pedantic -std=c++11 -g)
 
-#ds specify target binary descriptor size (default: 32)
-add_definitions(-DSRRG_BENCH_DESCRIPTOR_SIZE_BYTES=32)
+#ds specify target binary descriptor BIT size
+add_definitions(-DDESCRIPTOR_SIZE_BITS=256)
+
+#ds augmentation configuration
+add_definitions(-DAUGMENTATION_WEIGHT=0)
+add_definitions(-DAUGMENTATION_SIZE_BITS=16)
 
 #ds locate external dependencies
 find_package(catkin QUIET COMPONENTS srrg_cmake_modules srrg_core srrg_core_viewers srrg_gl_helpers srrg_hbst obindex2)

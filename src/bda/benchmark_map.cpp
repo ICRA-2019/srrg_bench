@@ -8,8 +8,8 @@
 #ifdef SRRG_BENCH_BUILD_HBST
 #include "matchers/hbst_matcher.h"
 #endif
-#ifdef SRRG_BENCH_BUILD_IBOW
-#include "matchers/ibow_matcher.h"
+#ifdef SRRG_BENCH_BUILD_DBOW2
+#include "matchers/bow_matcher.h"
 #endif
 
 
@@ -18,7 +18,7 @@ int32_t main(int32_t argc_, char** argv_) {
 
   //ds validate number of parameters
   if (argc_ < 9) {
-    std::cerr << "./benchmark_map -mode zubud"
+    std::cerr << "./benchmark_map -mode zubud "
                  "-images-reference <directory_train_images> "
                  "-images-query <directory_test_images> "
                  "-closures <ground_truth_mapping>.txt "
@@ -40,10 +40,9 @@ int32_t main(int32_t argc_, char** argv_) {
   baselayer->validate(std::cerr);
 
   //ds adjust thresholds
-  baselayer->maximum_descriptor_distance             = 0.1*(DESCRIPTOR_SIZE_BITS+baselayer->augmentation_weight*baselayer->number_of_augmented_bits);
+  baselayer->maximum_descriptor_distance             = 0.1*AUGMENTED_DESCRIPTOR_SIZE_BITS;
   baselayer->minimum_distance_between_closure_images = 0;
   baselayer->maximum_leaf_size                       = 0.1*baselayer->target_number_of_descriptors;
-  baselayer->fast_detector_threshold                 = 20;
 
   //ds configure and log
   baselayer->configure(std::cerr);
@@ -66,8 +65,11 @@ int32_t main(int32_t argc_, char** argv_) {
     return EXIT_FAILURE;
 #endif
   } else if (method_name == "bof") {
-#ifdef SRRG_BENCH_BUILD_IBOW
-    matcher = std::make_shared<srrg_bench::IBoWMatcher>(baselayer->minimum_distance_between_closure_images, baselayer->maximum_descriptor_distance);
+#ifdef SRRG_BENCH_BUILD_DBOW2
+    matcher = std::make_shared<srrg_bench::BoWMatcher>(baselayer->minimum_distance_between_closure_images,
+                                                       baselayer->file_path_vocabulary,
+                                                       baselayer->use_direct_index,
+                                                       baselayer->direct_index_levels);
 #else
     std::cerr << "ERROR: unknown method name: " << method_name << std::endl;
     return EXIT_FAILURE;
@@ -223,8 +225,8 @@ int32_t main(int32_t argc_, char** argv_) {
   std::cerr << "number of processed reference images: " << number_of_processed_reference_images << std::endl;
   std::cerr << "    number of processed query images: " << number_of_processed_query_images << std::endl;
   std::cerr << "        mean average precision (mAP): " << mean_average_precision << std::endl;
-  std::cerr << "      mean add() processing time (s): " << matcher->totalDurationAddSeconds()/number_of_processed_reference_images << std::endl;
-  std::cerr << "         train() processing time (s): " << matcher->totalDurationTrainSeconds() << std::endl;
-  std::cerr << "    mean query() processing time (s): " << matcher->totalDurationQuerySeconds()/number_of_processed_query_images << std::endl;
+  std::cerr << "        mean add processing time (s): " << matcher->totalDurationAddSeconds()/number_of_processed_reference_images << std::endl;
+  std::cerr << "           train processing time (s): " << matcher->totalDurationTrainSeconds() << std::endl;
+  std::cerr << "      mean query processing time (s): " << matcher->totalDurationQuerySeconds()/number_of_processed_query_images << std::endl;
   return 0;
 }

@@ -10,7 +10,6 @@ FLANNLSHMatcher::FLANNLSHMatcher(const uint32_t& minimum_distance_between_closur
                                                                      _minimum_distance_between_closure_images(minimum_distance_between_closure_images_) {
   _train_descriptor_details.clear();
   _image_numbers.clear();
-  _durations_seconds_query_and_train.clear();
 }
 
 FLANNLSHMatcher::~FLANNLSHMatcher() {

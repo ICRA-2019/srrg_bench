@@ -5,7 +5,6 @@ namespace srrg_bench {
 BruteforceMatcher::BruteforceMatcher(const uint32_t& minimum_distance_between_closure_images_,
                                      const int32_t& norm_type_): _matcher(new cv::BFMatcher(norm_type_, true)),
                                                                  _minimum_distance_between_closure_images(minimum_distance_between_closure_images_) {
-    _durations_seconds_query_and_train.clear();
     _train_descriptors.clear();
 }
 
