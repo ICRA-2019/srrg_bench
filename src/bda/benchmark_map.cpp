@@ -1,5 +1,4 @@
 #include <regex>
-#include <omp.h>
 #include "matchers/bruteforce_matcher.h"
 #include "matchers/flannlsh_matcher.h"
 #include "utilities/command_line_parameters.h"

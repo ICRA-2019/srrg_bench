@@ -39,15 +39,14 @@ int readKeyPoints(const char *fileName, vector<float> *des);
 
 void eval(string fileName1, string fileName2, string tsak);
 void ground(string fileName1, string fileName2, string tsak);
-void makeFlow();
 
 float* readFlow(const char *fileName, int *nrRows, int *nrCols);
 
 map<int,int> match01;
 map<int,int> match10;
 
-vector<int> Gmatch01;
-vector<int> Gmatch10;
+vector<size_t> Gmatch01;
+vector<size_t> Gmatch10;
 	
 int main(int argc, char **argv) 
 {
@@ -82,7 +81,7 @@ int main(int argc, char **argv)
 	string fileName1;
 	string fileName2;
 	
-	for(int i=1; i < fileNameList.size(); i++)
+	for(size_t i=1; i < fileNameList.size(); i++)
 	{
 		fileName1 = fileNameList[i];
 		fileName2 = fileNameList[0];
@@ -126,7 +125,7 @@ void eval(string fileName1, string fileName2, string task)
 		
 		//compute maxDist over ground truth matches
 		float maxDist = 0;
-		for(int i1=0; i1 < Gmatch01.size(); i1++)
+		for(size_t i1=0; i1 < Gmatch01.size(); i1++)
 		{
 			int i2 = Gmatch01[i1];
 			if(i2 == -1) continue;
@@ -150,12 +149,10 @@ void eval(string fileName1, string fileName2, string task)
 			falsePos[i] = 0.0;
 		}
 		
-		for(int i1=0; i1 < Gmatch01.size(); i1++)
+		for(size_t i1=0; i1 < Gmatch01.size(); i1++)
 		{
-			if(Gmatch01[i1] == -1) continue;
-			for(int i2=0; i2 < Gmatch10.size(); i2++)
+			for(size_t i2=0; i2 < Gmatch10.size(); i2++)
 			{
-				if(Gmatch10[i2] == -1) continue;
 				
 				float fdist = 0.0;
 				for(int j=0; j < nrDim; j++)
@@ -189,7 +186,7 @@ void eval(string fileName1, string fileName2, string task)
 		}
 		//compute maxDist over ground truth matches
 		int maxDist = 0;
-		for(int i1=0; i1 < Gmatch01.size(); i1++)
+		for(size_t i1=0; i1 < Gmatch01.size(); i1++)
 		{
 			int i2 = Gmatch01[i1];
 			if(i2 == -1) continue;
@@ -213,12 +210,10 @@ void eval(string fileName1, string fileName2, string task)
 			falsePos[i] = 0.0;
 		}
 		
-		for(int i1=0; i1 < Gmatch01.size(); i1++)
+		for(size_t i1=0; i1 < Gmatch01.size(); i1++)
 		{
-			if(Gmatch01[i1] == -1) continue;
-			for(int i2=0; i2 < Gmatch10.size(); i2++)
+			for(size_t i2=0; i2 < Gmatch10.size(); i2++)
 			{
-				if(Gmatch10[i2] == -1) continue;
 				
 				int dist = 0;
 				for(int j=0; j < nrDim; j++)
@@ -286,8 +281,6 @@ int readKeyPoints(const char *fileName, vector<BIN_WORD> *des)
 	in.read((char*)&nrCols, sizeof(int));
 
 	const int n64  = nrDim;
-	const float nr = nrRows;
-	const float nc = nrCols;
 
 	cout << fileName << " " << nrKeypoints << " " << nrDim << " " << n64 << " " << nrAlg << " " << nrRows << " " << nrCols << " ";
 
@@ -332,8 +325,6 @@ int readKeyPoints(const char *fileName, vector<float> *des)
 	in.read((char*)&nrCols, sizeof(int));
 
 	const int n64  = nrDim;
-	const float nr = nrRows;
-	const float nc = nrCols;
 
 	cout << fileName << " " << nrKeypoints << " " << nrDim << " " << n64 << " " << nrAlg << " " << nrRows << " " << nrCols << " " << endl;
 
@@ -487,7 +478,7 @@ void ground(string fileName1, string fileName2, string task)
 	CvScalar colorRed   = CV_RGB(255,0,0);
 	CvScalar colorGreen = CV_RGB(0,255,0);
 	
-	for(int i=0; i < points1.size(); i++)
+	for(size_t i=0; i < points1.size(); i++)
 	{
 		float x = points1[i].x;
 		float y = points1[i].y;
@@ -509,7 +500,7 @@ void ground(string fileName1, string fileName2, string task)
 		}
 	}
 	
-	for(int i=0; i < points2.size(); i++)
+	for(size_t i=0; i < points2.size(); i++)
 	{
 		float x = points2[i].x;
 		float y = points2[i].y;
@@ -647,10 +638,10 @@ void ground(string fileName1, string fileName2, string task)
 	Gmatch01.resize(points1.size());
 	Gmatch10.resize(points2.size());
 	
-	for(int i=0; i < Gmatch01.size(); i++) Gmatch01[i] = -1;
-	for(int i=0; i < Gmatch10.size(); i++) Gmatch10[i] = -1;
+	for(size_t i=0; i < Gmatch01.size(); i++) Gmatch01[i] = -1;
+	for(size_t i=0; i < Gmatch10.size(); i++) Gmatch10[i] = -1;
 	
-	for(int i=0; i < matches.size(); i++)
+	for(size_t i=0; i < matches.size(); i++)
 	{
 		//cout << i << " " << matches[i].first << " " << matches[i].second << endl;
 		Gmatch01[matches[i].first]  = matches[i].second;

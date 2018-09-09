@@ -4,16 +4,21 @@
 
 /* load tests and init 2 rotations
    for fast affine aprox. (example -20,20) */
-BOLD::BOLD(void)
+BOLD::BOLD(const std::string& file_path_configuration_)
 {
+  //ds TODO softcode goddammit
+  std::ifstream file;
+  file.open(file_path_configuration_);
+
+  if (!file.good() || !file.is_open()) {
+    throw std::runtime_error("ERROR: invalid binary test file provided for BOLD: '" + file_path_configuration_ + "'");
+  }
+
   bin_tests = (int**) malloc(NROTS * sizeof(int *));
   for (int i = 0; i < NROTS; i++){
     bin_tests[i] = (int*)malloc(NTESTS*2 * sizeof(int));
   }
-  std::ifstream file;
 
-  //ds TODO softcode goddammit
-  file.open("/home/dom/source/srrg/srrg_bench/src/thirdparty/bold/bold.descr");
   /* read original tests and set them to rotation 0 */
   for(int j = 0; j < NTESTS*2; j++ )
     {

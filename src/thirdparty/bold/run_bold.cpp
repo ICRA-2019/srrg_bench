@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
   init_dataset(&data,(char*) "/home/dom/Downloads/notredame/");
 
   /* init BOLD */
-  BOLD bold;
+  BOLD bold("/home/dom/source/srrg/srrg_bench/src/thirdparty/bold/bold.descr");
 
   /* get descriptors for patch pairs */
   for (int i = 0; i < GT_SIZE; i++) {

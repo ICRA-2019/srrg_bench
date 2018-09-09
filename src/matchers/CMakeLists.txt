@@ -24,12 +24,15 @@ endif()
 #ds iBoW-LCD -> obindex
 if(obindex2_FOUND)
   set(MATCHERS_SOURCES "ibow_matcher.cpp;${MATCHERS_SOURCES}")
-  set(MATCHERS_LIBRARIES "${obindex2_LIBRARIES};${MATCHERS_LIBRARIES}")
+  set(MATCHERS_LIBRARIES "gomp;${obindex2_LIBRARIES};${MATCHERS_LIBRARIES}")
 endif()
 
 #ds create target library
 if(MATCHERS_SOURCES)
   add_library(srrg_bench_matchers_library ${MATCHERS_SOURCES})
+  if(obindex2_FOUND)
+    target_compile_options(srrg_bench_matchers_library PUBLIC -fopenmp)
+  endif()
   target_link_libraries(srrg_bench_matchers_library 
     ${MATCHERS_LIBRARIES}
     srrg_bench_loop_closure_evaluator_library

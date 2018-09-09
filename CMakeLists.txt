@@ -14,10 +14,10 @@ add_definitions(-Ofast -march=native -Wall -pedantic -std=c++11)
 #add_definitions(-O0 -march=native -Wall -pedantic -std=c++11 -g)
 
 #ds specify target binary descriptor BIT size
-add_definitions(-DDESCRIPTOR_SIZE_BITS=486)
+add_definitions(-DDESCRIPTOR_SIZE_BITS=64)
 
 #ds augmentation configuration
-add_definitions(-DAUGMENTATION_WEIGHT=1)
+add_definitions(-DAUGMENTATION_WEIGHT=2)
 add_definitions(-DAUGMENTATION_SIZE_BITS=16)
 
 #ds locate external dependencies
@@ -89,8 +89,8 @@ add_subdirectory(src/matchers)
 #ds thirdparty software (e.g. descriptors)
 message("srrg_bench|building LDAHash descriptor")
 add_subdirectory(src/thirdparty/ldahash)
-message("srrg_bench|building BinBoost descriptor")
-add_subdirectory(src/thirdparty/binboost)
+#message("srrg_bench|building BinBoost descriptor")
+#add_subdirectory(src/thirdparty/binboost)
 message("srrg_bench|building BOLD descriptor")
 add_subdirectory(src/thirdparty/bold)
 

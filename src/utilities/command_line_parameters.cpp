@@ -446,12 +446,24 @@ void CommandLineParameters::configure(std::ostream& stream_) {
     if (DESCRIPTOR_SIZE_BITS != 512) {
       throw std::runtime_error("ERROR: invalid DESCRIPTOR_SIZE_BITS '" + std::to_string(DESCRIPTOR_SIZE_BITS) + "' for descriptor '" + descriptor_type + "'");
     }
-    feature_detector        = cv::xfeatures2d::HarrisLaplaceFeatureDetector::create();
-    bold_descriptor_handler = std::make_shared<BOLD>(); //ds 512 bits
+    feature_detector        = cv::xfeatures2d::HarrisLaplaceFeatureDetector::create(6, fast_detector_threshold/1e4, fast_detector_threshold/1e4);
+    bold_descriptor_handler = std::make_shared<BOLD>("/home/dom/source/srrg/srrg_bench/src/thirdparty/bold/bold.descr"); //ds 512 bits
   } else if (descriptor_type == "ldahash") {
     if (DESCRIPTOR_SIZE_BITS != 128) {
       throw std::runtime_error("ERROR: invalid DESCRIPTOR_SIZE_BITS '" + std::to_string(DESCRIPTOR_SIZE_BITS) + "' for descriptor '" + descriptor_type + "'");
     }
+  } else if (descriptor_type == "latch") {
+    if (DESCRIPTOR_SIZE_BITS != 512) {
+      throw std::runtime_error("ERROR: invalid DESCRIPTOR_SIZE_BITS '" + std::to_string(DESCRIPTOR_SIZE_BITS) + "' for descriptor '" + descriptor_type + "'");
+    }
+    feature_detector     = cv::FastFeatureDetector::create(fast_detector_threshold);
+    descriptor_extractor = cv::xfeatures2d::LATCH::create(64);
+  } else if (descriptor_type == "binboost") {
+    if (DESCRIPTOR_SIZE_BITS != 64) {
+      throw std::runtime_error("ERROR: invalid DESCRIPTOR_SIZE_BITS '" + std::to_string(DESCRIPTOR_SIZE_BITS) + "' for descriptor '" + descriptor_type + "'");
+    }
+    feature_detector     = cv::FastFeatureDetector::create(fast_detector_threshold);
+    descriptor_extractor = cv::xfeatures2d::BoostDesc::create(cv::xfeatures2d::BoostDesc::BINBOOST_64);
   }
     else {
     stream_ << "ERROR: unknown descriptor type: " << descriptor_type << std::endl;
@@ -473,28 +485,27 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
     //ds detect keypoints
     feature_detector->detect(image_, keypoints_);
 
+    //ds sort keypoints descendingly by response value (for culling after descriptor computation)
+    if (sort_keypoints_by_response_) {
+      std::sort(keypoints_.begin(), keypoints_.end(), [](const cv::KeyPoint& a_, const cv::KeyPoint& b_){return a_.response > b_.response;});
+    }
+
     //ds kept keypoints and descriptors
     std::vector<cv::KeyPoint> keypoints_kept(0);
     std::vector<cv::Mat> descriptors(0);
 
-    //ds for each keypoint patch
+    //ds for each keypoint patch - we use the default configuration for 32x32 patches
     for (cv::KeyPoint& keypoint: keypoints_) {
-      const int32_t patch_size      = 32;
-      const int32_t patch_size_half = patch_size/2;
 
       //ds if computation is possible
-      if (keypoint.pt.x-patch_size_half > 0           &&
-          keypoint.pt.x+patch_size_half < image_.cols &&
-          keypoint.pt.y-patch_size_half > 0           &&
-          keypoint.pt.y+patch_size_half < image_.rows ) {
-        keypoint.size = patch_size;
+      if (keypoint.pt.x-16 > 0           &&
+          keypoint.pt.x+16 < image_.cols &&
+          keypoint.pt.y-16 > 0           &&
+          keypoint.pt.y+16 < image_.rows ) {
 
         //ds compute descriptor and mask
         cv::Mat descriptor, mask;
-        cv::Mat patch(image_(cv::Rect2i(keypoint.pt.x-patch_size_half,
-                                        keypoint.pt.y-patch_size_half,
-                                        patch_size,
-                                        patch_size)));
+        cv::Mat patch(image_(cv::Rect2i(keypoint.pt.x-16, keypoint.pt.y-16, 32, 32)));
         bold_descriptor_handler->compute_patch(patch, descriptor, mask);
 
         //ds keep keypoint and descriptor
@@ -502,12 +513,14 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
         descriptors.push_back(descriptor);
       }
     }
+    if (!keypoints_kept.empty()) {
 
-    //ds set output
-    keypoints_   = keypoints_kept;
-    descriptors_ = cv::Mat(keypoints_.size(), descriptors.front().cols, descriptors.front().type());
-    for (uint32_t u = 0; u < descriptors.size(); ++u) {
-      descriptors_.row(u) = descriptors[u];
+      //ds set output
+      keypoints_   = keypoints_kept;
+      descriptors_ = cv::Mat(keypoints_.size(), descriptors.front().cols, descriptors.front().type());
+      for (uint32_t u = 0; u < descriptors.size(); ++u) {
+        descriptors_.row(u) = descriptors[u];
+      }
     }
   } else if (descriptor_type == "ldahash") {
 
@@ -595,20 +608,15 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
   //ds compute descriptors after sorting detected keypoints
   computeDescriptors(image_, keypoints_, descriptors_, true);
 
-  //ds rebuild descriptor matrix and keypoints vector unless for specific descriptors
-  if (descriptor_type != "binboost" &&
-      descriptor_type != "bold"     ) {
-
-    //ds check insufficient descriptor number
-    if (keypoints_.size() < target_number_of_descriptors_) {
-      std::cerr << "\nWARNING: insufficient number of descriptors computed: " << keypoints_.size()
-                << " < " << target_number_of_descriptors_ << ", adjust keypoint detector threshold" << std::endl;
-      return;
-    }
-
-    keypoints_.resize(target_number_of_descriptors_);
-    descriptors_ = descriptors_(cv::Rect(0, 0, descriptors_.cols, target_number_of_descriptors_));
+  //ds check insufficient descriptor number
+  if (keypoints_.size() < target_number_of_descriptors_) {
+    std::cerr << "\nWARNING: insufficient number of descriptors computed: " << keypoints_.size()
+              << " < " << target_number_of_descriptors_ << ", adjust keypoint detector threshold" << std::endl;
+    return;
   }
+
+  keypoints_.resize(target_number_of_descriptors_);
+  descriptors_ = descriptors_(cv::Rect(0, 0, descriptors_.cols, target_number_of_descriptors_));
 }
 
 void CommandLineParameters::configurePositionAugmentation(const std::string& image_resolution_key_) {

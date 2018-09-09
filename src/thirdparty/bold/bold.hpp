@@ -9,7 +9,7 @@
 
 class BOLD {
 public:
-  BOLD(void);
+  BOLD(const std::string& file_path_configuration_);
   ~BOLD();
   
   void compute_patch(cv::Mat image, cv::Mat& descrs,cv::Mat& masks);
