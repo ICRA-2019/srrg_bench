@@ -17,8 +17,8 @@ add_definitions(-Ofast -march=native -Wall -pedantic -std=c++11)
 add_definitions(-DDESCRIPTOR_SIZE_BITS=256)
 
 #ds augmentation configuration
-add_definitions(-DAUGMENTATION_WEIGHT=0)
-add_definitions(-DAUGMENTATION_SIZE_BITS=16)
+add_definitions(-DAUGMENTATION_WEIGHT=1)
+add_definitions(-DAUGMENTATION_SIZE_BITS=12)
 
 #ds locate external dependencies
 find_package(catkin QUIET COMPONENTS srrg_cmake_modules srrg_core srrg_core_viewers srrg_gl_helpers srrg_hbst obindex2)

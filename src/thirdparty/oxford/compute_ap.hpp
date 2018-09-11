@@ -1,7 +1,7 @@
 // This code originated from: http://www.robots.ox.ac.uk/~vgg/data/oxbuildings/compute_ap.cpp
 // The Oxford Buildings Datastd::set
 // James Philbin, Relja Arandjelović and Andrew Zisserman 
-
+#pragma once
 #include <fstream>
 #include <iostream>
 #include <set>

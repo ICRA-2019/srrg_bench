@@ -2,7 +2,7 @@
 #include "matchers/bruteforce_matcher.h"
 #include "matchers/flannlsh_matcher.h"
 #include "utilities/command_line_parameters.h"
-#include "thirdparty/oxford/compute_ap.h"
+#include "thirdparty/oxford/compute_ap.hpp"
 
 #ifdef SRRG_BENCH_BUILD_HBST
 #include "matchers/hbst_matcher.h"

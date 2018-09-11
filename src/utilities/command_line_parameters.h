@@ -4,6 +4,11 @@
 //ds custom descriptor types
 #include "thirdparty/bold/bold.hpp"
 
+//ds segmentation information
+#ifdef SRRG_BENCH_BUILD_SEGNET
+#include "thirdparty/segnet/segnet_classifier.hpp"
+#endif
+
 namespace srrg_bench {
 
 //! struct used to store position augmentation information
@@ -191,6 +196,11 @@ class CommandLineParameters {
     //! @brief where image_resolution_key could be "240x320" (rows x cols)
     //! @brief a new image_resolution_key entry is generated for every new image encountered
     std::map<std::string, BinaryStringGrid*> mappings_image_coordinates_to_augmentation;
+
+    //! @brief pixel-wise segmentation library
+    std::shared_ptr<SegNetClassifier> classifier;
+    std::string file_name_classifier_model   = "";
+    std::string file_name_classifier_weights = "";
 
     //ds GUI
     double display_scale = 1.0;

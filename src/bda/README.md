@@ -30,6 +30,11 @@ with a 9x9 PA at weight 4:
 without augmentation:
 
 	    ./benchmark_map -mode kitti -images kitti_00/image_0 -poses kitti_00/00.txt -method hbst -descriptor freak
+	    
+- [ZuBuD](http://www.vision.ee.ethz.ch/en/datasets) with [Brute-Force (BF)](https://docs.opencv.org/3.1.0/d3/da1/classcv_1_1BFMatcher.html) matching and BRIEF descriptors (default)
+without semantic augmentation:
+
+      ./benchmark_map -mode zubud -images-query zubud/1000city/qimage/ -images-reference zubud/png-ZuBuD/ -closures zubud_groundtruth.txt -method bf -semantic-augmentation 1 model.prototxt weights.caffemodel
 
 Source images and ground truth files have been extracted from the compressed files provided online <br>
 We extracted all files into a corresponding, separate dataset folder (e.g. ZuBuD in `zubud`, Oxford in `oxford`) <br>

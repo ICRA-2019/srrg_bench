@@ -126,6 +126,10 @@ void CommandLineParameters::parse(const int32_t& argc_, char** argv_) {
       semantic_augmentation = true;
       c++; if (c == argc_) {break;}
       augmentation_weight = std::stoi(argv_[c]);
+      c++; if (c == argc_) {break;}
+      file_name_classifier_model = argv_[c];
+      c++; if (c == argc_) {break;}
+      file_name_classifier_weights = argv_[c];
     }
     c++;
   }
@@ -204,6 +208,26 @@ void CommandLineParameters::validate(std::ostream& stream_) {
       throw std::runtime_error("ERROR: invalid build, define AUGMENTATION_SIZE_BITS=" + std::to_string(number_of_augmented_bits/8) + " in ./CMakeLists.txt");
     }
   }
+
+  //ds if we require a classifier
+  if (semantic_augmentation) {
+
+    //ds check if required bits are set
+    if (AUGMENTATION_SIZE_BITS != 12) {
+      throw std::runtime_error("ERROR: invalid build, define AUGMENTATION_SIZE_BITS=12 in ./CMakeLists.txt");
+    }
+
+    //ds fixed
+    number_of_augmented_bits = AUGMENTATION_SIZE_BITS;
+
+    //ds check if paths are set
+    if (file_name_classifier_model.empty()) {
+      throw std::runtime_error("ERROR: missing classifier model file");
+    }
+    if (file_name_classifier_weights.empty()) {
+      throw std::runtime_error("ERROR: missing classifier weights file");
+    }
+  }
 }
 
 void CommandLineParameters::write(std::ostream& stream_) {
@@ -278,6 +302,10 @@ void CommandLineParameters::write(std::ostream& stream_) {
   } else if (parsing_mode == "zubud" || parsing_mode == "paris") {
     WRITE_VARIABLE(stream_, folder_images_cross);
     stream_ << BAR << std::endl;
+  }
+  if (semantic_augmentation) {
+    WRITE_VARIABLE(stream_, file_name_classifier_model);
+    WRITE_VARIABLE(stream_, file_name_classifier_weights);
   }
 }
 
@@ -475,6 +503,11 @@ void CommandLineParameters::configure(std::ostream& stream_) {
   if (parsing_mode == "nordland") {
     feature_detector = cv::GFTTDetector::create(1.5*target_number_of_descriptors, 1e-3, 10);
   }
+
+  //ds instanciate classifier if needed
+  if (semantic_augmentation) {
+    classifier = std::make_shared<SegNetClassifier>(file_name_classifier_model, file_name_classifier_weights);
+  }
 }
 
 void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vector<cv::KeyPoint>& keypoints_, cv::Mat& descriptors_, const bool sort_keypoints_by_response_) {
@@ -544,56 +577,61 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
   if (number_of_augmented_bits > 0 && augmentation_weight > 0) {
 
     //ds check augmentation bits
-    if (number_of_augmented_bits%8 != 0) {
-      throw std::runtime_error("choose bytewise augmentation (multiples of 8)");
-    }
-    const uint32_t number_of_augmented_bytes = augmentation_weight*number_of_augmented_bits/8;
-
-    //ds image resolution key (to obtain fixed mapping)
-    const std::string key = std::to_string(image_.rows)+"x"+std::to_string(image_.cols);
-
-    //ds check if augmentations are not initialized yet for this image resolution
-    if (number_of_image_rows != static_cast<uint32_t>(image_.rows) ||
-        number_of_image_cols != static_cast<uint32_t>(image_.cols) ) {
-      number_of_image_rows = image_.rows;
-      number_of_image_cols = image_.cols;
-
-      //ds if mapping is not existing yet - configure a new mapping for this key
-      if (mappings_image_coordinates_to_augmentation.count(key) == 0) {
-        configurePositionAugmentation(key);
-      }
-    }
+    const uint32_t number_of_augmented_bytes = std::ceil(augmentation_weight*number_of_augmented_bits/8.0);
 
     //ds reserve augmentented descriptor matrix
     cv::Mat descriptors_augmented = cv::Mat(descriptors_.rows, descriptors_.cols+number_of_augmented_bytes, descriptors_.type());
 
-    //ds obtain mapping (must work at this point)
-    BinaryStringGrid* mapping = mappings_image_coordinates_to_augmentation.at(key);
+    //ds for semantic augmentation
+    if (semantic_augmentation) {
 
-    //ds augment each descriptor
-    for (int32_t i = 0; i < descriptors_augmented.rows; ++i) {
+      throw std::runtime_error("not implemented");
 
-      //ds for all bytes
-      uint32_t augmentation_bit_index = 0;
-      for (int32_t j = 0; j < descriptors_augmented.cols; ++j) {
-        if (j < descriptors_.cols) {
-          descriptors_augmented.row(i).at<uchar>(j) = descriptors_.row(i).at<uchar>(j);
-        } else {
+    } else {
 
-          //ds repeat augmentations until completed (index j keeps moving)
-          if (augmentation_bit_index == number_of_augmented_bits) {
-            augmentation_bit_index = 0;
+      //ds image resolution key (to obtain fixed mapping)
+      const std::string key = std::to_string(image_.rows)+"x"+std::to_string(image_.cols);
+
+      //ds check if augmentations are not initialized yet for this image resolution
+      if (number_of_image_rows != static_cast<uint32_t>(image_.rows) ||
+          number_of_image_cols != static_cast<uint32_t>(image_.cols) ) {
+        number_of_image_rows = image_.rows;
+        number_of_image_cols = image_.cols;
+
+        //ds if mapping is not existing yet - configure a new mapping for this key
+        if (mappings_image_coordinates_to_augmentation.count(key) == 0) {
+          configurePositionAugmentation(key);
+        }
+      }
+
+      //ds obtain mapping (must work at this point)
+      BinaryStringGrid* mapping = mappings_image_coordinates_to_augmentation.at(key);
+
+      //ds augment each descriptor
+      for (int32_t i = 0; i < descriptors_augmented.rows; ++i) {
+
+        //ds for all bytes
+        uint32_t augmentation_bit_index = 0;
+        for (int32_t j = 0; j < descriptors_augmented.cols; ++j) {
+          if (j < descriptors_.cols) {
+            descriptors_augmented.row(i).at<uchar>(j) = descriptors_.row(i).at<uchar>(j);
+          } else {
+
+            //ds repeat augmentations until completed (index j keeps moving)
+            if (augmentation_bit_index == number_of_augmented_bits) {
+              augmentation_bit_index = 0;
+            }
+
+            //ds obtain the mapping for the descriptor
+            const uint32_t& row = keypoints_[i].pt.y;
+            const uint32_t& col = keypoints_[i].pt.x;
+            const std::string& augmentation = mapping->at(row,col);
+
+            //ds build uchar bitset and set augmentation to descriptor
+            const std::bitset<8> data(augmentation.substr(augmentation_bit_index, 8));
+            descriptors_augmented.row(i).at<uchar>(j) = static_cast<uchar>(data.to_ulong());
+            augmentation_bit_index += 8;
           }
-
-          //ds obtain the mapping for the descriptor
-          const uint32_t& row = keypoints_[i].pt.y;
-          const uint32_t& col = keypoints_[i].pt.x;
-          const std::string& augmentation = mapping->at(row,col);
-
-          //ds build uchar bitset and set augmentation to descriptor
-          const std::bitset<8> data(augmentation.substr(augmentation_bit_index, 8));
-          descriptors_augmented.row(i).at<uchar>(j) = static_cast<uchar>(data.to_ulong());
-          augmentation_bit_index += 8;
         }
       }
     }
