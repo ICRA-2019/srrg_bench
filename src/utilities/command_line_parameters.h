@@ -5,7 +5,7 @@
 #include "thirdparty/bold/bold.hpp"
 
 //ds segmentation information
-#ifdef SRRG_BENCH_BUILD_SEGNET
+#if SRRG_BENCH_BUILD_SEGNET
 #include "thirdparty/segnet/segnet_classifier.hpp"
 #endif
 
@@ -198,7 +198,7 @@ class CommandLineParameters {
     std::map<std::string, BinaryStringGrid*> mappings_image_coordinates_to_augmentation;
 
     //! @brief pixel-wise segmentation library
-#ifdef SRRG_BENCH_BUILD_SEGNET
+#if SRRG_BENCH_BUILD_SEGNET
     std::shared_ptr<SegNetClassifier> classifier;
 #endif
     std::string file_name_classifier_model   = "";

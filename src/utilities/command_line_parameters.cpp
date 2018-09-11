@@ -206,7 +206,7 @@ void CommandLineParameters::validate(std::ostream& stream_) {
 
   //ds if we require a classifier
   if (semantic_augmentation) {
-#ifndef SRRG_BENCH_BUILD_SEGNET
+#if SRRG_BENCH_BUILD_SEGNET
     throw std::runtime_error("ERROR: classifier not available, adjust build");
 #endif
 
@@ -504,7 +504,7 @@ void CommandLineParameters::configure(std::ostream& stream_) {
 
   //ds instanciate classifier if needed
   if (semantic_augmentation) {
-#ifdef SRRG_BENCH_BUILD_SEGNET
+#if SRRG_BENCH_BUILD_SEGNET
     classifier = std::make_shared<SegNetClassifier>(file_name_classifier_model, file_name_classifier_weights);
 #endif
   }
@@ -584,7 +584,7 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
 
     //ds for semantic augmentation
     if (semantic_augmentation) {
-#ifdef SRRG_BENCH_BUILD_SEGNET
+#if SRRG_BENCH_BUILD_SEGNET
       if (number_of_augmented_bits != 12) {
         throw std::runtime_error("ERROR: invalid configuration, number_of_augmented_bits must be 12");
       }
@@ -786,7 +786,7 @@ void CommandLineParameters::displayKeypoints(const cv::Mat& image_,
     cv::cvtColor(image_display, image_display, CV_GRAY2RGB);
 
     //ds if semantic augmnentation is desired - display keypoint labels (as colors)
-#ifdef SRRG_BENCH_BUILD_SEGNET
+#if SRRG_BENCH_BUILD_SEGNET
     if (semantic_augmentation) {
       for (const cv::KeyPoint& keypoint: keypoints_) {
         cv::circle(image_display, keypoint.pt, 2, classifier->getColorForLabel(keypoint.class_id), -1);
@@ -798,7 +798,7 @@ void CommandLineParameters::displayKeypoints(const cv::Mat& image_,
         cv::circle(image_display, keypoint.pt, 2, cv::Scalar(255, 0, 0), -1);
         cv::circle(image_display, keypoint.pt, keypoint.size, cv::Scalar(0, 0, 255), 1);
       }
-#ifdef SRRG_BENCH_BUILD_SEGNET
+#if SRRG_BENCH_BUILD_SEGNET
     }
 #endif
 
