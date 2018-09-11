@@ -586,14 +586,13 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
 
     //ds for semantic augmentation
     if (semantic_augmentation) {
+#ifdef SRRG_BENCH_BUILD_SEGNET
       if (number_of_augmented_bits != 12) {
         throw std::runtime_error("ERROR: invalid configuration, number_of_augmented_bits must be 12");
       }
 
       //ds obtain labels for current image
-#ifdef SRRG_BENCH_BUILD_SEGNET
       const cv::Mat image_labelled = classifier->getImageWithLabels(image_);
-#endif
 
       //ds augment each descriptor
       for (int32_t i = 0; i < descriptors_augmented.rows; ++i) {
@@ -630,6 +629,7 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
           }
         }
       }
+#endif
     } else {
 
       //ds image resolution key (to obtain fixed mapping)
