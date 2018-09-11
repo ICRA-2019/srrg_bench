@@ -198,19 +198,17 @@ void CommandLineParameters::validate(std::ostream& stream_) {
   if (number_of_augmentation_bins_horizontal > 0 && number_of_augmentation_bins_vertical > 0) {
     number_of_augmented_bits = number_of_augmentation_bins_horizontal+number_of_augmentation_bins_vertical-2;
 
-    //ds check augmentation bits
-    if (number_of_augmented_bits%8 != 0) {
-      throw std::runtime_error("ERROR: choose bytewise augmentation (multiples of 8)");
-    }
-
     //ds check against build
     if (number_of_augmented_bits != AUGMENTATION_SIZE_BITS) {
-      throw std::runtime_error("ERROR: invalid build, define AUGMENTATION_SIZE_BITS=" + std::to_string(number_of_augmented_bits/8) + " in ./CMakeLists.txt");
+      throw std::runtime_error("ERROR: invalid build, define AUGMENTATION_SIZE_BITS=" + std::to_string(number_of_augmented_bits) + " in ./CMakeLists.txt");
     }
   }
 
   //ds if we require a classifier
   if (semantic_augmentation) {
+#ifndef SRRG_BENCH_BUILD_SEGNET
+    throw std::runtime_error("ERROR: classifier not available, adjust build");
+#endif
 
     //ds check if required bits are set
     if (AUGMENTATION_SIZE_BITS != 12) {
