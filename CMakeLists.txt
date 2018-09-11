@@ -17,7 +17,7 @@ add_definitions(-Ofast -march=native -Wall -pedantic -std=c++11)
 add_definitions(-DDESCRIPTOR_SIZE_BITS=256)
 
 #ds augmentation configuration
-add_definitions(-DAUGMENTATION_WEIGHT=1)
+add_definitions(-DAUGMENTATION_WEIGHT=4)
 add_definitions(-DAUGMENTATION_SIZE_BITS=12)
 
 #ds locate external dependencies

@@ -85,6 +85,64 @@ public:
     return image_with_labels;
   }
 
+  cv::Scalar getColorForLabel(const uint32_t& label_) const {
+    cv::Scalar color(0, 0, 0);
+    switch (label_) {
+      case 0: { //Sky
+        color = cv::Scalar(128, 128, 128);
+        break;
+      }
+      case 1: { //Building
+        color = cv::Scalar(0, 0, 128);
+        break;
+      }
+      case 2: { //Pole
+        color = cv::Scalar(128, 192, 192);
+        break;
+      }
+      case 3: { //Road (1)
+        color = cv::Scalar(128, 64, 128);
+        break;
+      }
+      case 4: { //Road (2)
+        color = cv::Scalar(128, 64, 128);
+        break;
+      }
+      case 5: { //Pavement
+        color = cv::Scalar(222, 40, 60);
+        break;
+      }
+      case 6: { //Tree
+        color = cv::Scalar(0, 128, 128);
+        break;
+      }
+      case 7: { //Sign
+        color = cv::Scalar(128, 128, 192);
+        break;
+      }
+      case 8: { //Fence
+        color = cv::Scalar(128, 64, 64);
+        break;
+      }
+      case 9: { //Vehicle
+        color = cv::Scalar(128, 0, 64);
+        break;
+      }
+      case 10: { //Pedestrian
+        color = cv::Scalar(0, 64, 64);
+        break;
+      }
+      case 11: { //Bike
+        color = cv::Scalar(192, 128, 0);
+        break;
+      }
+      default: {
+        color = cv::Scalar(0, 0, 0);
+      }
+    }
+    return color;
+  }
+
 private:
 
   /* Wrap the input layer of the network in separate cv::Mat objects

@@ -506,7 +506,9 @@ void CommandLineParameters::configure(std::ostream& stream_) {
 
   //ds instanciate classifier if needed
   if (semantic_augmentation) {
+#ifdef SRRG_BENCH_BUILD_SEGNET
     classifier = std::make_shared<SegNetClassifier>(file_name_classifier_model, file_name_classifier_weights);
+#endif
   }
 }
 
@@ -584,9 +586,50 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
 
     //ds for semantic augmentation
     if (semantic_augmentation) {
+      if (number_of_augmented_bits != 12) {
+        throw std::runtime_error("ERROR: invalid configuration, number_of_augmented_bits must be 12");
+      }
 
-      throw std::runtime_error("not implemented");
+      //ds obtain labels for current image
+#ifdef SRRG_BENCH_BUILD_SEGNET
+      const cv::Mat image_labelled = classifier->getImageWithLabels(image_);
+#endif
 
+      //ds augment each descriptor
+      for (int32_t i = 0; i < descriptors_augmented.rows; ++i) {
+
+        //ds obtain label (0, 12) at keypoint position
+        uint32_t object_class = image_labelled.at<uchar>(keypoints_[i].pt);
+
+        //ds store class (VISUALIZATION ONLY)
+        keypoints_[i].class_id = object_class;
+
+        //ds for all bytes of the current descriptor
+        uint32_t augmentation_bit_index = 0;
+        for (int32_t j = 0; j < descriptors_augmented.cols; ++j) {
+
+          //ds write original descriptor
+          if (j < descriptors_.cols) {
+            descriptors_augmented.row(i).at<uchar>(j) = descriptors_.row(i).at<uchar>(j);
+
+          //ds write augmentation (setting always to zero first)
+          } else {
+
+            //ds default info (setting always to zero first)
+            std::bitset<8> data("00000000");
+
+            //ds set bit if in range
+            if (object_class >= augmentation_bit_index) {
+              if (object_class >= 8) {
+                object_class -= 8;
+              }
+              data.set(object_class);
+            }
+            descriptors_augmented.row(i).at<uchar>(j) = static_cast<uchar>(data.to_ulong());
+            augmentation_bit_index += 8;
+          }
+        }
+      }
     } else {
 
       //ds image resolution key (to obtain fixed mapping)
@@ -613,8 +656,12 @@ void CommandLineParameters::computeDescriptors(const cv::Mat& image_, std::vecto
         //ds for all bytes
         uint32_t augmentation_bit_index = 0;
         for (int32_t j = 0; j < descriptors_augmented.cols; ++j) {
+
+          //ds write original descriptor
           if (j < descriptors_.cols) {
             descriptors_augmented.row(i).at<uchar>(j) = descriptors_.row(i).at<uchar>(j);
+
+          //ds write augmentation
           } else {
 
             //ds repeat augmentations until completed (index j keeps moving)
@@ -739,10 +786,23 @@ void CommandLineParameters::displayKeypoints(const cv::Mat& image_,
   if (use_gui) {
     cv::Mat image_display = image_;
     cv::cvtColor(image_display, image_display, CV_GRAY2RGB);
-    for (const cv::KeyPoint& keypoint: keypoints_) {
-      cv::circle(image_display, keypoint.pt, 2, cv::Scalar(255, 0, 0), -1);
-      cv::circle(image_display, keypoint.pt, keypoint.size, cv::Scalar(0, 0, 255), 1);
+
+    //ds if semantic augmnentation is desired - display keypoint labels (as colors)
+#ifdef SRRG_BENCH_BUILD_SEGNET
+    if (semantic_augmentation) {
+      for (const cv::KeyPoint& keypoint: keypoints_) {
+        cv::circle(image_display, keypoint.pt, 2, classifier->getColorForLabel(keypoint.class_id), -1);
+        cv::circle(image_display, keypoint.pt, keypoint.size, classifier->getColorForLabel(keypoint.class_id), 1);
+      }
+    } else {
+#endif
+      for (const cv::KeyPoint& keypoint: keypoints_) {
+        cv::circle(image_display, keypoint.pt, 2, cv::Scalar(255, 0, 0), -1);
+        cv::circle(image_display, keypoint.pt, keypoint.size, cv::Scalar(0, 0, 255), 1);
+      }
+#ifdef SRRG_BENCH_BUILD_SEGNET
     }
+#endif
 
     //ds if position augmentation is set - display grid
     if (number_of_augmentation_bins_horizontal > 0 && number_of_augmentation_bins_vertical > 0) {
