@@ -17,7 +17,7 @@ add_definitions(-Ofast -march=native -Wall -pedantic -std=c++11)
 add_definitions(-DDESCRIPTOR_SIZE_BITS=256)
 
 #ds augmentation configuration
-add_definitions(-DAUGMENTATION_WEIGHT=16)
+add_definitions(-DAUGMENTATION_WEIGHT=1)
 add_definitions(-DAUGMENTATION_SIZE_BITS=12)
 
 #ds locate external dependencies
@@ -85,8 +85,8 @@ if(NOT "$ENV{SEGNET_PATH}" STREQUAL "" AND NOT "$ENV{CUDA_PATH}" STREQUAL "")
 
   message("srrg_bench|found CUDA: '$ENV{CUDA_PATH}'") 
   include_directories("$ENV{CUDA_PATH}")
-  #set(SRRG_BENCH_BUILD_SEGNET true)
-  #add_definitions(-DSRRG_BENCH_BUILD_SEGNET)
+  set(SRRG_BENCH_BUILD_SEGNET true)
+  add_definitions(-DSRRG_BENCH_BUILD_SEGNET)
 endif()
 
 #ds add internal includes

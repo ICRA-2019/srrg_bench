@@ -135,7 +135,7 @@ void SegNetClassifier::predict(const cv::Mat& image) {
 
   std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now(); //Just for time measurement
 
-  _net->Forward();
+  _net->ForwardPrefilled();
 
   std::chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
   std::cout << "Processing time = " << (std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count())/1000000.0 << " sec" <<std::endl; //Just for time measurement

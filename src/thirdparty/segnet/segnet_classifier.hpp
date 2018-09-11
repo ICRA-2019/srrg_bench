@@ -71,7 +71,7 @@ public:
 
     preprocess(image, &input_channels);
 
-    _net->Forward();
+    _net->ForwardPrefilled();
 
     /* Copy the output layer to a std::vector */
     caffe::Blob<float>* output_layer = _net->output_blobs()[0];
