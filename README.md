@@ -48,6 +48,7 @@ Reference software (required if a comparison is desired): <br>
 - DBoW2: https://github.com/schdomin/DBoW2 (fork from the official repository, added generic descriptor support)
 - FLANN: https://github.com/mariusmuja/flann (used for Hierarchical Clustering Trees)
 - iBoW: https://github.com/emiliofidalgo/obindex2
+- SegNet: https://github.com/alexgkendall/caffe-segnet
 
 # Available benchmarks
 - [Hamming Binary Search Tree (HBST)](https://gitlab.com/srrg-software/srrg_bench/tree/master/src/hbst)
@@ -55,3 +56,10 @@ Reference software (required if a comparison is desired): <br>
 
 ### It doesn't work? ###
 [Open an issue](https://gitlab.com/srrg-software/srrg_bench/issues) or contact the maintainer (see package.xml)
+
+### Thirdparty troubleshooting ###
+SegNet compilation error:
+
+    error: no matching function for call to ‘max(double, float)’
+    
+Solution: https://github.com/alexgkendall/caffe-segnet/pull/123/commits/c03eb6e786df0f46ecaf8c7ac05a4ce15fab99a9

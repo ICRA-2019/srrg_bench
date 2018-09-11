@@ -75,6 +75,21 @@ if(srrg_core_viewers_FOUND AND QGLVIEWER_FOUND)
   set(SRRG_BENCH_BUILD_VIEWERS true)
   add_definitions(-DSRRG_BENCH_BUILD_VIEWERS)
 endif()
+
+#ds environment path variables have to be defined manually
+if(NOT "$ENV{SEGNET_PATH}" STREQUAL "" AND NOT "$ENV{CUDA_PATH}" STREQUAL "")
+  message("srrg_bench|found SegNet: '$ENV{SEGNET_PATH}'") 
+  include_directories("$ENV{SEGNET_PATH}/include")
+  include_directories("$ENV{SEGNET_PATH}/build/include")
+  link_directories("$ENV{SEGNET_PATH}/build/lib")
+
+  message("srrg_bench|found CUDA: '$ENV{CUDA_PATH}'") 
+  include_directories("$ENV{CUDA_PATH}")
+  set(SRRG_BENCH_BUILD_SEGNET true)
+  add_definitions(-DSRRG_BENCH_BUILD_SEGNET)
+endif()
+
+#ds add internal includes
 include_directories(src)
 
 #ds define catkin package
