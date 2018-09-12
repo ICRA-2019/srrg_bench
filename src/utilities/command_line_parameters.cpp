@@ -266,8 +266,8 @@ void CommandLineParameters::write(std::ostream& stream_) {
     WRITE_VARIABLE(stream_, number_of_augmentation_bins_vertical);
     WRITE_VARIABLE(stream_, number_of_augmented_bits);
     WRITE_VARIABLE(stream_, augmentation_weight);
+    stream_ << BAR << std::endl;
   }
-  stream_ << BAR << std::endl;
   if (method_name == "hbst") {
     WRITE_VARIABLE(stream_, maximum_leaf_size);
     WRITE_VARIABLE(stream_, maximum_partitioning);
@@ -307,6 +307,7 @@ void CommandLineParameters::write(std::ostream& stream_) {
     WRITE_VARIABLE(stream_, augmentation_weight);
     WRITE_VARIABLE(stream_, file_name_classifier_model);
     WRITE_VARIABLE(stream_, file_name_classifier_weights);
+    stream_ << BAR << std::endl;
   }
 }
 
@@ -508,7 +509,9 @@ void CommandLineParameters::configure(std::ostream& stream_) {
   //ds instanciate classifier if needed
   if (semantic_augmentation) {
 #ifdef SRRG_BENCH_BUILD_SEGNET
+    stream_ << "allocating SegNet classifier" << std::endl;
     classifier = std::make_shared<SegNetClassifier>(file_name_classifier_model, file_name_classifier_weights);
+    stream_ << "successfully allocated and configured SegNet classifier" << std::endl;
 #endif
   }
 }

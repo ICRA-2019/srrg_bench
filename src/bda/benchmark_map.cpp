@@ -33,6 +33,10 @@ int32_t main(int32_t argc_, char** argv_) {
   //omp_set_dynamic(0);
   //omp_set_num_threads(4);
 
+#ifdef SRRG_BENCH_BUILD_SEGNET
+  google::InitGoogleLogging(argv_[0]);
+#endif
+
   //ds grab configuration
   std::shared_ptr<srrg_bench::CommandLineParameters> baselayer = std::make_shared<srrg_bench::CommandLineParameters>();
   baselayer->parse(argc_, argv_);
@@ -235,5 +239,6 @@ int32_t main(int32_t argc_, char** argv_) {
   std::cerr << "        mean add processing time (s): " << matcher->totalDurationAddSeconds()/number_of_processed_reference_images << std::endl;
   std::cerr << "           train processing time (s): " << matcher->totalDurationTrainSeconds() << std::endl;
   std::cerr << "      mean query processing time (s): " << matcher->totalDurationQuerySeconds()/number_of_processed_query_images << std::endl;
+  std::cerr << "             augmentation parameters: " << baselayer->augmentation_weight << " x " << baselayer->number_of_augmented_bits << std::endl;
   return 0;
 }
