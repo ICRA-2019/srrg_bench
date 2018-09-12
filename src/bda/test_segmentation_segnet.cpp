@@ -41,15 +41,17 @@ using namespace caffe;  // NOLINT(build/namespaces)
 using std::string;
 
 //ds feature handling
-#define DESCRIPTOR_SIZE_BITS 256
+#ifndef DESCRIPTOR_SIZE_BITS
+  #define DESCRIPTOR_SIZE_BITS 256
+#endif
 #if CV_MAJOR_VERSION == 2
-cv::FeatureDetector* feature_detector                 = new cv::FastFeatureDetector(5);
-const cv::DescriptorExtractor* descriptor_extractor   = new cv::BriefDescriptorExtractor(DESCRIPTOR_SIZE_BITS/8);
+  cv::FeatureDetector* feature_detector                 = new cv::FastFeatureDetector(5);
+  const cv::DescriptorExtractor* descriptor_extractor   = new cv::BriefDescriptorExtractor(DESCRIPTOR_SIZE_BITS/8);
 #elif CV_MAJOR_VERSION == 3
-cv::Ptr<cv::FastFeatureDetector> feature_detector     = cv::FastFeatureDetector::create(5);
-cv::Ptr<cv::DescriptorExtractor> descriptor_extractor = cv::xfeatures2d::BriefDescriptorExtractor::create(DESCRIPTOR_SIZE_BITS/8);
+  cv::Ptr<cv::FastFeatureDetector> feature_detector     = cv::FastFeatureDetector::create(5);
+  cv::Ptr<cv::DescriptorExtractor> descriptor_extractor = cv::xfeatures2d::BriefDescriptorExtractor::create(DESCRIPTOR_SIZE_BITS/8);
 #else
-#error OpenCV version not supported
+  #error OpenCV version not supported
 #endif
 
 class SegNetClassifier {
