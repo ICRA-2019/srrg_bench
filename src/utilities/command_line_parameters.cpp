@@ -476,7 +476,8 @@ void CommandLineParameters::configure(std::ostream& stream_) {
     if (DESCRIPTOR_SIZE_BITS != 512) {
       throw std::runtime_error("ERROR: invalid DESCRIPTOR_SIZE_BITS '" + std::to_string(DESCRIPTOR_SIZE_BITS) + "' for descriptor '" + descriptor_type + "'");
     }
-    feature_detector        = cv::xfeatures2d::HarrisLaplaceFeatureDetector::create(6, fast_detector_threshold/1e4, fast_detector_threshold/1e4);
+    feature_detector        = cv::FastFeatureDetector::create(fast_detector_threshold);
+    //feature_detector        = cv::xfeatures2d::HarrisLaplaceFeatureDetector::create(6, fast_detector_threshold/1e4, fast_detector_threshold/1e4); //ds disabled for now
     bold_descriptor_handler = std::make_shared<BOLD>("/home/dom/source/srrg/srrg_bench/src/thirdparty/bold/bold.descr"); //ds 512 bits
   } else if (descriptor_type == "ldahash") {
     if (DESCRIPTOR_SIZE_BITS != 128) {
