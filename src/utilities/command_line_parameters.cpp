@@ -125,8 +125,6 @@ void CommandLineParameters::parse(const int32_t& argc_, char** argv_) {
     } else if (!std::strcmp(argv_[c], "-semantic-augmentation") || !std::strcmp(argv_[c], "-sa")) {
       semantic_augmentation = true;
       c++; if (c == argc_) {break;}
-      augmentation_weight = std::stoi(argv_[c]);
-      c++; if (c == argc_) {break;}
       file_name_classifier_model = argv_[c];
       c++; if (c == argc_) {break;}
       file_name_classifier_weights = argv_[c];
@@ -189,13 +187,15 @@ void CommandLineParameters::validate(std::ostream& stream_) {
     }
   }
 
-  //ds check against build
-  if (augmentation_weight != AUGMENTATION_WEIGHT) {
-    throw std::runtime_error("ERROR: invalid build, define AUGMENTATION_WEIGHT=" + std::to_string(augmentation_weight) + " in ./CMakeLists.txt");
-  }
-
   //ds if position augmentation is desired
   if (number_of_augmentation_bins_horizontal > 0 && number_of_augmentation_bins_vertical > 0) {
+
+    //ds check against build
+    if (augmentation_weight != AUGMENTATION_WEIGHT) {
+      throw std::runtime_error("ERROR: invalid build, define AUGMENTATION_WEIGHT=" + std::to_string(augmentation_weight) + " in ./CMakeLists.txt");
+    }
+
+    //ds compute number of augmented bits
     number_of_augmented_bits = number_of_augmentation_bins_horizontal+number_of_augmentation_bins_vertical-2;
 
     //ds check against build
@@ -217,6 +217,7 @@ void CommandLineParameters::validate(std::ostream& stream_) {
 
     //ds fixed
     number_of_augmented_bits = AUGMENTATION_SIZE_BITS;
+    augmentation_weight      = AUGMENTATION_WEIGHT;
 
     //ds check if paths are set
     if (file_name_classifier_model.empty()) {
@@ -302,6 +303,8 @@ void CommandLineParameters::write(std::ostream& stream_) {
     stream_ << BAR << std::endl;
   }
   if (semantic_augmentation) {
+    WRITE_VARIABLE(stream_, number_of_augmented_bits);
+    WRITE_VARIABLE(stream_, augmentation_weight);
     WRITE_VARIABLE(stream_, file_name_classifier_model);
     WRITE_VARIABLE(stream_, file_name_classifier_weights);
   }

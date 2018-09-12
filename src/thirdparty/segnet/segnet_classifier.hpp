@@ -43,6 +43,7 @@ class SegNetClassifier {
 public:
 
   SegNetClassifier(const std::string& model_file, const std::string& trained_file) {
+    google::SetCommandLineOption("GLOG_minloglevel", "2");
     caffe::Caffe::set_mode(caffe::Caffe::GPU);
 
     /* Load the network. */

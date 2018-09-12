@@ -39,7 +39,15 @@ int32_t main(int32_t argc_, char** argv_) {
   baselayer->validate(std::cerr);
 
   //ds adjust thresholds
-  baselayer->maximum_descriptor_distance             = 0.1*AUGMENTED_DESCRIPTOR_SIZE_BITS;
+  if (baselayer->semantic_augmentation) {
+
+    //ds only increase threshold by weight since for selector augmentations we only have distance 1 or 0 for the entire string
+    baselayer->maximum_descriptor_distance = 0.1*(DESCRIPTOR_SIZE_BITS+AUGMENTATION_WEIGHT);
+  } else {
+
+    //ds extend threshold by full continuous augmentation size
+    baselayer->maximum_descriptor_distance = 0.1*AUGMENTED_DESCRIPTOR_SIZE_BITS;
+  }
   baselayer->minimum_distance_between_closure_images = 0;
   baselayer->maximum_leaf_size                       = 0.1*baselayer->target_number_of_descriptors;
 
