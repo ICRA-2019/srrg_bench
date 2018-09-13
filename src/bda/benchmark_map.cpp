@@ -78,6 +78,7 @@ int32_t main(int32_t argc_, char** argv_) {
   } else if (method_name == "bof") {
 #ifdef SRRG_BENCH_BUILD_DBOW2
     matcher = std::make_shared<srrg_bench::BoWMatcher>(baselayer->minimum_distance_between_closure_images,
+                                                       true,
                                                        baselayer->file_path_vocabulary,
                                                        baselayer->use_direct_index,
                                                        baselayer->direct_index_levels);

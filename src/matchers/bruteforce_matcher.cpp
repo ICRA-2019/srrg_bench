@@ -18,9 +18,7 @@ void BruteforceMatcher::add(const cv::Mat& train_descriptors_,
                             const std::vector<cv::KeyPoint>& train_keypoints_) {
   TIC(_time_begin);
   _train_descriptors.insert(std::make_pair(image_number_, train_descriptors_));
-  const double duration_seconds = TOC(_time_begin).count();
-  _durations_seconds_query_and_train.push_back(duration_seconds);
-  _total_duration_add_seconds += duration_seconds;
+  _total_duration_add_seconds += TOC(_time_begin).count();
 }
 
 void BruteforceMatcher::train(const cv::Mat& train_descriptors_,
@@ -28,9 +26,7 @@ void BruteforceMatcher::train(const cv::Mat& train_descriptors_,
                               const std::vector<cv::KeyPoint>& train_keypoints_) {
   TIC(_time_begin);
   _train_descriptors.insert(std::make_pair(image_number_, train_descriptors_));
-  const double duration_seconds = TOC(_time_begin).count();
-  _durations_seconds_query_and_train.push_back(duration_seconds);
-  _total_duration_train_seconds += duration_seconds;
+  _total_duration_train_seconds += TOC(_time_begin).count();
 }
 
 void BruteforceMatcher::query(const cv::Mat& query_descriptors_,
@@ -72,9 +68,7 @@ void BruteforceMatcher::query(const cv::Mat& query_descriptors_,
       closures_.push_back(ResultImageRetrieval(score, ImageNumberAssociation(image_number_, image_number_train)));
     }
   }
-  const double duration_seconds = TOC(_time_begin).count();
-  _durations_seconds_query_and_train.push_back(duration_seconds);
-  _total_duration_query_seconds += duration_seconds;
+  _total_duration_query_seconds += TOC(_time_begin).count();
 
   //ds sort results in descending score
   std::sort(closures_.begin(), closures_.end(), [](const ResultImageRetrieval& a_, const ResultImageRetrieval& b_)
@@ -116,8 +110,6 @@ void BruteforceMatcher::query(const cv::Mat& query_descriptors_,
       closures_.push_back(ResultDescriptorMatching(score, ImageNumberAssociation(image_number_, image_number_train), descriptor_associations));
     }
   }
-  const double duration_seconds = TOC(_time_begin).count();
-  _durations_seconds_query_and_train.push_back(duration_seconds);
-  _total_duration_query_seconds += duration_seconds;
+  _total_duration_query_seconds += TOC(_time_begin).count();
 }
 }

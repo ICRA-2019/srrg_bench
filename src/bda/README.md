@@ -24,7 +24,7 @@ with a 5x5 PA at weight 2:
 - [Holidays](http://lear.inrialpes.fr/~jegou/data.php) with [HBST](https://gitlab.com/srrg-software/srrg_hbst) matching and A-KAZE descriptors
 with a 9x9 PA at weight 4:
 
-	    ./benchmark_map -mode holidays -images-query holidays/jpg/ -closures holidays/eval_holidays/perfect_result.dat -method hbst -descriptor akaze -position-augmentation 9 9 4
+	    ./benchmark_map -mode holidays -images-query holidays/jpg/ -closures holidays/eval_holidays/perfect_result.dat -method bst -descriptor akaze -position-augmentation 9 9 4
 
 - [KITTI](http://www.cvlibs.net/datasets/kitti/eval_odometry.php) with [HBST](https://gitlab.com/srrg-software/srrg_hbst) matching and FREAK descriptors
 without augmentation:

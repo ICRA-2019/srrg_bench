@@ -32,6 +32,7 @@ public:
   //! @param[in] direct_index_levels_
   //! @param[in] compute_score_only_
   BoWMatcher(const uint32_t& minimum_distance_between_closure_images_,
+             const bool& add_descriptors_to_database_ = true,
              const std::string& file_path_vocabulary_ = "",
              const bool& use_direct_index_ = false,
              const uint32_t& number_of_direct_index_levels_ = 2,
@@ -116,6 +117,9 @@ protected:
 
   //! @brief bookkeeping: raw descriptors (required for association retrieval)
   std::vector<std::vector<DBOW2_DESCRIPTOR_CLASS::TDescriptor>> _raw_descriptors;
+
+  //! @brief enable automatic adding of images to database when creating vocabulary
+  bool _add_descriptors_to_database;
 
   //! @brief bookkeeping: transformed BoW descriptors (required for querying and training)
   std::vector<BowVector> _bow_descriptors_per_image;

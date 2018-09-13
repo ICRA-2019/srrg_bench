@@ -45,7 +45,22 @@ int32_t main(int32_t argc_, char** argv_) {
   parameters->parse(argc_, argv_);
   parameters->validate(std::cerr);
   parameters->configure(std::cerr);
+
+  //ds adjust thresholds
+  if (parameters->semantic_augmentation) {
+
+    //ds only increase threshold by weight since for selector augmentations we only have distance 1 or 0 for the entire string
+    parameters->maximum_descriptor_distance = 0.1*(DESCRIPTOR_SIZE_BITS+AUGMENTATION_WEIGHT);
+  } else {
+
+    //ds extend threshold by full continuous augmentation size
+    parameters->maximum_descriptor_distance = 0.1*AUGMENTED_DESCRIPTOR_SIZE_BITS;
+  }
+  parameters->multi_probe_level = 0;
+
+  //ds log parameters
   parameters->write(std::cerr);
+
 
   //ds evaluated matcher
   std::shared_ptr<BaseMatcher> matcher = 0;
@@ -76,6 +91,7 @@ int32_t main(int32_t argc_, char** argv_) {
   } else if (method_name == "bow") {
 #ifdef SRRG_BENCH_BUILD_DBOW2
     matcher = std::make_shared<BoWMatcher>(parameters->minimum_distance_between_closure_images,
+                                           false,
                                            parameters->file_path_vocabulary,
                                            parameters->use_direct_index,
                                            parameters->direct_index_levels,
@@ -83,13 +99,6 @@ int32_t main(int32_t argc_, char** argv_) {
     if (parameters->compute_score_only) {
       method_name += "-so";
     }
-
-  //ds adjust descriptor type
-  #if DBOW2_DESCRIPTOR_TYPE == 0
-    parameters->descriptor_type = "brief";
-  #elif DBOW2_DESCRIPTOR_TYPE == 1
-    parameters->descriptor_type = "orb";
-  #endif
 
 #else
     std::cerr << "ERROR: unknown method name: " << method_name << std::endl;
@@ -118,7 +127,7 @@ int32_t main(int32_t argc_, char** argv_) {
     method_name += ("-"+std::to_string(parameters->multi_probe_level));
 
     //ds enable optimization and multithreading
-    cv::setNumThreads(4);
+    //cv::setNumThreads(4);
     cv::setUseOptimized(true);
   } else if (method_name == "flannhc") {
 #ifdef SRRG_BENCH_BUILD_FLANNHC
@@ -131,7 +140,7 @@ int32_t main(int32_t argc_, char** argv_) {
     matcher = std::make_shared<BruteforceMatcher>(parameters->minimum_distance_between_closure_images, parameters->distance_norm);
 
     //ds enable optimization and multithreading
-    cv::setNumThreads(4);
+    //cv::setNumThreads(4);
     cv::setUseOptimized(true);
   } else {
     std::cerr << "ERROR: unknown method name: " << method_name << std::endl;
@@ -152,8 +161,49 @@ int32_t main(int32_t argc_, char** argv_) {
   std::vector<double> mean_processing_times(0);
 
   //ds for the number of test runs
+  uint32_t number_of_processed_images = 0;
   for (uint32_t sample_index = 0; sample_index < parameters->number_of_samples; ++sample_index) {
     matcher->clear();
+    number_of_processed_images = 0;
+
+    //ds if we have to create a bow vocabulary
+    if (method_name == "bow") {
+      std::cerr << "processing images for vocabulary creating" << std::endl;
+      for (ImageNumberQuery image_number_query = 0; image_number_query < parameters->image_number_stop; ++image_number_query) {
+
+        //ds check if the image number is not in the target range
+        if (image_number_query < parameters->image_number_start) {
+          ++image_number_query;
+          continue;
+        }
+
+        //ds if we got a query image
+        if (image_number_query%parameters->query_interspace == 0) {
+
+          //ds load image from disk
+          const std::string file_name_image = parameters->evaluator->imagePosesGroundTruth()[image_number_query]->file_path;
+          cv::Mat image = cv::imread(file_name_image, CV_LOAD_IMAGE_GRAYSCALE);
+
+          //ds apply bayer decoding if necessary
+          if (parameters->parsing_mode == "lucia" || parameters->parsing_mode == "oxford") {
+            cv::cvtColor(image, image, CV_BayerGR2GRAY);
+          }
+
+          //ds detect keypoints and compute descriptors
+          std::vector<cv::KeyPoint> keypoints;
+          cv::Mat descriptors;
+          parameters->computeDescriptors(image, keypoints, descriptors, parameters->target_number_of_descriptors);
+
+          //ds add descriptors of the query image
+          matcher->add(descriptors, image_number_query, keypoints);
+          std::cerr << "x";
+        }
+      }
+      std::cerr << std::endl;
+
+      //ds train on the query image
+      matcher->train();
+    }
 
     //ds result vector (evaluated for precision/recall)
     std::vector<ResultImageRetrieval> closures(0);
@@ -188,7 +238,6 @@ int32_t main(int32_t argc_, char** argv_) {
         std::vector<cv::KeyPoint> keypoints;
         cv::Mat descriptors;
         parameters->computeDescriptors(image, keypoints, descriptors, parameters->target_number_of_descriptors);
-        parameters->feature_detector->detect(image, keypoints);
 
         //ds convert to points
         std::vector<cv::Point2f> points_current(parameters->target_number_of_descriptors);
@@ -227,15 +276,17 @@ int32_t main(int32_t argc_, char** argv_) {
         //ds add descriptors of the query image
         matcher->add(descriptors, image_number_query, keypoints);
 
-        //ds train on the query image TODO clean
-        matcher->train(descriptors, image_number_query, keypoints);
+        //ds for bow we already trained/have a vocabulary
+        if (method_name != "bow") {
 
-        //free memory
-        image.release();
+          //ds train on the query image
+          matcher->train();
+        }
+        ++number_of_processed_images;
       }
 
       //ds progress feedback: compute printing configuration
-      const double progress           = static_cast<double>(matcher->numberOfQueries())/parameters->number_of_images_to_process;
+      const double progress           = static_cast<double>(number_of_processed_images)/parameters->number_of_images_to_process;
       const uint32_t length_completed = progress*length_progress_bar;
 
       //ds draw progress bar
@@ -247,12 +298,14 @@ int32_t main(int32_t argc_, char** argv_) {
         std::cerr << " ";
       }
       std::cerr << "] " << static_cast<int32_t>(progress*100.0) << " %"
-                        << " | current image number: " << image_number_query
-                        << " | TOTAL queries: " << matcher->numberOfQueries()
+                        << " | image number: " << image_number_query
+                        << " | TOTAL queries: " << number_of_processed_images
                         << " descriptors: " << number_of_descriptors_total
-                        << " (average: " << static_cast<double>(number_of_descriptors_total)/matcher->numberOfQueries() << ")"
+                        << " (average: " << static_cast<double>(number_of_descriptors_total)/number_of_processed_images << ")"
                         << " | sample: " << sample_index
-                        << " | current processing time (s): " << matcher->durationsSecondsQueryAndTrain().back() << "\r";
+                        << " | processing time (s): " << (matcher->totalDurationAddSeconds()+
+                                                          matcher->totalDurationTrainSeconds()+
+                                                          matcher->totalDurationQuerySeconds())/number_of_processed_images << "\r";
     }
 
     //ds retrieve precision/recall for current result and save it to a file
@@ -316,7 +369,7 @@ int32_t main(int32_t argc_, char** argv_) {
 #endif
 
   std::cerr << std::endl;
-  std::cerr << "maximum F1 scores: " << std::endl;
+  std::cerr << "maximum F1 score(s): " << std::endl;
   for (const double& maximum_f1_score: maximum_f1_scores) {
     std::cerr << maximum_f1_score << std::endl;
   }
@@ -327,21 +380,10 @@ int32_t main(int32_t argc_, char** argv_) {
   outfile_f1_score.close();
 
   //ds compute mean processing time over all samples
-  double mean_processing_time = 0;
-  for (uint64_t u = 0; u < mean_processing_times.size(); ++u) {
-    mean_processing_times[u] /= parameters->number_of_samples;
-    mean_processing_time += mean_processing_times[u];
-  }
-  mean_processing_time /= mean_processing_times.size();
+  double mean_processing_time = (matcher->totalDurationAddSeconds()+
+                                 matcher->totalDurationTrainSeconds()+
+                                 matcher->totalDurationQuerySeconds())/number_of_processed_images;
   std::cerr << "mean processing time per image (s): " << mean_processing_time << std::endl;
-
-  //ds compute mean, variance and standard deviation for query and train duration
-  double variance_duration = 0;
-  for (const double& duration_seconds: mean_processing_times) {
-    variance_duration += (duration_seconds-mean_processing_time)*(duration_seconds-mean_processing_time);
-  }
-  variance_duration /= mean_processing_times.size();
-  const double standard_deviation_duration = std::sqrt(variance_duration);
 
 //  //ds compute mean, variance and standard deviation of match numbers returned (for correct closures)
 //  double mean_number_of_matches       = 0;
@@ -376,21 +418,21 @@ int32_t main(int32_t argc_, char** argv_) {
 //  }
 //  const double standard_deviation_number_of_matches = std::sqrt(variance_number_of_matches);
 
-  //ds save miscellaneous statistics to file (appending!)
-  std::ofstream outfile_miscellaneous_statistics("statistics.txt", std::ifstream::app);
-  outfile_miscellaneous_statistics << benchmark_suffix
-                                   << " " << mean_processing_time << " " << standard_deviation_duration
-                                   << " " << 0 << " " << 0
-                                   << " " << 0 << " " << 0 <<  std::endl;
-  outfile_miscellaneous_statistics.close();
-
-  //ds save timing results to file with continuous image indices for plotting (of last run)
-  std::ofstream outfile_duration("duration_"+ benchmark_suffix, std::ifstream::out);
-  outfile_duration << "#0:IMAGE_NUMBER #1:MEAN_PROCESSING_TIME_SECONDS #2:STANDARD_DEVIATION" << std::endl;
-  for (uint64_t u = 0; u < mean_processing_times.size(); ++u) {
-    outfile_duration << u << " " << mean_processing_times[u] << " " << standard_deviation_duration << std::endl;
-  }
-  outfile_duration.close();
+//  //ds save miscellaneous statistics to file (appending!)
+//  std::ofstream outfile_miscellaneous_statistics("statistics.txt", std::ifstream::app);
+//  outfile_miscellaneous_statistics << benchmark_suffix
+//                                   << " " << mean_processing_time
+//                                   << " " << 0 << " " << 0
+//                                   << " " << 0 << " " << 0 <<  std::endl;
+//  outfile_miscellaneous_statistics.close();
+//
+//  //ds save timing results to file with continuous image indices for plotting (of last run)
+//  std::ofstream outfile_duration("duration_"+ benchmark_suffix, std::ifstream::out);
+//  outfile_duration << "#0:IMAGE_NUMBER #1:MEAN_PROCESSING_TIME_SECONDS #2:STANDARD_DEVIATION" << std::endl;
+//  for (uint64_t u = 0; u < mean_processing_times.size(); ++u) {
+//    outfile_duration << u << " " << mean_processing_times[u] << std::endl;
+//  }
+//  outfile_duration.close();
 
   //ds done
   std::cerr << "done" << std::endl;

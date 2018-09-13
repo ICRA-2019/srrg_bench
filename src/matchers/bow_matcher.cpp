@@ -4,10 +4,12 @@
 namespace srrg_bench {
 
 BoWMatcher::BoWMatcher(const uint32_t& minimum_distance_between_closure_images_,
+                       const bool& add_descriptors_to_database_,
                        const std::string& file_path_vocabulary_,
                        const bool& use_direct_index_,
                        const uint32_t& number_of_direct_index_levels_,
-                       const bool& compute_score_only_): _number_of_direct_index_levels(number_of_direct_index_levels_),
+                       const bool& compute_score_only_): _add_descriptors_to_database(add_descriptors_to_database_),
+                                                         _number_of_direct_index_levels(number_of_direct_index_levels_),
                                                          _minimum_distance_between_closure_images(minimum_distance_between_closure_images_),
                                                          _compute_score_only(compute_score_only_) {
   _image_numbers.clear();
@@ -93,16 +95,20 @@ void BoWMatcher::train() {
               << "> vocabulary for " << _raw_descriptors.size() << " descriptor vectors (this might take some time)" << std::endl;
     _vocabulary.create(_raw_descriptors);
     std::cerr << "BoWMatcher::train|created vocabulary of size: " << _vocabulary.size() << std::endl;
-    std::cerr << "BoWMatcher::train|adding images to database with quantization based on created vocabulary" << std::endl;
 
     //ds update database with new vocabulary
     _database.setVocabulary(_vocabulary);
 
     //ds finalize database with added descriptors
-    for (uint32_t u = 0; u < _raw_descriptors.size(); ++u) {
-      _add(_raw_descriptors[u]);
+    if (_add_descriptors_to_database) {
+      std::cerr << "BoWMatcher::train|adding images to database with quantization based on created vocabulary" << std::endl;
+      for (uint32_t u = 0; u < _raw_descriptors.size(); ++u) {
+        _add(_raw_descriptors[u]);
+      }
+      std::cerr << "BoWMatcher::train|final database size: " << _database.size() << std::endl;
+    } else {
+      _raw_descriptors.clear();
     }
-    std::cerr << "BoWMatcher::train|final database size: " << _database.size() << std::endl;
   }
   _total_duration_train_seconds += TOC(_time_begin).count();
 }

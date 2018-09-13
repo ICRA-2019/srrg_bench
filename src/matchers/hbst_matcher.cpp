@@ -23,7 +23,6 @@ void HBSTMatcher::add(const cv::Mat& train_descriptors_,
     TIC(_time_begin);
     _database->add(matchables);
     const double duration_seconds = TOC(_time_begin).count();
-    _durations_seconds_query_and_train.push_back(duration_seconds);
     _total_duration_add_seconds += duration_seconds;
   }
 }
@@ -33,7 +32,6 @@ void HBSTMatcher::train() {
     TIC(_time_begin);
     _database->train(srrg_hbst::SplitEven);
     const double duration_seconds = TOC(_time_begin).count();
-    _durations_seconds_query_and_train.push_back(duration_seconds);
     _total_duration_train_seconds += duration_seconds;
   }
 }
@@ -59,9 +57,7 @@ void HBSTMatcher::query(const cv::Mat& query_descriptors_,
     //ds match against database
     TIC(_time_begin);
     _database->match(matchables, matches, maximum_distance_hamming_);
-    const double duration_seconds = TOC(_time_begin).count();
-    _durations_seconds_query_and_train.push_back(duration_seconds);
-    _total_duration_query_seconds += duration_seconds;
+    _total_duration_query_seconds += TOC(_time_begin).count();
 
     //ds result evaluation
     for (const Tree::MatchVectorMapElement& match_vector: matches) {

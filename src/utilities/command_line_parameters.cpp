@@ -59,7 +59,7 @@ void CommandLineParameters::parse(const int32_t& argc_, char** argv_) {
     } else if (!std::strcmp(argv_[c], "-r")) {
       c++; if (c == argc_) {break;}
       target_recall = std::stod(argv_[c]);
-    } else if (!std::strcmp(argv_[c], "-space")) {
+    } else if (!std::strcmp(argv_[c], "-space") || !std::strcmp(argv_[c], "-interspace")) {
       c++; if (c == argc_) {break;}
       query_interspace = std::stoi(argv_[c]);
     } else if (!std::strcmp(argv_[c], "-distance")) {
@@ -238,6 +238,7 @@ void CommandLineParameters::write(std::ostream& stream_) {
   WRITE_VARIABLE(stream_, parsing_mode);
   WRITE_VARIABLE(stream_, image_number_start);
   WRITE_VARIABLE(stream_, image_number_stop);
+  WRITE_VARIABLE(stream_, number_of_images_to_process);
   stream_ << BAR << std::endl;
   WRITE_VARIABLE(stream_, query_interspace);
   WRITE_VARIABLE(stream_, minimum_distance_between_closure_images);
@@ -373,7 +374,7 @@ void CommandLineParameters::configure(std::ostream& stream_) {
   }
 
   //ds compute total number of images to process (considering the interspace)
-  number_of_images_to_process = static_cast<double>(image_number_stop-image_number_start)/query_interspace;
+  number_of_images_to_process = std::ceil(static_cast<double>(image_number_stop-image_number_start)/query_interspace);
 
   //ds compute all feasible closures for the given interspace - check if no closure ground truth file is provided
   if (file_name_closures_ground_truth.empty() || parsing_mode == "holidays") {
