@@ -14,11 +14,11 @@ add_definitions(-Ofast -march=native -Wall -pedantic -std=c++11)
 #add_definitions(-O0 -march=native -Wall -pedantic -std=c++11 -g)
 
 #ds specify target binary descriptor BIT size
-add_definitions(-DDESCRIPTOR_SIZE_BITS=64)
+add_definitions(-DDESCRIPTOR_SIZE_BITS=128)
 
 #ds augmentation configuration
-add_definitions(-DAUGMENTATION_WEIGHT=32)
-add_definitions(-DAUGMENTATION_SIZE_BITS=16)
+add_definitions(-DAUGMENTATION_WEIGHT=8)
+add_definitions(-DAUGMENTATION_SIZE_BITS=12)
 
 #ds locate external dependencies
 find_package(catkin QUIET COMPONENTS srrg_cmake_modules srrg_core srrg_core_viewers srrg_gl_helpers srrg_hbst obindex2)

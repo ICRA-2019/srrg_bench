@@ -40,6 +40,10 @@ int32_t main(int32_t argc_, char** argv_) {
   //ds disable multithreading of opencv
   cv::setNumThreads(0);
 
+#ifdef SRRG_BENCH_BUILD_SEGNET
+  google::InitGoogleLogging(argv_[0]);
+#endif
+
   //ds grab configuration
   std::shared_ptr<CommandLineParameters> parameters = std::make_shared<CommandLineParameters>();
   parameters->parse(argc_, argv_);
@@ -149,7 +153,7 @@ int32_t main(int32_t argc_, char** argv_) {
 
   //ds compute outfile suffix
   const std::string benchmark_suffix = method_name + "_"
-                                     + parameters->descriptor_type + "_"
+                                     + parameters->descriptor_type + "-" + std::to_string(parameters->augmentation_weight*parameters->number_of_augmented_bits) + "_"
                                      + std::to_string(parameters->target_number_of_descriptors) + ".txt";
   LOG_VARIABLE(benchmark_suffix)
   LOG_VARIABLE(cv::getNumThreads())
@@ -245,29 +249,13 @@ int32_t main(int32_t argc_, char** argv_) {
           points_current[u] = keypoints[u].pt;
         }
 
-        //ds if desired - draw keypoints with descriptors
-        cv::Mat image_display;
-        const cv::Point2f offset(0, image.rows);
-        if (parameters->use_gui) {
-
-          //ds build image window
-          image_display = image;
-          cv::cvtColor(image_display, image_display, CV_GRAY2RGB);
-
-          //ds draw current and previous keypoints
-          for (const cv::Point2f& point: points_current) {
-            cv::circle(image_display, point, 2, cv::Scalar(255, 0, 0), -1);
-          }
-        }
-
         //ds update statistics
         number_of_descriptors_total += parameters->target_number_of_descriptors;
         number_of_descriptors_accumulated.push_back(number_of_descriptors_total);
 
         //ds display currently detected keypoints
         if (parameters->use_gui) {
-          cv::imshow("benchmark: current image | " + benchmark_suffix, image_display);
-          cv::waitKey(1);
+          parameters->displayKeypoints(image, keypoints);
         }
 
         //ds query against all past images, retrieving closures with relative scores
