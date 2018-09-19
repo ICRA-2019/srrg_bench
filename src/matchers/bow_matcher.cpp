@@ -8,8 +8,8 @@ BoWMatcher::BoWMatcher(const uint32_t& minimum_distance_between_closure_images_,
                        const std::string& file_path_vocabulary_,
                        const bool& use_direct_index_,
                        const uint32_t& number_of_direct_index_levels_,
-                       const bool& compute_score_only_): _add_descriptors_to_database(add_descriptors_to_database_),
-                                                         _number_of_direct_index_levels(number_of_direct_index_levels_),
+                       const bool& compute_score_only_): _number_of_direct_index_levels(number_of_direct_index_levels_),
+                                                         _add_descriptors_to_database(add_descriptors_to_database_),
                                                          _minimum_distance_between_closure_images(minimum_distance_between_closure_images_),
                                                          _compute_score_only(compute_score_only_) {
   _image_numbers.clear();
