@@ -216,7 +216,7 @@ int32_t main(int32_t argc_, char** argv_) {
       }
       cv::cvtColor(image_display, image_display, CV_GRAY2RGB);
       for (const Tree::Matchable* matchable: current_matchables) {
-        const cv::KeyPoint& keypoint = *(reinterpret_cast<const cv::KeyPoint*>(matchable->pointer));
+        const cv::KeyPoint& keypoint = *(reinterpret_cast<const cv::KeyPoint*>(matchable->pointers.at(0)));
         cv::circle(image_display, keypoint.pt, 2, cv::Scalar(255, 0, 0));
       }
     } else {

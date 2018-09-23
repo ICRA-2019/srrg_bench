@@ -250,7 +250,7 @@ const double getMeanRelativeNumberOfMatches(const std::shared_ptr<Tree> tree_,
     uint64_t number_of_matches = getNumberOfMatches(query_descriptor, iterator->matchables, maximum_distance_matching_);
 
     //ds compute completeness
-    const uint64_t feasible_number_of_matches = feasible_number_of_matches_per_query_[query_descriptor->identifier];
+    const uint64_t feasible_number_of_matches = feasible_number_of_matches_per_query_[query_descriptor->identifiers.at(0)];
     if (feasible_number_of_matches > 0) {
       relative_number_of_matches_accumulated += static_cast<double>(number_of_matches)/feasible_number_of_matches;
     } else {
