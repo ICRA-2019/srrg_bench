@@ -21,14 +21,6 @@
 #include <opencv2/core/version.hpp>
 #include <opencv2/opencv.hpp>
 
-#if CV_MAJOR_VERSION == 2
-  //ds no specifics
-#elif CV_MAJOR_VERSION == 3
-  #include <opencv2/xfeatures2d.hpp>
-#else
-  #error OpenCV version not supported
-#endif
-
 #include <algorithm>
 #include <iosfwd>
 #include <memory>
@@ -45,11 +37,11 @@ using std::string;
   #define DESCRIPTOR_SIZE_BITS 256
 #endif
 #if CV_MAJOR_VERSION == 2
-  cv::FeatureDetector* feature_detector                 = new cv::FastFeatureDetector(5);
-  const cv::DescriptorExtractor* descriptor_extractor   = new cv::BriefDescriptorExtractor(DESCRIPTOR_SIZE_BITS/8);
+  cv::Ptr<cv::FeatureDetector> feature_detector         = new cv::FastFeatureDetector(5);
+  cv::Ptr<cv::DescriptorExtractor> descriptor_extractor = new cv::ORB();
 #elif CV_MAJOR_VERSION == 3
-  cv::Ptr<cv::FastFeatureDetector> feature_detector     = cv::FastFeatureDetector::create(5);
-  cv::Ptr<cv::DescriptorExtractor> descriptor_extractor = cv::xfeatures2d::BriefDescriptorExtractor::create(DESCRIPTOR_SIZE_BITS/8);
+  cv::Ptr<cv::FeatureDetector> feature_detector     = cv::FastFeatureDetector::create(5);
+  cv::Ptr<cv::DescriptorExtractor> descriptor_extractor = cv::ORB::create();
 #else
   #error OpenCV version not supported
 #endif

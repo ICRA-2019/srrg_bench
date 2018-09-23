@@ -44,6 +44,13 @@ if(OpenCV_FOUND)
   message("srrg_bench|found OpenCV: '${OpenCV_DIR}' ${OpenCV_VERSION}")
   set(SRRG_BENCH_BUILD_OPENCV true)
   
+  #ds check for contrib library
+  string(FIND "${OpenCV_LIBS}" "xfeatures2d" FOUND_OPENCV_CONTRIB)
+  if(NOT ${FOUND_OPENCV_CONTRIB} EQUAL -1)
+  	message("srrg_bench|found xfeatures2d library, building contributed OpenCV components")
+  	  add_definitions(-DSRRG_HBST_HAS_OPENCV_CONTRIB)
+  endif()
+  
   #ds enable hbst wrapping
   add_definitions(-DSRRG_HBST_HAS_OPENCV)
   include_directories(${OpenCV_INCLUDE_DIRS})

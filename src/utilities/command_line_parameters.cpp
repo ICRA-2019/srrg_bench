@@ -439,7 +439,11 @@ void CommandLineParameters::configure(std::ostream& stream_) {
       throw std::runtime_error("ERROR: invalid DESCRIPTOR_SIZE_BITS '" + std::to_string(DESCRIPTOR_SIZE_BITS) + "' for descriptor '" + descriptor_type + "'");
     }
     feature_detector     = cv::FastFeatureDetector::create(fast_detector_threshold);
+#ifdef SRRG_HBST_HAS_OPENCV_CONTRIB
     descriptor_extractor = cv::xfeatures2d::BriefDescriptorExtractor::create(DESCRIPTOR_SIZE_BYTES); //128, 256, 512 bits
+#else
+    throw std::runtime_error("ERROR: BRIEF descriptor not available, check build or install opencv_contrib");
+#endif
     distance_norm        = cv::NORM_HAMMING;
   } else if (descriptor_type == "orb") {
     if (DESCRIPTOR_SIZE_BITS != 256) {
@@ -460,7 +464,11 @@ void CommandLineParameters::configure(std::ostream& stream_) {
       throw std::runtime_error("ERROR: invalid DESCRIPTOR_SIZE_BITS '" + std::to_string(DESCRIPTOR_SIZE_BITS) + "' for descriptor '" + descriptor_type + "'");
     }
     feature_detector     = cv::FastFeatureDetector::create(fast_detector_threshold);
+#ifdef SRRG_HBST_HAS_OPENCV_CONTRIB
     descriptor_extractor = cv::xfeatures2d::FREAK::create(); //512 bits
+#else
+    throw std::runtime_error("ERROR: FREAK descriptor not available, check build or install opencv_contrib");
+#endif
     distance_norm        = cv::NORM_HAMMING;
   } else if (descriptor_type == "akaze") {
     if (DESCRIPTOR_SIZE_BITS != 486) {
@@ -470,8 +478,12 @@ void CommandLineParameters::configure(std::ostream& stream_) {
     descriptor_extractor = cv::AKAZE::create(); //486 bits
     distance_norm        = cv::NORM_HAMMING;
   } else if (descriptor_type == "sift") {
+#ifdef SRRG_HBST_HAS_OPENCV_CONTRIB
     feature_detector     = cv::xfeatures2d::SIFT::create(target_number_of_descriptors);
     descriptor_extractor = cv::xfeatures2d::SIFT::create(target_number_of_descriptors); //ds 128 floats (4096 bits)
+#else
+    throw std::runtime_error("ERROR: SIFT descriptor not available, check build or install opencv_contrib");
+#endif
     distance_norm        = cv::NORM_L2;
   } else if (descriptor_type == "bold") {
     if (DESCRIPTOR_SIZE_BITS != 512) {
@@ -489,13 +501,21 @@ void CommandLineParameters::configure(std::ostream& stream_) {
       throw std::runtime_error("ERROR: invalid DESCRIPTOR_SIZE_BITS '" + std::to_string(DESCRIPTOR_SIZE_BITS) + "' for descriptor '" + descriptor_type + "'");
     }
     feature_detector     = cv::FastFeatureDetector::create(fast_detector_threshold);
+#ifdef SRRG_HBST_HAS_OPENCV_CONTRIB
     descriptor_extractor = cv::xfeatures2d::LATCH::create(64);
+#else
+    throw std::runtime_error("ERROR: LATCH descriptor not available, check build or install opencv_contrib");
+#endif
   } else if (descriptor_type == "binboost") {
     if (DESCRIPTOR_SIZE_BITS != 64) {
       throw std::runtime_error("ERROR: invalid DESCRIPTOR_SIZE_BITS '" + std::to_string(DESCRIPTOR_SIZE_BITS) + "' for descriptor '" + descriptor_type + "'");
     }
     feature_detector     = cv::FastFeatureDetector::create(fast_detector_threshold);
+#ifdef SRRG_HBST_HAS_OPENCV_CONTRIB
     descriptor_extractor = cv::xfeatures2d::BoostDesc::create(cv::xfeatures2d::BoostDesc::BINBOOST_64);
+#else
+    throw std::runtime_error("ERROR: BinBoost descriptor not available, check build or install opencv_contrib");
+#endif
   }
     else {
     stream_ << "ERROR: unknown descriptor type: " << descriptor_type << std::endl;
