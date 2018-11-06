@@ -202,7 +202,7 @@ const MatchableVector getAvailableDescriptors(const MatchableVector& descriptors
                                               const std::vector<uint32_t>& splitting_bits_left_,
                                               const std::vector<uint32_t>& splitting_bits_right_) {
   MatchableVector descriptors_available(0);
-  for (const Matchable* descriptor: descriptors_) {
+  for (Matchable* descriptor: descriptors_) {
 
     //ds check if some of the splitting bits are set for the corresponding side (left or right)
     bool available = true;
@@ -278,7 +278,7 @@ void evaluateBitWiseCompleteness(const MatchableVector& parent_query_descriptors
     //ds partition the input set according to the checked bit
     MatchableVector input_descriptors_left;
     MatchableVector input_descriptors_right;
-    for (const Matchable* input_descriptor: reference_descriptors) {
+    for (Matchable* input_descriptor: reference_descriptors) {
       if (input_descriptor->descriptor[k]) {
         input_descriptors_right.push_back(input_descriptor);
         ++bit_values_accumulated;

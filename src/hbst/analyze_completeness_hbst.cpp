@@ -284,7 +284,7 @@ const double getMeanRelativeNumberOfMatches(const MatchableVector& query_descrip
     //ds partition the input set according to the checked bit
     MatchableVector reference_descriptors_left;
     MatchableVector reference_descriptors_right;
-    for (const Matchable* input_descriptor: reference_descriptors_) {
+    for (Matchable* input_descriptor: reference_descriptors_) {
       if (input_descriptor->descriptor[k]) {
         reference_descriptors_right.push_back(input_descriptor);
       } else {

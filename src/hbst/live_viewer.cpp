@@ -70,7 +70,7 @@ int32_t main(int32_t argc_, char** argv_) {
   //ds current and previous image
   cv::Mat image_query;
   cv::Mat image_reference_best;
-  std::vector<std::vector<const cv::KeyPoint*>> keypoints_per_image;
+  std::vector<std::vector<cv::KeyPoint*>> keypoints_per_image;
 
   //ds dataset variables
   uint64_t image_number_query = 0;
@@ -128,15 +128,14 @@ int32_t main(int32_t argc_, char** argv_) {
     //ds rebuild descriptor matrix and keypoints vector
     keypoints.resize(std::min(keypoints.size(), static_cast<uint64_t>(parameters->target_number_of_descriptors)));
     descriptors = descriptors(cv::Rect(0, 0, descriptors.cols, keypoints.size()));
-    std::vector<const cv::KeyPoint*> linked_keypoints(0);
+    std::vector<cv::KeyPoint*> linked_keypoints(0);
     for (const cv::KeyPoint& keypoint: keypoints) {
-      cv::KeyPoint* linked_keypoint = new cv::KeyPoint(keypoint);
-      linked_keypoints.push_back(linked_keypoint);
+      linked_keypoints.push_back(new cv::KeyPoint(keypoint));
     }
     keypoints_per_image.push_back(linked_keypoints);
 
     //ds convert to keypoints linked to descriptors to HBST matchables
-    Tree::MatchableVector current_matchables(Tree::getMatchablesWithPointer<const cv::KeyPoint*>(descriptors, keypoints_per_image.back(), image_number_query));
+    Tree::MatchableVector current_matchables(Tree::getMatchablesWithPointer<cv::KeyPoint*>(descriptors, keypoints_per_image.back(), image_number_query));
 
     //ds match map for this query image
     Tree::MatchVectorMap matches;
@@ -215,7 +214,7 @@ int32_t main(int32_t argc_, char** argv_) {
         cv::hconcat(image_query, empty_image, image_display);
       }
       cv::cvtColor(image_display, image_display, CV_GRAY2RGB);
-      for (const Tree::Matchable* matchable: current_matchables) {
+      for (Tree::Matchable* matchable: current_matchables) {
         const cv::KeyPoint& keypoint = *(reinterpret_cast<const cv::KeyPoint*>(matchable->pointers.at(0)));
         cv::circle(image_display, keypoint.pt, 2, cv::Scalar(255, 0, 0));
       }
@@ -288,7 +287,7 @@ int32_t main(int32_t argc_, char** argv_) {
   cv::destroyAllWindows();
   ui_server->closeAllWindows();
   ui_server->quit();
-  for (const std::vector<const cv::KeyPoint*>& keypoints: keypoints_per_image) {
+  for (const std::vector<cv::KeyPoint*>& keypoints: keypoints_per_image) {
     for (const cv::KeyPoint* keypoint: keypoints) {
       delete keypoint;
     }
