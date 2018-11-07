@@ -70,7 +70,6 @@ int32_t main(int32_t argc_, char** argv_) {
   //ds current and previous image
   cv::Mat image_query;
   cv::Mat image_reference_best;
-  std::vector<std::vector<cv::KeyPoint*>> keypoints_per_image;
 
   //ds dataset variables
   uint64_t image_number_query = 0;
@@ -128,14 +127,9 @@ int32_t main(int32_t argc_, char** argv_) {
     //ds rebuild descriptor matrix and keypoints vector
     keypoints.resize(std::min(keypoints.size(), static_cast<uint64_t>(parameters->target_number_of_descriptors)));
     descriptors = descriptors(cv::Rect(0, 0, descriptors.cols, keypoints.size()));
-    std::vector<cv::KeyPoint*> linked_keypoints(0);
-    for (const cv::KeyPoint& keypoint: keypoints) {
-      linked_keypoints.push_back(new cv::KeyPoint(keypoint));
-    }
-    keypoints_per_image.push_back(linked_keypoints);
 
     //ds convert to keypoints linked to descriptors to HBST matchables
-    Tree::MatchableVector current_matchables(Tree::getMatchablesWithPointer<cv::KeyPoint*>(descriptors, keypoints_per_image.back(), image_number_query));
+    Tree::MatchableVector current_matchables(Tree::getMatchables(descriptors, keypoints, image_number_query));
 
     //ds match map for this query image
     Tree::MatchVectorMap matches;
@@ -215,8 +209,7 @@ int32_t main(int32_t argc_, char** argv_) {
       }
       cv::cvtColor(image_display, image_display, CV_GRAY2RGB);
       for (Tree::Matchable* matchable: current_matchables) {
-        const cv::KeyPoint& keypoint = *(reinterpret_cast<const cv::KeyPoint*>(matchable->pointers.at(0)));
-        cv::circle(image_display, keypoint.pt, 2, cv::Scalar(255, 0, 0));
+        cv::circle(image_display, matchable->objects.begin()->second.pt, 2, cv::Scalar(255, 0, 0));
       }
     } else {
 
@@ -240,18 +233,14 @@ int32_t main(int32_t argc_, char** argv_) {
       //ds draw correspondences in opencv image
       for (const Tree::Match& match: viewer_tree->matches()) {
 
-        //ds directly get the keypoint objects
-        const cv::KeyPoint* keypoint_reference = static_cast<const cv::KeyPoint*>(match.pointer_reference);
-        const cv::KeyPoint* keypoint_query     = static_cast<const cv::KeyPoint*>(match.pointer_query);
-
         //ds draw correspondence
-        cv::line(image_display, keypoint_query->pt, keypoint_reference->pt+shift, color_correspondence);
+        cv::line(image_display, match.object_query.pt, match.object_reference.pt+shift, color_correspondence);
 
         //ds draw query point in upper image
-        cv::circle(image_display, keypoint_query->pt, 2, cv::Scalar(255, 0, 0));
+        cv::circle(image_display, match.object_query.pt, 2, cv::Scalar(255, 0, 0));
 
         //ds draw reference point in lower image
-        cv::circle(image_display, keypoint_reference->pt+shift, 2, cv::Scalar(0, 0, 255));
+        cv::circle(image_display, match.object_reference.pt+shift, 2, cv::Scalar(0, 0, 255));
       }
     }
 
@@ -287,10 +276,5 @@ int32_t main(int32_t argc_, char** argv_) {
   cv::destroyAllWindows();
   ui_server->closeAllWindows();
   ui_server->quit();
-  for (const std::vector<cv::KeyPoint*>& keypoints: keypoints_per_image) {
-    for (const cv::KeyPoint* keypoint: keypoints) {
-      delete keypoint;
-    }
-  }
   return 0;
 }

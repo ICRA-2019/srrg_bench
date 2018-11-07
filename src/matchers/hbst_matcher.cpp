@@ -17,8 +17,10 @@ void HBSTMatcher::add(const cv::Mat& train_descriptors_,
                       const std::vector<cv::KeyPoint>& train_keypoints_) {
   if (_database) {
 
-    //ds obtain matchables (not timed being raw data)
-    const Tree::MatchableVector matchables(_database->getMatchablesWithIndex(train_descriptors_, image_number_));
+    //ds obtain matchables for each descriptor with continuous indexing
+    std::vector<uint64_t> indices(train_descriptors_.rows, 0);
+    std::for_each(indices.begin(), indices.end(), [](uint64_t &index){++index;});
+    const Tree::MatchableVector matchables(Tree::getMatchables(train_descriptors_, indices, image_number_));
 
     TIC(_time_begin);
     _database->add(matchables);
@@ -51,8 +53,10 @@ void HBSTMatcher::query(const cv::Mat& query_descriptors_,
     //ds match result handle
     Tree::MatchVectorMap matches;
 
-    //ds obtain matchables (not timed being raw data, same for bow)
-    const Tree::MatchableVector matchables(_database->getMatchablesWithIndex(query_descriptors_, image_number_));
+    //ds obtain matchables for each descriptor with continuous indexing
+    std::vector<uint64_t> indices(query_descriptors_.rows, 0);
+    std::for_each(indices.begin(), indices.end(), [](uint64_t &index){++index;});
+    const Tree::MatchableVector matchables(Tree::getMatchables(query_descriptors_, indices, image_number_));
 
     //ds match against database
     TIC(_time_begin);

@@ -4,7 +4,7 @@
 
 
 //ds descriptor configuration
-typedef srrg_hbst::BinaryMatchable<DESCRIPTOR_SIZE_BITS> Matchable;
+typedef srrg_hbst::BinaryMatchable<uint64_t, DESCRIPTOR_SIZE_BITS> Matchable;
 typedef Matchable::Descriptor Descriptor;
 typedef srrg_hbst::BinaryNode<Matchable> Node;
 typedef Node::MatchableVector MatchableVector;
@@ -178,9 +178,13 @@ void loadMatchables(MatchableVector& matchables_,
       throw std::runtime_error("insufficient number of descriptors computed");
     }
 
-    //ds compute matchables and store them
-    MatchableVector matchables_current(Tree::getMatchablesWithIndex(descriptors(cv::Rect(0, 0, descriptors.cols, target_number_of_descriptors_per_image_)),
-                                                                    image_with_pose->image_number));
+    //ds cull descriptors
+    descriptors = descriptors(cv::Rect(0, 0, descriptors.cols, target_number_of_descriptors_per_image_));
+
+    //ds obtain matchables for each descriptor with continuous indexing
+    std::vector<uint64_t> indices(descriptors.rows, 0);
+    std::for_each(indices.begin(), indices.end(), [](uint64_t &index){++index;});
+    MatchableVector matchables_current(Tree::getMatchables(descriptors, indices, image_with_pose->image_number));
     matchables_.insert(matchables_.end(), matchables_current.begin(), matchables_current.end());
     std::cerr << "x";
   }

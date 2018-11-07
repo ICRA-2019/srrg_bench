@@ -5,7 +5,7 @@
 namespace srrg_bench {
 
 //ds configuration
-typedef srrg_hbst::BinaryMatchable<AUGMENTED_DESCRIPTOR_SIZE_BITS> Matchable;
+typedef srrg_hbst::BinaryMatchable<uint64_t, AUGMENTED_DESCRIPTOR_SIZE_BITS> Matchable;
 typedef srrg_hbst::BinaryNode<Matchable> Node;
 typedef srrg_hbst::BinaryTree<Node> Tree;
 

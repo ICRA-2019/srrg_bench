@@ -5,7 +5,7 @@
 
 
 //ds HBST configuration
-typedef srrg_hbst::BinaryMatchable<DESCRIPTOR_SIZE_BITS> Matchable;
+typedef srrg_hbst::BinaryMatchable<uint64_t, DESCRIPTOR_SIZE_BITS> Matchable;
 typedef Matchable::Descriptor Descriptor;
 typedef srrg_hbst::BinaryNode<Matchable> Node;
 typedef Node::MatchableVector MatchableVector;
@@ -202,10 +202,13 @@ void loadMatchables(MatchableVector& matchables_total_,
       throw std::runtime_error("insufficient number of descriptors computed");
     }
 
-    //ds compute matchables and store them
-    MatchableVector matchables_current(Tree::getMatchablesWithIndex(descriptors(cv::Rect(0, 0, descriptors.cols, parameters_->target_number_of_descriptors)),
-                                                                    image_with_pose->image_number,
-                                                                    matchables_total_.size()));
+    //ds cull descriptors
+    descriptors = descriptors(cv::Rect(0, 0, descriptors.cols, parameters_->target_number_of_descriptors));
+
+    //ds obtain matchables for each descriptor with continuous indexing
+    std::vector<uint64_t> indices(descriptors.rows, matchables_total_.size());
+    std::for_each(indices.begin(), indices.end(), [](uint64_t &index){++index;});
+    MatchableVector matchables_current(Tree::getMatchables(descriptors, indices, image_with_pose->image_number));
     matchables_total_.insert(matchables_total_.end(), matchables_current.begin(), matchables_current.end());
     std::cerr << "x";
   }
@@ -250,7 +253,7 @@ const double getMeanRelativeNumberOfMatches(const std::shared_ptr<Tree> tree_,
     uint64_t number_of_matches = getNumberOfMatches(query_descriptor, iterator->matchables, maximum_distance_matching_);
 
     //ds compute completeness
-    const uint64_t feasible_number_of_matches = feasible_number_of_matches_per_query_[query_descriptor->identifiers.at(0)];
+    const uint64_t feasible_number_of_matches = feasible_number_of_matches_per_query_[query_descriptor->objects.begin()->second];
     if (feasible_number_of_matches > 0) {
       relative_number_of_matches_accumulated += static_cast<double>(number_of_matches)/feasible_number_of_matches;
     } else {

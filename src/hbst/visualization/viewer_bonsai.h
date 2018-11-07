@@ -5,7 +5,11 @@
 #include "srrg_hbst_types/binary_tree.hpp"
 #include <Eigen/Geometry>
 
-typedef srrg_hbst::BinaryTree512 Tree;
+//ds HBST setup
+#define DESCRIPTOR_SIZE_BITS 256
+typedef srrg_hbst::BinaryMatchable<cv::KeyPoint, DESCRIPTOR_SIZE_BITS> Matchable;
+typedef srrg_hbst::BinaryNode<Matchable> Node;
+typedef srrg_hbst::BinaryTree<Node> Tree;
 
 namespace srrg_bench {
 
