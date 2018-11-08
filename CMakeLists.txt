@@ -84,21 +84,21 @@ if(srrg_core_viewers_FOUND AND QGLVIEWER_FOUND)
 endif()
 
 #ds environment path variables have to be defined manually
-#if(NOT "$ENV{SEGNET_PATH}" STREQUAL "" AND 
-#   NOT "$ENV{CUDA_PATH}" STREQUAL "" AND
-#   EXISTS "$ENV{SEGNET_PATH}" AND
-#   EXISTS "$ENV{CUDA_PATH}")
-#
-#  message("${PROJECT_NAME}|found SegNet: '$ENV{SEGNET_PATH}'") 
-#  include_directories("$ENV{SEGNET_PATH}/include")
-#  include_directories("$ENV{SEGNET_PATH}/build/include")
-#  link_directories("$ENV{SEGNET_PATH}/build/lib")
-#
-#  message("${PROJECT_NAME}|found CUDA: '$ENV{CUDA_PATH}'") 
-#  include_directories("$ENV{CUDA_PATH}")
-#  set(SRRG_BENCH_BUILD_SEGNET true)
-#  add_definitions(-DSRRG_BENCH_BUILD_SEGNET)
-#endif()
+if(NOT "$ENV{SEGNET_PATH}" STREQUAL "" AND 
+   NOT "$ENV{CUDA_PATH}" STREQUAL "" AND
+   EXISTS "$ENV{SEGNET_PATH}" AND
+   EXISTS "$ENV{CUDA_PATH}")
+
+  message("${PROJECT_NAME}|found SegNet: '$ENV{SEGNET_PATH}'") 
+  include_directories("$ENV{SEGNET_PATH}/include")
+  include_directories("$ENV{SEGNET_PATH}/build/include")
+  link_directories("$ENV{SEGNET_PATH}/build/lib")
+
+  message("${PROJECT_NAME}|found CUDA: '$ENV{CUDA_PATH}'") 
+  include_directories("$ENV{CUDA_PATH}")
+  set(SRRG_BENCH_BUILD_SEGNET true)
+  add_definitions(-DSRRG_BENCH_BUILD_SEGNET)
+endif()
 
 #ds add internal includes
 include_directories(src)
