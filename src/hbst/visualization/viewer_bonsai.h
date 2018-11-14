@@ -2,7 +2,7 @@
 #include <QVector3D>
 #include <mutex>
 #include "srrg_core_viewers/simple_viewer.h"
-#include "srrg_hbst_types/binary_tree.hpp"
+#include "srrg_hbst/types/binary_tree.hpp"
 #include <Eigen/Geometry>
 
 //ds HBST setup

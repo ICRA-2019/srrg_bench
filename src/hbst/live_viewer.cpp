@@ -1,7 +1,7 @@
 #include <chrono>
 #include <ctime>
 #include "qapplication.h"
-#include "srrg_hbst_types/binary_tree.hpp"
+#include "srrg_hbst/types/binary_tree.hpp"
 
 #include "../hbst/visualization/map_viewer.h"
 #include "../hbst/visualization/viewer_bonsai.h"

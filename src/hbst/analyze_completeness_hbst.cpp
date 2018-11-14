@@ -1,5 +1,5 @@
 #include "../utilities/command_line_parameters.h"
-#include "srrg_hbst_types/binary_tree.hpp"
+#include "srrg_hbst/types/binary_tree.hpp"
 
 
 

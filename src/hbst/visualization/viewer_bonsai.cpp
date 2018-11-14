@@ -1,5 +1,4 @@
-#include "../../hbst/visualization/viewer_bonsai.h"
-
+#include "viewer_bonsai.h"
 #include "srrg_gl_helpers/opengl_primitives.h"
 
 namespace srrg_bench {

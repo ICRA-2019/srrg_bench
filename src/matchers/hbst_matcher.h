@@ -1,5 +1,5 @@
 #pragma once
-#include "srrg_hbst_types/binary_tree.hpp"
+#include "srrg_hbst/types/binary_tree.hpp"
 #include "base_matcher.hpp"
 
 namespace srrg_bench {
