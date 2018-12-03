@@ -136,7 +136,7 @@ namespace srrg_bench {
                                          const uint32_t& angle_degrees_) const {
 
     //ds check if this node has leafs
-    if(node_->has_leafs) {
+    if(node_->hasLeafs()) {
 
       //ds we have leafs - draw this node as a branch (grey) and dispatch function on leafs
       glColor4f(0.5, 0.5, 0.5, 0.25);
@@ -147,7 +147,7 @@ namespace srrg_bench {
       QVector3D position_leaf_zeroes;
 
       //ds spacing factor
-      const double spacing = _depth_size_per_level*node_->depth;
+      const double spacing = _depth_size_per_level*node_->getDepth();
 
       //ds z is directly proportional to the depth value
       position_leaf_ones.setZ(_spread_size_per_level*spacing);
@@ -210,14 +210,14 @@ namespace srrg_bench {
         position_previous = position;
 
         //ds compute next position spacing
-        const double spacing = _depth_size_per_level*node_current->depth;
+        const double spacing = _depth_size_per_level*node_current->getDepth();
         position.setZ(_spread_size_per_level*spacing);
 
         //ds if this node has leaves
-        if (node_current->has_leafs) {
+        if (node_current->hasLeafs()) {
 
           //ds check the split bit and go deeper
-          if (match.matchable_query->descriptor[node_current->index_split_bit]) {
+          if (match.matchable_query->descriptor[node_current->indexSplitBit()]) {
 
             //ds check if we have to fork in x or y
             if (angle_degrees%2 == 0) {

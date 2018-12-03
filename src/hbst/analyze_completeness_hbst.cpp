@@ -254,7 +254,7 @@ const double getMeanRelativeNumberOfMatches(const std::shared_ptr<Tree> tree_,
     //ds traverse the tree until no children are available -> we hit a leaf
     const Node* iterator = tree_->root();
     while (iterator->left) {
-      if (query_descriptor->descriptor[iterator->index_split_bit]) {
+      if (query_descriptor->descriptor[iterator->indexSplitBit()]) {
         iterator = iterator->right;
       } else {
         iterator = iterator->left;
@@ -262,7 +262,7 @@ const double getMeanRelativeNumberOfMatches(const std::shared_ptr<Tree> tree_,
     }
 
     //ds compute matches within threshold in this leaf
-    uint64_t number_of_matches = getNumberOfMatches(query_descriptor, iterator->matchables, maximum_distance_matching_);
+    uint64_t number_of_matches = getNumberOfMatches(query_descriptor, iterator->getMatchables(), maximum_distance_matching_);
 
     //ds compute completeness
     if (feasible_number_of_matches_per_query_.at(query_descriptor) > 0) {
