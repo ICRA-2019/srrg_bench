@@ -10,8 +10,16 @@ message("${PROJECT_NAME}|build type: ${CMAKE_BUILD_TYPE}")
 #ds add c++11 support, mediocre optimization, all warnings
 add_definitions(-Ofast -march=native -Wall -pedantic -std=c++11)
 
-#ds debug flags
-#add_definitions(-O0 -march=native -Wall -pedantic -std=c++11 -g)
+#ds flags for release build
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" OR "${CMAKE_BUILD_TYPE}" STREQUAL "RELEASE")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11 -Wall -Ofast -DNDEBUG")
+  message("${PROJECT_NAME}|adding flags for '${CMAKE_BUILD_TYPE}': '--std=c++11 -Wall -Ofast -DNDEBUG'")
+  
+#ds flags for other build(s) (e.g. debug)
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11 -Wall -O0 -g -fstack-check")
+  message("${PROJECT_NAME}|adding flags for '${CMAKE_BUILD_TYPE}': '--std=c++11 -Wall -O0 -g -fstack-check'")
+endif()
 
 #ds specify target binary descriptor BIT size
 add_definitions(-DDESCRIPTOR_SIZE_BITS=256)
@@ -59,7 +67,7 @@ if(srrg_hbst_FOUND)
   message("${PROJECT_NAME}|found srrg_hbst: '${srrg_hbst_DIR}' ${srrg_hbst_VERSION}")
   add_definitions(-DSRRG_BENCH_BUILD_HBST)
   include_directories(${srrg_hbst_INCLUDE_DIRS})
-  add_definitions(-DSRRG_MERGE_DESCRIPTORS)
+  add_definitions(-DSRRG_MERGE_DESCRIPTORS) #ds enable descriptor merging
 endif()
 if(DBoW2_FOUND AND DLib_FOUND)
   message("${PROJECT_NAME}|found DBoW2: '${DBoW2_DIR}' ${DBoW2_VERSION}")
