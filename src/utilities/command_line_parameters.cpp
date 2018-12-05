@@ -270,6 +270,9 @@ void CommandLineParameters::write(std::ostream& stream_) {
     stream_ << BAR << std::endl;
   }
   if (method_name == "hbst") {
+#ifdef SRRG_MERGE_DESCRIPTORS
+  std::cerr << "descriptor merging enabled" << std::endl;
+#endif
     WRITE_VARIABLE(stream_, maximum_leaf_size);
     WRITE_VARIABLE(stream_, maximum_partitioning);
     WRITE_VARIABLE(stream_, use_random_splitting);

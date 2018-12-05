@@ -7,9 +7,6 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 message("${PROJECT_NAME}|build type: ${CMAKE_BUILD_TYPE}")
 
-#ds add c++11 support, mediocre optimization, all warnings
-add_definitions(-Ofast -march=native -Wall -pedantic -std=c++11)
-
 #ds flags for release build
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" OR "${CMAKE_BUILD_TYPE}" STREQUAL "RELEASE")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++11 -Wall -pedantic -Ofast -DNDEBUG")

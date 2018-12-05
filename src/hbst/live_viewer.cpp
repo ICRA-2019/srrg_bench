@@ -233,14 +233,18 @@ int32_t main(int32_t argc_, char** argv_) {
       //ds draw correspondences in opencv image
       for (const Tree::Match& match: viewer_tree->matches()) {
 
-        //ds draw correspondence
-        cv::line(image_display, match.object_query.pt, match.object_reference.pt+shift, color_correspondence);
+        //ds only process single matches
+        if (match.object_references.size() == 1) {
 
-        //ds draw query point in upper image
-        cv::circle(image_display, match.object_query.pt, 2, cv::Scalar(255, 0, 0));
+          //ds draw correspondence
+          cv::line(image_display, match.object_query.pt, match.object_references[0].pt+shift, color_correspondence);
 
-        //ds draw reference point in lower image
-        cv::circle(image_display, match.object_reference.pt+shift, 2, cv::Scalar(0, 0, 255));
+          //ds draw query point in upper image
+          cv::circle(image_display, match.object_query.pt, 2, cv::Scalar(255, 0, 0));
+
+          //ds draw reference point in lower image
+          cv::circle(image_display, match.object_references[0].pt+shift, 2, cv::Scalar(0, 0, 255));
+        }
       }
     }
 
