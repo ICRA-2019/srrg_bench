@@ -11,7 +11,9 @@
 
 #if CV_MAJOR_VERSION == 2
 #elif CV_MAJOR_VERSION == 3
+#ifdef SRRG_HBST_HAS_OPENCV_CONTRIB
   #include <opencv2/xfeatures2d.hpp>
+#endif
 #else
   #error OpenCV version not supported
 #endif
